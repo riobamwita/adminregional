@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css">
+<title>Admin | Regional Autoselections Ltd</title></head><body>
+<div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div>
+<header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div><button class="menu" id="menu"><i class="fa-solid fa-bars"></i></button></div></header>
+<div class="admin-layout"><aside class="sidebar" id="sidebar"><div class="side-head"><div><span>MANAGEMENT</span><strong>Admin Console</strong></div><button id="closeMenu"><i class="fa-solid fa-xmark"></i></button></div>
+<nav>
+<a class="side-link active" href="index.html"><i class="fa-solid fa-car-side"></i><span>Listings</span></a>
+<a class="side-link" href="tradeins.html"><i class="fa-solid fa-right-left"></i><span>Trade-In Requests</span></a>
+<a class="side-link" href="imports.html"><i class="fa-solid fa-ship"></i><span>Import Requests</span></a>
+<a class="side-link" href="financing.html"><i class="fa-solid fa-coins"></i><span>Financing Requests</span></a>
+<a class="side-link" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i><span>Diaspora Requests</span></a>
+<a class="side-link" href="sellcars.html"><i class="fa-solid fa-car"></i><span>Sell A Car</span></a>
+<a class="side-link" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i><span>Accessible Cars</span></a>
+</nav><div class="side-bottom"><div class="side-title">SYSTEM</div><button id="refreshBtn" class="side-link"><i class="fa-solid fa-arrows-rotate"></i><span>Refresh Data</span></button><a class="side-link" href="../index.html"><i class="fa-solid fa-globe"></i><span>View Website</span></a><button id="logoutBtn" class="side-link"><i class="fa-solid fa-right-from-bracket"></i><span>Sign Out</span></button></div></aside>
+<div class="overlay" id="overlay"></div><main class="main">
+<section class="page-heading"><div><span class="eyebrow"><b></b> ADMIN DASHBOARD</span><h1>Vehicle <strong>Listings</strong></h1><p>Manage inventory, deals and customer requests.</p></div><a href="add.html" class="primary-btn"><i class="fa-solid fa-plus"></i> Add Vehicle</a></section>
+<section class="stats">
+<div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-car-side"></i></div><div><span>Total Listings</span><strong id="totalCars">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div><div><span>Available</span><strong id="availableCars">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-clock"></i></div><div><span>Reserved</span><strong id="reservedCars">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-tag"></i></div><div><span>Sold</span><strong id="soldCars">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-star"></i></div><div><span>Featured</span><strong id="featuredCars">0</strong></div></div></section>
+<section class="listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> INVENTORY</span><h2>All Vehicles</h2></div><button id="refreshListings" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></div>
+<div class="toolbar"><div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search make, model, stock number..."></div><select id="statusFilter"><option value="all">All Status</option><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option><option value="inactive">Inactive</option></select><select id="sortFilter"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-high">Price: High → Low</option><option value="price-low">Price: Low → High</option><option value="year-new">Year: Newest</option><option value="mileage-low">Mileage: Low → High</option></select></div>
+<div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading vehicles...</div><div id="error" class="error"></div><div id="propertiesGrid" class="cars-grid"></div>
+<div id="empty" class="empty"><div><i class="fa-solid fa-car"></i></div><h3>No vehicles found</h3><p>There are no vehicles matching your search.</p><a href="add.html" class="primary-btn"><i class="fa-solid fa-plus"></i> Add Vehicle</a></div></section></main></div>
+<script type="module" src="script.js"></script></body></html>
