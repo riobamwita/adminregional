@@ -1,1 +1,30 @@
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="assets/logo.jpg"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css"><title>Admin | Requests</title></head><body><header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div></div></header><main class="main"><section class="listing-panel"><span class="eyebrow"><b></b> ADMIN REQUESTS</span><h1 style="margin:12px 0">TRADE-IN REQUESTS</h1><p style="color:#657b8c">Placeholder admin page. Connect this page to its Supabase request table next.</p><a href="index.html" class="primary-btn" style="margin-top:20px"><i class="fa-solid fa-arrow-left"></i> Back to Listings</a></section></main></body></html>
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="assets/logo.jpg"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="tradeins.css"><title>Admin | Trade-In Requests</title></head><body>
+<header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg" alt=""><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div><button class="menu" id="menu" type="button"><i class="fa-solid fa-bars"></i></button></div></header>
+<div class="admin-layout">
+<aside class="sidebar" id="sidebar"><div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional Auto</strong></div><button id="closeMenu"><i class="fa-solid fa-xmark"></i></button></div><nav>
+<a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicles</a>
+<a class="side-link" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
+<a class="side-link active" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
+<a class="side-link" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell Car Requests</a>
+<a class="side-link" href="financing.html"><i class="fa-solid fa-coins"></i> Financing</a>
+<a class="side-link" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora</a>
+</nav><div class="side-bottom"><span class="side-title">ACCOUNT</span><button class="side-link" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></div></aside>
+<div class="overlay" id="overlay"></div>
+<main class="main">
+<div class="page-heading"><div><span class="eyebrow"><b></b> ADMIN REQUESTS</span><h1>TRADE-IN <strong>REQUESTS</strong></h1><p>Review vehicle valuations, customer information and submitted documents.</p></div><button class="primary-btn" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
+<div class="stats">
+<div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-inbox"></i></div><div><span>Total Requests</span><strong id="totalRequests">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-clock"></i></div><div><span>New</span><strong id="newRequests">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-spinner"></i></div><div><span>Reviewing</span><strong id="reviewingRequests">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-check"></i></div><div><span>Completed</span><strong id="completedRequests">0</strong></div></div>
+</div>
+<section class="listing-panel"><div class="panel-head"><div><span class="eyebrow dark">VALUATION QUEUE</span><h2>Submitted Requests</h2></div></div>
+<div id="error" class="error"></div>
+<div class="toolbar"><div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" placeholder="Search customer, phone, vehicle or registration..."></div><select id="statusFilter"><option value="all">All Statuses</option><option value="new">New</option><option value="reviewing">Reviewing</option><option value="valued">Valued</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select><select id="sortFilter"><option value="newest">Newest First</option><option value="oldest">Oldest First</option><option value="value-high">Expected Value High</option><option value="budget-high">Upgrade Budget High</option></select></div>
+<div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading requests...</div>
+<div id="empty" class="empty"><div><i class="fa-solid fa-right-left"></i></div><h3>No Trade-In Requests</h3><p>No requests match your current search or filter.</p></div>
+<div id="requestsGrid" class="requests-grid"></div>
+</section></main></div>
+<div class="trade-detail" id="tradeDetail"><div class="detail-bg" id="detailBg"></div><div class="detail-box"><div class="detail-head"><div><span>TRADE-IN REQUEST</span><h2 id="detailTitle">Request</h2><p id="detailDate"></p></div><button id="closeDetail"><i class="fa-solid fa-xmark"></i></button></div><div id="detailContent"></div></div></div>
+<div id="loader"><div><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTO</p></div></div>
+<script type="module" src="tradeins.js"></script></body></html>
