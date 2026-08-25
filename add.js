@@ -1,13 +1,366 @@
-import{supabase}from"./supabase.js";import{initVehicleCatalogue}from"./vehicle-catalog.js";
-const BUCKET="car-images",$=id=>document.getElementById(id),form=$("carForm"),di=$("displayInput"),gi=$("galleryInput"),dp=$("displayPreview"),gp=$("galleryPreview");let newDisplay=null,gallery=[],catalog=null;
-const fields=["make","model","trim","year","price","condition","body_type","status","engine_size","engine_description","horsepower","mileage","fuel_type","transmission","drive_type","exterior_color","interior_color","seats","doors","vin","chassis_number","registration_number","stock_number","country_of_origin","import_year","registration_year","auction_grade","previous_owners","accident_history","service_history","number_of_keys","inspection_status","inspection_notes","location","city","county","description"],nums=new Set(["year","price","engine_size","horsepower","mileage","seats","doors","import_year","registration_year"]);
-const msg=(id,t)=>{$(id).textContent=t;$(id).classList.add("active")},clear=()=>{$("error").classList.remove("active");$("success").classList.remove("active")},publicUrl=p=>supabase.storage.from(BUCKET).getPublicUrl(p).data.publicUrl,safe=n=>n.toLowerCase().replace(/[^a-z0-9.]+/g,"-");
-function years(id){const e=$(id),y=new Date().getFullYear();e.innerHTML='<option value="">Select</option>';for(let i=y;i>=2016;i--){const o=document.createElement("option");o.value=i;o.textContent=i;e.appendChild(o)}}years("import_year");years("registration_year");
-function preview(u){dp.innerHTML=`<img src="${u}" alt="Display image">`;dp.classList.add("active");$("removeDisplay").classList.add("active")}
-di.onchange=e=>{newDisplay=e.target.files[0]||null;if(newDisplay)preview(URL.createObjectURL(newDisplay))};
-$("removeDisplay").onclick=()=>{newDisplay=null;di.value="";dp.innerHTML="";dp.classList.remove("active");$("removeDisplay").classList.remove("active")};
-gi.onchange=e=>{[...e.target.files].forEach(f=>{const u=URL.createObjectURL(f),x=document.createElement("div");x.className="gallery-item";x.innerHTML=`<img src="${u}" alt="Gallery image"><button type="button">×</button>`;x.querySelector("button").onclick=()=>{URL.revokeObjectURL(u);x.remove();gallery=gallery.filter(v=>v!==f)};gp.appendChild(x);gallery.push(f)});gi.value=""};
-async function upload(path,file){const{error}=await supabase.storage.from(BUCKET).upload(path,file,{cacheControl:"3600",upsert:false});if(error)throw error;return publicUrl(path)}
-form.onsubmit=async e=>{e.preventDefault();clear();if(!catalog)return msg("error","Vehicle catalogue is not ready. Please refresh the page.");const invalid=catalog.validate();if(invalid)return msg("error",invalid);$("saveBtn").disabled=true;$("saveBtn").textContent="Saving...";const id=crypto.randomUUID(),paths=[];try{const data={id};fields.forEach(f=>{const v=$(f).value.trim();data[f]=v===""?null:nums.has(f)?Number(v):v});data.negotiable=$("negotiable").checked;data.financing_available=$("financing_available").checked;data.test_drive_available=$("test_drive_available").checked;data.featured=$("featured").checked;let{error}=await supabase.from("cars").insert(data);if(error)throw error;if(newDisplay){const p=`${id}/display/${crypto.randomUUID()}-${safe(newDisplay.name)}`,u=await upload(p,newDisplay);paths.push(p);({error}=await supabase.from("cars").update({display_image_url:u,display_image_path:p}).eq("id",id));if(error)throw error}for(let i=0;i<gallery.length;i++){const f=gallery[i],p=`${id}/gallery/${crypto.randomUUID()}-${safe(f.name)}`,u=await upload(p,f);paths.push(p);({error}=await supabase.from("car_images").insert({car_id:id,image_url:u,storage_path:p,image_type:"gallery",display_order:i}));if(error)throw error}msg("success","Vehicle added successfully.");$("saveBtn").textContent="Added";setTimeout(()=>location.href=`edit.html?id=${id}`,900)}catch(e){if(paths.length)await supabase.storage.from(BUCKET).remove(paths);await supabase.from("cars").delete().eq("id",id);msg("error",e.message||"Unable to save vehicle.");$("saveBtn").disabled=false;$("saveBtn").textContent="Add Vehicle"}};
-$("backBtn").onclick=$("cancelBtn").onclick=$("bottomCancel").onclick=()=>location.href="index.html";
-(async()=>{try{catalog=await initVehicleCatalogue({makeId:"make",modelId:"model",yearId:"year",bodyId:"body_type",fuelId:"fuel_type",transId:"transmission",driveId:"drive_type"})}catch(e){msg("error",`Vehicle catalogue could not load: ${e.message}`)}})();
+import { supabase } from "./supabase.js";
+import { initVehicleCatalogue } from "./vehicle-catalog.js";
+
+const BUCKET = "car-images";
+
+const $ = id => document.getElementById(id);
+
+const form = $("carForm");
+const displayInput = $("displayInput");
+const galleryInput = $("galleryInput");
+const displayPreview = $("displayPreview");
+const galleryPreview = $("galleryPreview");
+
+let newDisplay = null;
+let gallery = [];
+let catalog = null;
+
+const fields = [
+    "make",
+    "model",
+    "trim",
+    "year",
+    "price",
+    "condition",
+    "body_type",
+    "status",
+    "engine_size",
+    "engine_description",
+    "horsepower",
+    "mileage",
+    "fuel_type",
+    "transmission",
+    "drive_type",
+    "exterior_color",
+    "interior_color",
+    "seats",
+    "doors",
+    "vin",
+    "chassis_number",
+    "registration_number",
+    "stock_number",
+    "country_of_origin",
+    "import_year",
+    "registration_year",
+    "auction_grade",
+    "previous_owners",
+    "accident_history",
+    "service_history",
+    "number_of_keys",
+    "inspection_status",
+    "inspection_notes",
+    "location",
+    "city",
+    "county",
+    "description"
+];
+
+const numericFields = new Set([
+    "year",
+    "price",
+    "engine_size",
+    "horsepower",
+    "mileage",
+    "seats",
+    "doors",
+    "import_year",
+    "registration_year"
+]);
+
+function showMessage(id, text) {
+    const element = $(id);
+
+    element.textContent = text;
+    element.classList.add("active");
+}
+
+function clearMessages() {
+    $("error").classList.remove("active");
+    $("success").classList.remove("active");
+}
+
+function publicUrl(path) {
+    return supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(path)
+        .data.publicUrl;
+}
+
+function safeFileName(name) {
+    return String(name)
+        .toLowerCase()
+        .replace(/[^a-z0-9.]+/g, "-");
+}
+
+function populateYears(id) {
+    const select = $(id);
+    const currentYear = new Date().getFullYear();
+
+    select.innerHTML = '<option value="">Select</option>';
+
+    for (let year = currentYear; year >= 2016; year--) {
+        const option = document.createElement("option");
+
+        option.value = year;
+        option.textContent = year;
+
+        select.appendChild(option);
+    }
+}
+
+populateYears("import_year");
+populateYears("registration_year");
+
+function showDisplayPreview(url) {
+    displayPreview.innerHTML = `
+        <img src="${url}" alt="Display image">
+    `;
+
+    displayPreview.classList.add("active");
+    $("removeDisplay").classList.add("active");
+}
+
+displayInput.onchange = event => {
+    newDisplay = event.target.files[0] || null;
+
+    if (newDisplay) {
+        showDisplayPreview(URL.createObjectURL(newDisplay));
+    }
+};
+
+$("removeDisplay").onclick = () => {
+    newDisplay = null;
+    displayInput.value = "";
+
+    displayPreview.innerHTML = "";
+    displayPreview.classList.remove("active");
+
+    $("removeDisplay").classList.remove("active");
+};
+
+galleryInput.onchange = event => {
+    const files = [...event.target.files];
+
+    files.forEach(file => {
+        const url = URL.createObjectURL(file);
+
+        const item = document.createElement("div");
+
+        item.className = "gallery-item";
+
+        item.innerHTML = `
+            <img src="${url}" alt="Gallery image">
+            <button type="button" class="delete-image">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+
+        item.querySelector(".delete-image").onclick = () => {
+            URL.revokeObjectURL(url);
+
+            item.remove();
+
+            gallery = gallery.filter(
+                existingFile => existingFile !== file
+            );
+        };
+
+        galleryPreview.appendChild(item);
+
+        gallery.push(file);
+    });
+
+    galleryInput.value = "";
+};
+
+async function uploadImage(path, file) {
+    const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, file, {
+            cacheControl: "3600",
+            upsert: false
+        });
+
+    if (error) {
+        throw error;
+    }
+
+    return publicUrl(path);
+}
+
+form.onsubmit = async event => {
+    event.preventDefault();
+
+    clearMessages();
+
+    if (!catalog) {
+        showMessage(
+            "error",
+            "Vehicle catalogue is not ready. Please refresh the page."
+        );
+
+        return;
+    }
+
+    const invalid = catalog.validate();
+
+    if (invalid) {
+        showMessage("error", invalid);
+        return;
+    }
+
+    const saveButtons = document.querySelectorAll(".save");
+
+    saveButtons.forEach(button => {
+        button.disabled = true;
+        button.textContent = "Saving...";
+    });
+
+    const id = crypto.randomUUID();
+
+    const uploadedPaths = [];
+
+    try {
+        const data = {
+            id
+        };
+
+        fields.forEach(field => {
+            const element = $(field);
+            const value = element.value.trim();
+
+            if (value === "") {
+                data[field] = null;
+            } else if (numericFields.has(field)) {
+                data[field] = Number(value);
+            } else {
+                data[field] = value;
+            }
+        });
+
+        data.negotiable = $("negotiable").checked;
+        data.financing_available = $("financing_available").checked;
+        data.test_drive_available = $("test_drive_available").checked;
+        data.featured = $("featured").checked;
+
+        let result = await supabase
+            .from("cars")
+            .insert(data);
+
+        if (result.error) {
+            throw result.error;
+        }
+
+        if (newDisplay) {
+            const path =
+                `${id}/display/` +
+                `${crypto.randomUUID()}-${safeFileName(newDisplay.name)}`;
+
+            const imageUrl = await uploadImage(path, newDisplay);
+
+            uploadedPaths.push(path);
+
+            result = await supabase
+                .from("cars")
+                .update({
+                    display_image_url: imageUrl,
+                    display_image_path: path
+                })
+                .eq("id", id);
+
+            if (result.error) {
+                throw result.error;
+            }
+        }
+
+        for (let index = 0; index < gallery.length; index++) {
+            const file = gallery[index];
+
+            const path =
+                `${id}/gallery/` +
+                `${crypto.randomUUID()}-${safeFileName(file.name)}`;
+
+            const imageUrl = await uploadImage(path, file);
+
+            uploadedPaths.push(path);
+
+            result = await supabase
+                .from("car_images")
+                .insert({
+                    car_id: id,
+                    image_url: imageUrl,
+                    storage_path: path,
+                    image_type: "gallery",
+                    display_order: index
+                });
+
+            if (result.error) {
+                throw result.error;
+            }
+        }
+
+        showMessage(
+            "success",
+            "Vehicle added successfully."
+        );
+
+        saveButtons.forEach(button => {
+            button.textContent = "Added";
+        });
+
+        setTimeout(() => {
+            location.href = `edit.html?id=${encodeURIComponent(id)}`;
+        }, 900);
+
+    } catch (error) {
+        if (uploadedPaths.length) {
+            await supabase.storage
+                .from(BUCKET)
+                .remove(uploadedPaths);
+        }
+
+        await supabase
+            .from("cars")
+            .delete()
+            .eq("id", id);
+
+        showMessage(
+            "error",
+            error?.message || "Unable to save vehicle."
+        );
+
+        saveButtons.forEach(button => {
+            button.disabled = false;
+            button.textContent = "Add Vehicle";
+        });
+    }
+};
+
+async function initialise() {
+    try {
+        catalog = await initVehicleCatalogue({
+            makeId: "make",
+            modelId: "model",
+            yearId: "year",
+            bodyId: "body_type",
+            fuelId: "fuel_type",
+            transId: "transmission",
+            driveId: "drive_type"
+        });
+
+        if (!catalog.rows.length) {
+            showMessage(
+                "error",
+                "The vehicle catalogue is currently empty. Add catalogue makes and models in Supabase before creating new vehicles."
+            );
+        }
+
+    } catch (error) {
+        showMessage(
+            "error",
+            `Vehicle catalogue could not load: ${error?.message || "Unknown error"}`
+        );
+    }
+}
+
+initialise();
