@@ -1,57 +1,11 @@
-import{supabase}from"./supabase.js";
+import{supabase}from"../supabase.js";
 
-const pages={
- index:"vehicles",vehicles:"vehicles",tradeins:"tradeins",imports:"imports",
- financing:"financing",diaspora:"diaspora",sellcars:"sellcars",
- accessiblecars:"accessiblecars",reservations:"reservations",
- testdrives:"testdrives",insurance:"insurance",admins:"admins"
-};
+const pages={index:"vehicles",vehicles:"vehicles",tradeins:"tradeins",imports:"imports",financing:"financing",diaspora:"diaspora",sellcars:"sellcars",accessiblecars:"accessiblecars",reservations:"reservations",testdrives:"testdrives",insurance:"insurance",admins:"admins"};
 
-export async function requireAdmin(page){
- const{data:{session}}=await supabase.auth.getSession();
- if(!session){location.replace("auth.html");return null}
+const notice=(ok,text)=>{let e=document.getElementById("accessNotice");if(!e){e=document.createElement("div");e.id="accessNotice";e.style.cssText="position:fixed;top:25px;right:25px;z-index:99999;padding:14px 22px;border-radius:8px;color:#fff;font:600 14px Space Grotesk,Arial;box-shadow:0 8px 25px #0004;transition:.3s";document.body.appendChild(e)}e.textContent=text;e.style.background=ok?"#16a34a":"#dc2626";e.style.opacity="1";clearTimeout(e._t);e._t=setTimeout(()=>e.style.opacity="0",3000)};
 
- const{data:admin,error}=await supabase.from("admin_users")
-  .select("id,email,is_main_admin").eq("id",session.user.id).maybeSingle();
+export async function requireAdmin(page){const{data:{session}}=await supabase.auth.getSession();if(!session){location.replace("auth.html");return null}const{data:admin,error}=await supabase.from("admin_users").select("id,email,is_main_admin").eq("id",session.user.id).maybeSingle();if(error||!admin){await supabase.auth.signOut();location.replace("auth.html");return null}if(admin.is_main_admin){notice(true,"Full Access");return admin}const key=pages[page]||page,{data:row,error:pe}=await supabase.from("admin_permissions").select("permissions").eq("admin_id",admin.id).maybeSingle();if(pe||row?.permissions?.[key]!==true){notice(false,"Access Denied");setTimeout(()=>location.replace("index.html?access=denied"),3000);return null}notice(true,"Full Access");return admin}
 
- if(error||!admin){await supabase.auth.signOut();location.replace("auth.html");return null}
- if(admin.is_main_admin)return admin;
+export async function applyPageAccess(){const{data:{session}}=await supabase.auth.getSession();if(!session){location.replace("auth.html");return null}const{data:admin,error}=await supabase.from("admin_users").select("id,is_main_admin").eq("id",session.user.id).maybeSingle();if(error||!admin){location.replace("auth.html");return null}if(admin.is_main_admin)return admin;const{data:row}=await supabase.from("admin_permissions").select("permissions").eq("admin_id",admin.id).maybeSingle();const p=row?.permissions||{};document.querySelectorAll("[data-permission]").forEach(el=>{if(p[el.dataset.permission]!==true)el.remove()});return admin}
 
- const key=pages[page]||page;
- const{data:row,error:pe}=await supabase.from("admin_permissions")
-  .select("permissions").eq("admin_id",admin.id).maybeSingle();
-
- if(pe||row?.permissions?.[key]!==true){
-   location.replace("index.html?access=denied");
-   return null;
- }
-
- return admin;
-}
-
-export async function applyPageAccess(){
- const{data:{session}}=await supabase.auth.getSession();
- if(!session){location.replace("auth.html");return null}
-
- const{data:admin,error}=await supabase.from("admin_users")
-  .select("id,is_main_admin").eq("id",session.user.id).maybeSingle();
-
- if(error||!admin){location.replace("auth.html");return null}
- if(admin.is_main_admin)return admin;
-
- const{data:row}=await supabase.from("admin_permissions")
-  .select("permissions").eq("admin_id",admin.id).maybeSingle();
-
- const p=row?.permissions||{};
-
- document.querySelectorAll("[data-permission]").forEach(el=>{
-   if(p[el.dataset.permission]!==true)el.remove();
- });
-
- return admin;
-}
-
-export async function logout(){
- await supabase.auth.signOut();
- location.replace("auth.html");
-}
+export async function logout(){await supabase.auth.signOut();location.replace("auth.html")}
