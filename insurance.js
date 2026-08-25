@@ -1,4 +1,5 @@
 import{supabase}from"./supabase.js";
+import{requireAdmin}from"./admin-guard.js";
 const $=id=>document.getElementById(id),grid=$("requestsGrid"),esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),fmt=v=>v?new Date(v).toLocaleString("en-KE",{dateStyle:"medium",timeStyle:"short"}):"—";
 let requests=[],current=null;
 async function load(){$("loading").style.display="block";$("error").textContent="";$("error").classList.remove("active");grid.innerHTML="";$("empty").style.display="none";try{const{data,error}=await supabase.from("insurance_requests").select("*").order("created_at",{ascending:false});if(error)throw error;requests=data||[];stats();render()}catch(e){console.error(e);$("error").textContent=e.message;$("error").classList.add("active")}finally{$("loading").style.display="none"}}

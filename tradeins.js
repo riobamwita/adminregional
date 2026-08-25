@@ -1,4 +1,5 @@
 import{supabase}from"./supabase.js";
+import{requireAdmin}from"./admin-guard.js";
 const $=id=>document.getElementById(id),grid=$("requestsGrid");let requests=[],current=null;
 const esc=v=>String(v??"—").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 async function load(){ $("loading").style.display="block";grid.innerHTML="";$("empty").style.display="none";$("error").classList.remove("active");try{let{data,error}=await supabase.from("tradein_requests").select("*").order("created_at",{ascending:false});if(error)throw error;requests=data||[];stats();render()}catch(e){$("error").textContent=e.message;$("error").classList.add("active")}finally{$("loading").style.display="none"}}

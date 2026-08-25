@@ -1,4 +1,5 @@
-import{supabase}from"./supabase.js";const $=id=>document.getElementById(id),grid=$("requestsGrid"),esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),money=v=>Number(v||0).toLocaleString("en-KE"),fmt=v=>v?new Date(v).toLocaleString("en-KE",{dateStyle:"medium",timeStyle:"short"}):"—";let requests=[],current=null;
+import{supabase}from"./supabase.js";
+import{requireAdmin}from"./admin-guard.js";const $=id=>document.getElementById(id),grid=$("requestsGrid"),esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),money=v=>Number(v||0).toLocaleString("en-KE"),fmt=v=>v?new Date(v).toLocaleString("en-KE",{dateStyle:"medium",timeStyle:"short"}):"—";let requests=[],current=null;
 
 async function load(){$("loading").style.display="block";grid.innerHTML="";$("empty").style.display="none";$("error").classList.remove("active");try{let{data,error}=await supabase.from("vehicle_reservations").select("*,cars:car_id(id,make,model,year,price,stock_number,location,display_image_url,hero_image)").order("created_at",{ascending:false});if(error)throw error;requests=data||[];stats();render()}catch(e){$("error").textContent=e.message;$("error").classList.add("active")}finally{$("loading").style.display="none"}}
 
