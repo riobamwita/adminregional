@@ -1,6 +1,4 @@
 import{supabase}from"./supabase.js";
-import{requireAdmin}from"./admin-guard.js";
-import{requireAdmin}from"./admin-guard.js";
 import{requireAdmin}from"./admin-guard.js";const $=id=>document.getElementById(id),grid=$("requestsGrid"),esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),date=v=>v?new Date(v).toLocaleString("en-KE",{dateStyle:"medium",timeStyle:"short"}):"—";let requests=[],current=null;
 async function load(){$("loading").style.display="block";grid.innerHTML="";$("empty").style.display="none";$("error").classList.remove("active");try{let{data,error}=await supabase.from("accessible_car_requests").select("*").order("created_at",{ascending:false});if(error)throw error;requests=data||[];stats();render()}catch(e){$("error").textContent=e.message;$("error").classList.add("active")}finally{$("loading").style.display="none"}}
 function stats(){$("totalRequests").textContent=requests.length;$("newRequests").textContent=requests.filter(x=>(x.status||"new")==="new").length;$("progressRequests").textContent=requests.filter(x=>x.status==="in-progress").length;$("completedRequests").textContent=requests.filter(x=>x.status==="completed").length;$("cancelledRequests").textContent=requests.filter(x=>x.status==="cancelled").length}
