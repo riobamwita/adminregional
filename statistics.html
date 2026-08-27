@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="statistics.css"><title>Statistics | Regional Autoselections Ltd</title></head><body>
+<div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div>
+<header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-chart-column"></i> STATISTICS</div><button class="menu" id="menu"><i class="fa-solid fa-bars"></i></button></div></header>
+<div class="admin-layout">
+<aside class="sidebar" id="sidebar">
+<div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional</strong></div><button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button></div>
+<nav>
+<a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a>
+<a class="side-link" data-permission="tradeins" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
+<a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
+<a class="side-link" data-permission="financing" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a>
+<a class="side-link" data-permission="diaspora" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a>
+<a class="side-link" data-permission="sellcars" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell In Cars Requests'</a>
+<a class="side-link" data-permission="accessiblecars" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a>
+<a class="side-link" data-permission="reservations" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a>
+<a class="side-link" data-permission="testdrives" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a>
+<a class="side-link" data-permission="insurance" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a>
+<a class="side-link active" data-permission="statistics" href="statistics.html"><i class="fa-solid fa-chart-column"></i> Statistics</a>
+</nav>
+<div class="side-bottom">
+<span class="side-title">ACCOUNT</span>
+<a class="side-link" data-permission="admins" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Admins</a>
+<a class="side-link" data-permission="webpage" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a>
+<button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+</div>
+</aside>
+<div class="overlay" id="overlay"></div>
+
+<main class="main">
+<section class="page-heading">
+<div><span class="eyebrow"><b></b> BUSINESS PERFORMANCE</span><h1>Sales <strong>Statistics</strong></h1><p>Track inventory sales, revenue records and manually recorded ground sales.</p></div>
+<div class="heading-actions"><button id="refreshStats" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button><button id="openSaleModal" class="primary-btn"><i class="fa-solid fa-plus"></i> Add Ground Sale</button></div>
+</section>
+
+<div id="error" class="error"></div>
+<div id="success" class="success"></div>
+
+<section class="stats">
+<div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div><span>Total Recorded Revenue</span><strong id="totalRevenue">KES 0</strong></div></div>
+<div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-car-side"></i></div><div><span>Total Sales</span><strong id="totalSales">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-car"></i></div><div><span>Inventory Sales</span><strong id="inventorySales">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-handshake"></i></div><div><span>Ground Sales</span><strong id="groundSales">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-chart-line"></i></div><div><span>Average Sale</span><strong id="averageSale">KES 0</strong></div></div>
+</section>
+
+<section class="insights-grid">
+<div class="insight-card"><div class="insight-head"><span class="eyebrow dark"><b></b> INVENTORY STATUS</span><h2>Vehicle Breakdown</h2></div><div class="breakdown">
+<div><span class="dot available"></span><p>Available</p><strong id="availableCount">0</strong></div>
+<div><span class="dot reserved"></span><p>Reserved</p><strong id="reservedCount">0</strong></div>
+<div><span class="dot sold"></span><p>Sold</p><strong id="soldCount">0</strong></div>
+<div><span class="dot inactive"></span><p>Inactive</p><strong id="inactiveCount">0</strong></div>
+</div></div>
+
+<div class="insight-card"><div class="insight-head"><span class="eyebrow dark"><b></b> SALES SUMMARY</span><h2>Current Performance</h2></div><div class="performance-list">
+<div><span>Highest Recorded Sale</span><strong id="highestSale">KES 0</strong></div>
+<div><span>Lowest Recorded Sale</span><strong id="lowestSale">KES 0</strong></div>
+<div><span>Latest Sale</span><strong id="latestSale">No sales yet</strong></div>
+</div></div>
+</section>
+
+<section class="records-panel">
+<div class="panel-head">
+<div><span class="eyebrow dark"><b></b> SALES LEDGER</span><h2>All Sales Records</h2><p>Sold inventory is automatically included. Ground sales are manually recorded.</p></div>
+</div>
+
+<div class="toolbar">
+<div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search vehicle, make, model or notes..."></div>
+<select id="sourceFilter"><option value="all">All Sources</option><option value="inventory">Inventory Sales</option><option value="ground">Ground Sales</option></select>
+<select id="dateFilter"><option value="all">All Time</option><option value="today">Today</option><option value="month">This Month</option><option value="year">This Year</option></select>
+</div>
+
+<div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading statistics...</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Vehicle / Sale</th><th>Source</th><th>Sale Amount</th><th>Date</th><th>Details</th><th>Action</th></tr></thead>
+<tbody id="salesTable"></tbody>
+</table>
+</div>
+
+<div id="empty" class="empty"><div><i class="fa-solid fa-chart-column"></i></div><h3>No sales records found</h3><p>Sold vehicles and manually added ground sales will appear here.</p><button id="emptyAddSale" class="primary-btn"><i class="fa-solid fa-plus"></i> Add Ground Sale</button></div>
+</section>
+</main>
+</div>
+
+<div class="sale-modal" id="saleModal">
+<div class="modal-bg" id="saleModalBg"></div>
+<section class="modal-box">
+<button id="closeSaleModal" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+<div class="modal-head"><span>MANUAL SALE RECORD</span><h2>Add Ground <strong>Sale</strong></h2><p>Record a vehicle sale that was completed outside the online inventory workflow.</p></div>
+<form id="groundSaleForm">
+<div class="form-grid">
+<div class="field full"><label>Vehicle Name *</label><input id="saleVehicle" name="vehicle" required placeholder="e.g. Toyota Prado TX 2020"></div>
+<div class="field"><label>Sale Amount (KES) *</label><input id="saleAmount" name="amount" type="number" min="0" step="0.01" required placeholder="0"></div>
+<div class="field"><label>Sale Date *</label><input id="saleDate" name="sale_date" type="date" required></div>
+<div class="field"><label>Make</label><input id="saleMake" name="make" placeholder="Toyota"></div>
+<div class="field"><label>Model</label><input id="saleModel" name="model" placeholder="Prado"></div>
+<div class="field"><label>Year</label><input id="saleYear" name="year" type="number" min="1900" max="2100" placeholder="2020"></div>
+<div class="field"><label>Reference / Receipt</label><input id="saleReference" name="reference" placeholder="Optional reference"></div>
+<div class="field full"><label>Notes</label><textarea id="saleNotes" name="notes" placeholder="Optional sale details..."></textarea></div>
+</div>
+<div class="modal-actions"><button type="button" id="cancelSale" class="cancel-btn">Cancel</button><button type="submit" id="saveSale" class="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Sale Record</button></div>
+</form>
+</section>
+</div>
+
+<script type="module" src="statistics.js"></script>
+</body></html>
