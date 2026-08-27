@@ -1,1 +1,578 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="admins.css"><title>Manage Admins | Regional Autoselections Ltd</title></head><body><div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div><header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-user-shield"></i> ADMIN MANAGEMENT</div><button class="menu" id="menu"><i class="fa-solid fa-bars"></i></button></div></header><div class="admin-layout"><aside class="sidebar" id="sidebar"><div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional</strong></div><button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button></div><nav><a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a><a class="side-link" data-permission="tradeins" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a><a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a><a class="side-link" data-permission="financing" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a><a class="side-link" data-permission="diaspora" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a><a class="side-link" data-permission="sellcars" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell In Cars Requests'</a><a class="side-link" data-permission="accessiblecars" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a><a class="side-link" data-permission="reservations" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a><a class="side-link" data-permission="testdrives" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a><a class="side-link" data-permission="insurance" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a></nav><div class="side-bottom"><span class="side-title">ACCOUNT</span><a class="side-link active" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Admins</a><a class="side-link" data-permission="webpage" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a><button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></div></aside><div class="overlay" id="overlay"></div><main class="main"><section class="page-heading"><div><span class="eyebrow"><b></b> ADMINISTRATION</span><h1>Manage <strong>Admins</strong></h1><p>Control administrator access to the Regional Autoselections dashboard.</p></div></section><div id="error" class="error"></div><div id="success" class="success"></div><section class="admin-summary"><div><div class="summary-icon"><i class="fa-solid fa-user-shield"></i></div><div><span>Total Administrators</span><strong id="adminCount">0</strong></div></div><div><div class="summary-icon"><i class="fa-solid fa-lock"></i></div><div><span>Permission Control</span><strong>Main Admin Only</strong></div></div></section><section class="add-admin-panel"><div><span class="eyebrow dark"><b></b> NEW ADMINISTRATOR</span><h2>Add Administrator</h2><p>Create a new dashboard login account.</p></div><div class="add-admin-form"><input id="newAdminEmail" type="email" placeholder="Administrator email"><input id="newAdminPassword" type="password" placeholder="Password"><input id="confirmAdminPassword" type="password" placeholder="Confirm password"><button id="addAdminBtn" class="add-admin-btn"><i class="fa-solid fa-user-plus"></i> Create Administrator</button></div></section><section class="admins-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> ADMIN ACCOUNTS</span><h2>Administrator Access</h2></div><button id="refreshAdmins" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></div><div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading administrators...</div><div id="adminsGrid" class="admins-grid"></div></section></main></div><div class="permission-modal" id="permissionModal"><div class="modal-bg" id="modalBg"></div><section class="modal-box"><button id="closeModal" class="modal-close"><i class="fa-solid fa-xmark"></i></button><div class="modal-head"><span>ACCESS CONTROL</span><h2>Manage <strong id="modalAdminName">Admin</strong></h2><p>Select the dashboard pages this administrator can access.</p></div><div class="page-permissions" id="pagePermissions"></div><div class="modal-actions"><button id="cancelPermissions" class="cancel-btn">Cancel</button><button id="savePermissions" class="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Permissions</button></div></section></div><script type="module" src="admins.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7941d">
+<link rel="icon" href="assets/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="admins.css">
+<title>Manage Admins | Regional Autoselections Ltd</title>
+</head>
+
+<body>
+
+<div id="loader">
+<div class="loader-mark"><span></span><span></span><span></span></div>
+<p>REGIONAL AUTOSELECTIONS LTD</p>
+</div>
+
+<header class="header">
+<div class="nav wrap">
+
+<a class="brand" href="index.html">
+<img src="assets/logo.jpg">
+<span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span>
+</a>
+
+<div class="admin-label">
+<i class="fa-solid fa-user-shield"></i>
+ADMIN MANAGEMENT
+</div>
+
+<button class="menu" id="menu" type="button">
+<i class="fa-solid fa-bars"></i>
+</button>
+
+</div>
+</header>
+
+<div class="admin-layout">
+
+<aside class="sidebar" id="sidebar">
+
+<div class="side-head">
+<div>
+<span>ADMIN PANEL</span>
+<strong>Regional</strong>
+</div>
+
+<button id="closeMenu" type="button">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+
+<nav>
+
+<a class="side-link" href="index.html">
+<i class="fa-solid fa-car"></i>
+Vehicle Listings
+</a>
+
+<a class="side-link" data-permission="tradeins" href="tradeins.html">
+<i class="fa-solid fa-right-left"></i>
+Trade-In Requests
+</a>
+
+<a class="side-link" data-permission="imports" href="imports.html">
+<i class="fa-solid fa-ship"></i>
+Import Requests
+</a>
+
+<a class="side-link" data-permission="financing" href="financing.html">
+<i class="fa-solid fa-coins"></i>
+Financing Requests
+</a>
+
+<a class="side-link" data-permission="diaspora" href="diaspora.html">
+<i class="fa-solid fa-earth-africa"></i>
+Diaspora Requests
+</a>
+
+<a class="side-link" data-permission="sellcars" href="sellcars.html">
+<i class="fa-solid fa-car-side"></i>
+Sell In Cars Requests
+</a>
+
+<a class="side-link" data-permission="accessiblecars" href="accessiblecars.html">
+<i class="fa-solid fa-wheelchair"></i>
+Accessible Car Requests
+</a>
+
+<a class="side-link" data-permission="reservations" href="reservations.html">
+<i class="fa-solid fa-calendar-check"></i>
+Reservation Requests
+</a>
+
+<a class="side-link" data-permission="testdrives" href="testdrives.html">
+<i class="fa-solid fa-road"></i>
+Test Drives
+</a>
+
+<a class="side-link" data-permission="insurance" href="insurance.html">
+<i class="fa-solid fa-shield-halved"></i>
+Insurance Requests
+</a>
+
+</nav>
+
+<div class="side-bottom">
+
+<span class="side-title">ACCOUNT</span>
+
+<a class="side-link active" href="admins.html">
+<i class="fa-solid fa-user-shield"></i>
+Manage Admins
+</a>
+
+<a class="side-link" data-permission="webpage" href="manage.html">
+<i class="fa-solid fa-globe"></i>
+Manage Webpage
+</a>
+
+<button class="side-link" id="logoutBtn" type="button">
+<i class="fa-solid fa-right-from-bracket"></i>
+Logout
+</button>
+
+</div>
+
+</aside>
+
+<div class="overlay" id="overlay"></div>
+
+<main class="main">
+
+<section class="page-heading">
+
+<div>
+<span class="eyebrow"><b></b> ADMINISTRATION</span>
+<h1>Manage <strong>Admins</strong></h1>
+<p>Control administrator access and manage administrator performance payments.</p>
+</div>
+
+</section>
+
+<div id="error" class="error"></div>
+<div id="success" class="success"></div>
+
+<section class="admin-summary">
+
+<div>
+<div class="summary-icon">
+<i class="fa-solid fa-user-shield"></i>
+</div>
+
+<div>
+<span>Total Administrators</span>
+<strong id="adminCount">0</strong>
+</div>
+</div>
+
+<div>
+<div class="summary-icon">
+<i class="fa-solid fa-lock"></i>
+</div>
+
+<div>
+<span>Permission Control</span>
+<strong>Main Admin Only</strong>
+</div>
+</div>
+
+</section>
+
+<section class="add-admin-panel">
+
+<div>
+<span class="eyebrow dark"><b></b> NEW ADMINISTRATOR</span>
+<h2>Add Administrator</h2>
+<p>Create a new dashboard login account.</p>
+</div>
+
+<div class="add-admin-form">
+
+<input id="newAdminEmail" type="email" placeholder="Administrator email">
+
+<input id="newAdminPassword" type="password" placeholder="Password">
+
+<input id="confirmAdminPassword" type="password" placeholder="Confirm password">
+
+<button id="addAdminBtn" class="add-admin-btn" type="button">
+<i class="fa-solid fa-user-plus"></i>
+Create Administrator
+</button>
+
+</div>
+
+</section>
+
+<section class="admins-panel">
+
+<div class="panel-head">
+
+<div>
+<span class="eyebrow dark"><b></b> ADMIN ACCOUNTS</span>
+<h2>Administrator Access</h2>
+</div>
+
+<button id="refreshAdmins" class="outline-btn" type="button">
+<i class="fa-solid fa-arrows-rotate"></i>
+Refresh
+</button>
+
+</div>
+
+<div id="loading" class="loading">
+<i class="fa-solid fa-spinner fa-spin"></i>
+Loading administrators...
+</div>
+
+<div id="adminsGrid" class="admins-grid"></div>
+
+</section>
+
+<section class="payments-panel" id="adminPayments">
+
+<div class="panel-head payments-panel-head">
+
+<div>
+<span class="eyebrow dark"><b></b> ADMIN PAYMENTS</span>
+<h2>Administrator <strong>Payments</strong></h2>
+<p>Track earnings for approved and sold vehicles. Main administrators with full roles are excluded.</p>
+</div>
+
+<button id="refreshPayments" class="outline-btn" type="button">
+<i class="fa-solid fa-arrows-rotate"></i>
+Refresh Payments
+</button>
+
+</div>
+
+<div class="payment-settings">
+
+<div class="payment-settings-head">
+
+<div>
+<span class="eyebrow dark"><b></b> PAYMENT SETTINGS</span>
+<h3>Set Payment Rates</h3>
+<p>Define how much an administrator earns per approved vehicle and per completed sale.</p>
+</div>
+
+<div class="payment-settings-actions">
+
+<button id="savePaymentSettings" class="save-payment-settings" type="button">
+<i class="fa-solid fa-floppy-disk"></i>
+Save Payment Rates
+</button>
+
+</div>
+
+</div>
+
+<div class="payment-rate-grid">
+
+<div class="payment-rate-card">
+
+<div class="payment-rate-icon approval-rate-icon">
+<i class="fa-solid fa-circle-check"></i>
+</div>
+
+<div class="payment-rate-content">
+
+<span>Per Approved Vehicle</span>
+
+<div class="payment-input-wrap">
+<span>KES</span>
+<input id="approvalPaymentAmount" type="number" min="0" step="1" value="0" placeholder="0">
+</div>
+
+<small>Amount earned for each vehicle approval.</small>
+
+</div>
+
+</div>
+
+<div class="payment-rate-card">
+
+<div class="payment-rate-icon sale-rate-icon">
+<i class="fa-solid fa-handshake"></i>
+</div>
+
+<div class="payment-rate-content">
+
+<span>Per Sold Vehicle</span>
+
+<div class="payment-input-wrap">
+<span>KES</span>
+<input id="salePaymentAmount" type="number" min="0" step="1" value="0" placeholder="0">
+</div>
+
+<small>Amount earned for each completed vehicle sale.</small>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="payment-overview">
+
+<div class="payment-overview-card">
+
+<div class="payment-overview-icon">
+<i class="fa-solid fa-circle-check"></i>
+</div>
+
+<div>
+<span>Total Approvals</span>
+<strong id="totalApprovals">0</strong>
+<small id="totalPaidApprovals">0 paid · 0 unpaid</small>
+</div>
+
+</div>
+
+<div class="payment-overview-card">
+
+<div class="payment-overview-icon">
+<i class="fa-solid fa-car-side"></i>
+</div>
+
+<div>
+<span>Total Sales</span>
+<strong id="totalSales">0</strong>
+<small id="totalPaidSales">0 paid · 0 unpaid</small>
+</div>
+
+</div>
+
+<div class="payment-overview-card total-earnings-card">
+
+<div class="payment-overview-icon">
+<i class="fa-solid fa-money-bill-wave"></i>
+</div>
+
+<div>
+<span>Total Outstanding</span>
+<strong id="totalOutstanding">KES 0</strong>
+<small id="totalPaidAmount">KES 0 paid</small>
+</div>
+
+</div>
+
+</div>
+
+<div id="paymentsLoading" class="loading">
+<i class="fa-solid fa-spinner fa-spin"></i>
+Loading administrator payment records...
+</div>
+
+<div id="adminPaymentsGrid" class="admin-payments-grid"></div>
+
+</section>
+
+<section class="payment-history-panel">
+
+<div class="panel-head">
+
+<div>
+<span class="eyebrow dark"><b></b> PAYMENT HISTORY</span>
+<h2>Recent Payment <strong>Activity</strong></h2>
+<p>Review approvals and sales that have been marked as paid or remain unpaid.</p>
+</div>
+
+<button id="refreshPaymentHistory" class="outline-btn" type="button">
+<i class="fa-solid fa-arrows-rotate"></i>
+Refresh
+</button>
+
+</div>
+
+<div class="payment-history-filters">
+
+<button class="payment-filter active" data-payment-filter="all" type="button">
+All Activity
+</button>
+
+<button class="payment-filter" data-payment-filter="approval" type="button">
+<i class="fa-solid fa-circle-check"></i>
+Approvals
+</button>
+
+<button class="payment-filter" data-payment-filter="sale" type="button">
+<i class="fa-solid fa-handshake"></i>
+Sales
+</button>
+
+<button class="payment-filter" data-payment-filter="unpaid" type="button">
+<i class="fa-solid fa-clock"></i>
+Unpaid
+</button>
+
+<button class="payment-filter" data-payment-filter="paid" type="button">
+<i class="fa-solid fa-check-double"></i>
+Paid
+</button>
+
+</div>
+
+<div id="paymentHistoryLoading" class="loading">
+<i class="fa-solid fa-spinner fa-spin"></i>
+Loading payment history...
+</div>
+
+<div class="payment-history-table-wrap">
+
+<table class="payment-history-table">
+
+<thead>
+
+<tr>
+<th>Administrator</th>
+<th>Vehicle</th>
+<th>Activity</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+
+</thead>
+
+<tbody id="paymentHistoryBody"></tbody>
+
+</table>
+
+</div>
+
+<div id="paymentHistoryEmpty" class="payment-history-empty">
+
+<i class="fa-solid fa-receipt"></i>
+
+<h3>No Payment Records</h3>
+
+<p>Administrator approvals and vehicle sales will appear here.</p>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+<div class="permission-modal" id="permissionModal">
+
+<div class="modal-bg" id="modalBg"></div>
+
+<section class="modal-box">
+
+<button id="closeModal" class="modal-close" type="button">
+<i class="fa-solid fa-xmark"></i>
+</button>
+
+<div class="modal-head">
+
+<span>ACCESS CONTROL</span>
+
+<h2>Manage <strong id="modalAdminName">Admin</strong></h2>
+
+<p>Select the dashboard pages this administrator can access.</p>
+
+</div>
+
+<div class="page-permissions" id="pagePermissions"></div>
+
+<div class="modal-actions">
+
+<button id="cancelPermissions" class="cancel-btn" type="button">
+Cancel
+</button>
+
+<button id="savePermissions" class="save-btn" type="button">
+<i class="fa-solid fa-floppy-disk"></i>
+Save Permissions
+</button>
+
+</div>
+
+</section>
+
+</div>
+
+<div class="payment-modal" id="paymentModal">
+
+<div class="modal-bg" id="paymentModalBg"></div>
+
+<section class="payment-modal-box">
+
+<button id="closePaymentModal" class="modal-close" type="button">
+<i class="fa-solid fa-xmark"></i>
+</button>
+
+<div class="modal-head">
+
+<span>ADMIN PAYMENT</span>
+
+<h2>Manage Payment for <strong id="paymentAdminName">Administrator</strong></h2>
+
+<p>Review and update approval and sales payment records.</p>
+
+</div>
+
+<div class="payment-admin-summary">
+
+<div>
+
+<span>Administrator</span>
+
+<strong id="paymentAdminEmail">—</strong>
+
+</div>
+
+<div>
+
+<span>Total Unpaid</span>
+
+<strong id="paymentAdminOutstanding">KES 0</strong>
+
+</div>
+
+</div>
+
+<div class="payment-modal-tabs">
+
+<button class="payment-tab active" data-payment-tab="approvals" type="button">
+<i class="fa-solid fa-circle-check"></i>
+Approvals
+<span id="modalApprovalCount">0</span>
+</button>
+
+<button class="payment-tab" data-payment-tab="sales" type="button">
+<i class="fa-solid fa-handshake"></i>
+Sales
+<span id="modalSalesCount">0</span>
+</button>
+
+</div>
+
+<div class="payment-records" id="paymentApprovalRecords"></div>
+
+<div class="payment-records hidden" id="paymentSaleRecords"></div>
+
+<div class="payment-modal-actions">
+
+<button id="markAllApprovalsPaid" class="mark-all-btn" type="button">
+<i class="fa-solid fa-check-double"></i>
+Mark All Approvals Paid
+</button>
+
+<button id="markAllSalesPaid" class="mark-all-btn hidden" type="button">
+<i class="fa-solid fa-check-double"></i>
+Mark All Sales Paid
+</button>
+
+</div>
+
+</section>
+
+</div>
+
+<script type="module" src="admins.js"></script>
+
+</body>
+</html>
