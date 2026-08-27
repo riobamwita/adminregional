@@ -220,8 +220,8 @@ approval_amount:Number(data?.approval_amount||0),
 sale_amount:Number(data?.sale_amount||0)
 };
 
-if($("approvalAmount"))$("approvalAmount").value=paymentSettings.approval_amount||"";
-if($("saleAmount"))$("saleAmount").value=paymentSettings.sale_amount||"";
+if($("approvalPaymentAmount"))$("approvalPaymentAmount").value=paymentSettings.approval_amount||"";
+if($("salePaymentAmount"))$("salePaymentAmount").value=paymentSettings.sale_amount||"";
 
 }catch(e){
 console.error("Payment settings error:",e)
@@ -514,7 +514,7 @@ msg("error",e.message||"Unable to update payments.")
 };
 
 const savePaymentSettings=async()=>{
-const approval=Number($("approvalAmount")?.value||0),sale=Number($("saleAmount")?.value||0);
+const approval=Number($("approvalPaymentAmount")?.value||0),sale=Number($("salePaymentAmount")?.value||0);
 
 if(approval<0||sale<0)return msg("error","Payment amounts cannot be negative.");
 
