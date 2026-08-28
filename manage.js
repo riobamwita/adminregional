@@ -26,4 +26,4 @@ $("menu").onclick=()=>{$("sidebar").classList.add("open");$("overlay").classList
 $("closeMenu").onclick=$("overlay").onclick=()=>{$("sidebar").classList.remove("open");$("overlay").classList.remove("show")};
 $("logoutBtn").onclick=async()=>{await supabase.auth.signOut();location.replace("auth.html")};
 window.addEventListener("load",()=>setTimeout(()=>$("loader")?.classList.add("hide"),400));
-requireAdmin("manageweb").then(async ok=>{if(!ok)return;await loadContacts();await loadSettings()});
+requireAdmin("webpage").then(async ok=>{if(!ok)return;await loadContacts();await loadSettings()});

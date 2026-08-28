@@ -637,4 +637,4 @@ if($("paymentModal")?.classList.contains("open"))closePaymentModal()
 
 window.addEventListener("load",()=>setTimeout(()=>$("loader").classList.add("hide"),400));
 
-requireAdmin("manageweb").then(x=>x&&load());
+requireAdmin("webpage").then(x=>x&&load());
