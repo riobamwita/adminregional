@@ -142,26 +142,26 @@ msg("success","Administrator permissions updated successfully.");
 };
 
 const addAdmin=async()=>{
-const email=$("newAdminEmail")?.value.trim(),password=$("newAdminPassword")?.value||"",confirmPassword=$("confirmAdminPassword")?.value||"",btn=$("addAdminBtn");
+const full_name=$("newAdminName")?.value.trim(),id_number=$("newAdminIdNumber")?.value.trim(),email=$("newAdminEmail")?.value.trim(),password=$("newAdminPassword")?.value||"",confirmPassword=$("confirmAdminPassword")?.value||"",btn=$("addAdminBtn");
 
-if(!email||!password||!confirmPassword)return msg("error","Complete all administrator fields.");
+if(!full_name||!id_number||!email||!password||!confirmPassword)return msg("error","Complete all administrator fields.");
 if(password!==confirmPassword)return msg("error","Passwords do not match.");
 if(password.length<8)return msg("error","Password must be at least 8 characters.");
 
 try{
 if(btn){btn.disabled=true;btn.textContent="Creating...";}
-
-const{data,error}=await supabase.functions.invoke("admin-management",{body:{action:"create",email,password}});
+const{data,error}=await supabase.functions.invoke("admin-management",{body:{action:"create",full_name,id_number,email,password}});
 if(error)throw error;
 if(data?.error)throw new Error(data.error);
 
+$("newAdminName").value="";
+$("newAdminIdNumber").value="";
 $("newAdminEmail").value="";
 $("newAdminPassword").value="";
 $("confirmAdminPassword").value="";
 
-msg("success",`${email} was created as an administrator.`);
+msg("success",`${full_name} was created as an administrator.`);
 await refreshAll();
-
 }catch(e){
 console.error(e);
 msg("error",e.message||"Unable to create administrator.");
