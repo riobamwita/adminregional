@@ -1,171 +1,157 @@
-import{supabase}from"./supabase.js";import{requireAdmin}from"./admin-guard.js";
+import{supabase}from"./supabase.js";
 
 const $=id=>document.getElementById(id),pages=[["vehicles","Vehicle Listings","index.html","fa-car"],["tradeins","Trade-In Requests","tradeins.html","fa-right-left"],["imports","Import Requests","imports.html","fa-ship"],["financing","Financing Requests","financing.html","fa-coins"],["diaspora","Diaspora Requests","diaspora.html","fa-earth-africa"],["sellcars","Sell Your Car Requests","sellcars.html","fa-car-side"],["accessiblecars","Accessible Car Requests","accessiblecars.html","fa-wheelchair"],["reservations","Reservation Requests","reservations.html","fa-calendar-check"],["testdrives","Test Drives","testdrives.html","fa-road"],["insurance","Insurance Requests","insurance.html","fa-shield-halved"],["statistics","Statistics","statistics.html","fa-chart-column"],["admins","Manage Admins","admins.html","fa-user-shield"],["webpage","Manage Webpage","manage.html","fa-globe"]];
 
-let admins=[],permissions={},current=null,me=null,paymentSettings={approval_amount:0,sale_amount:0},paymentRecords=[],paymentAdmin=null,paymentTab="approval";
+let admins=[],permissions={},me=null,currentAdmin=null,paymentAdmin=null,paymentRecords=[],paymentSettings={approval_amount:0,sale_amount:0},historyFilter="all",paymentTab="approval";
 
 const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const money=v=>`KES ${Number(v||0).toLocaleString("en-KE",{maximumFractionDigits:2})}`;
+const date=v=>v?new Date(v).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"}):"—";
 
-const msg=(id,t)=>{
-let x=$(id);
-if(!x)return;
-x.textContent=t;
-x.classList.add("active");
-setTimeout(()=>x.classList.remove("active"),3500)
+const msg=(id,text)=>{
+const el=$(id);
+if(!el)return;
+el.textContent=text;
+el.classList.add("active");
+clearTimeout(el._timer);
+el._timer=setTimeout(()=>el.classList.remove("active"),4000);
 };
 
-const money=v=>`KES ${Number(v||0).toLocaleString("en-KE",{minimumFractionDigits:0,maximumFractionDigits:2})}`;
-
-const close=()=>{
-$("permissionModal")?.classList.remove("open");
-current=null
+const setLoading=(id,on,text)=>{
+const el=$(id);
+if(!el)return;
+el.style.display=on?"block":"none";
+if(text)el.innerHTML=`<i class="fa-solid fa-spinner fa-spin"></i> ${esc(text)}`;
 };
 
 const auth=async()=>{
-const{data:{session}}=await supabase.auth.getSession();
-
-if(!session){
+const{data:{session},error}=await supabase.auth.getSession();
+if(error||!session){
 location.replace("auth.html");
-return null
+return null;
 }
 
-const{data,error}=await supabase.from("admin_users").select("id,email,is_main_admin").eq("id",session.user.id).maybeSingle();
+const{data,error:e}=await supabase.from("admin_users").select("id,email,is_main_admin").eq("id",session.user.id).maybeSingle();
 
-if(error||!data){
+if(e||!data){
 await supabase.auth.signOut();
 location.replace("auth.html");
-return null
+return null;
 }
 
-if(!data.is_main_admin){
+if(data.is_main_admin!==true){
 location.replace("index.html");
-return null
+return null;
 }
 
-return data
+return data;
 };
 
-const load=async()=>{
-$("loading").style.display="block";
-$("adminsGrid").innerHTML="";
+const closePermissions=()=>{
+$("permissionModal")?.classList.remove("open");
+currentAdmin=null;
+};
 
-try{
-me=await auth();
-if(!me)return;
+const closePaymentModal=()=>{
+$("paymentModal")?.classList.remove("open");
+paymentAdmin=null;
+};
 
-const{data,error}=await supabase.from("admin_users").select("*").order("email");
+const loadAdmins=async()=>{
+const{data,error}=await supabase.from("admin_users").select("*").order("email",{ascending:true});
 if(error)throw error;
 
-const{data:p,error:pe}=await supabase.from("admin_permissions").select("*");
+const{data:perms,error:pe}=await supabase.from("admin_permissions").select("*");
 if(pe)throw pe;
 
 admins=data||[];
 permissions={};
 
-(p||[]).forEach(x=>permissions[x.admin_id]=x.permissions||{});
+(perms||[]).forEach(x=>permissions[x.admin_id]=x.permissions||{});
 
-$("adminCount").textContent=admins.length;
+if($("adminCount"))$("adminCount").textContent=admins.length;
 
-render();
-await loadPayments()
-
-}catch(e){
-console.error(e);
-msg("error",e.message||"Unable to load administrators.")
-}finally{
-$("loading").style.display="none"
-}
+renderAdmins();
 };
 
-const render=()=>{
-$("adminsGrid").innerHTML=admins.map(a=>{
-const email=a.email||a.id,n=email.split("@")[0],isMain=a.is_main_admin===true,p=permissions[a.id]||{},allowed=pages.filter(x=>p[x[0]]).length;
+const renderAdmins=()=>{
+const grid=$("adminsGrid");
+if(!grid)return;
+
+if(!admins.length){
+grid.innerHTML=`<div class="payment-empty-record"><i class="fa-solid fa-users"></i>No administrators found.</div>`;
+return;
+}
+
+grid.innerHTML=admins.map(a=>{
+const p=permissions[a.id]||{},isMain=a.is_main_admin===true,name=(a.email||a.id).split("@")[0],allowed=pages.filter(x=>p[x[0]]===true).length;
 
 return`<article class="admin-card">
 <div class="admin-card-top">
 <div class="admin-avatar"><i class="fa-solid fa-user"></i></div>
-<div class="admin-details"><strong>${esc(n)}</strong><span>${esc(email)}</span></div>
+<div class="admin-details"><strong>${esc(name)}</strong><span>${esc(a.email||a.id)}</span></div>
 <span class="admin-role">${isMain?"Main Admin":"Administrator"}</span>
 </div>
 <div class="admin-card-body">
-<div class="access-title">
-<span>PAGE ACCESS</span>
-<small class="access-count">${isMain?"All Access":`${allowed}/${pages.length} Pages`}</small>
-</div>
+<div class="access-title"><span>PAGE ACCESS</span><small class="access-count">${isMain?"All Access":`${allowed}/${pages.length} Pages`}</small></div>
 <div class="access-list">
-${isMain?`<span class="access-tag all"><i class="fa-solid fa-check"></i> Full Dashboard Access</span>`:pages.filter(x=>p[x[0]]).map(x=>`<span class="access-tag">${esc(x[1])}</span>`).join("")||`<span class="access-tag">No pages assigned</span>`}
+${isMain?`<span class="access-tag all"><i class="fa-solid fa-check"></i> Full Dashboard Access</span>`:pages.filter(x=>p[x[0]]===true).map(x=>`<span class="access-tag">${esc(x[1])}</span>`).join("")||`<span class="access-tag">No pages assigned</span>`}
 </div>
 <div class="admin-card-actions">
-${me.is_main_admin&&!isMain?`
-<button class="manage-btn" data-id="${a.id}"><i class="fa-solid fa-sliders"></i> Manage Page Access</button>
-<button class="delete-admin" data-id="${a.id}"><i class="fa-solid fa-trash"></i> Remove Admin</button>
-`:isMain?`<div class="main-admin"><i class="fa-solid fa-crown"></i>&nbsp; Full Administrative Control</div>`:""}
+${!isMain?`<button class="manage-btn" data-manage="${esc(a.id)}" type="button"><i class="fa-solid fa-sliders"></i> Manage Page Access</button><button class="delete-admin" data-delete="${esc(a.id)}" type="button"><i class="fa-solid fa-trash"></i> Remove Admin</button>`:`<div class="main-admin"><i class="fa-solid fa-crown"></i>&nbsp; Full Administrative Control</div>`}
 </div>
 </div>
-</article>`
+</article>`;
 }).join("");
 
-document.querySelectorAll(".manage-btn").forEach(b=>b.onclick=()=>open(b.dataset.id));
-document.querySelectorAll(".delete-admin").forEach(b=>b.onclick=()=>removeAdmin(b.dataset.id))
+grid.querySelectorAll("[data-manage]").forEach(b=>b.onclick=()=>openPermissions(b.dataset.manage));
+grid.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>removeAdmin(b.dataset.delete));
 };
 
-const open=id=>{
-current=admins.find(a=>a.id===id);
+const openPermissions=id=>{
+currentAdmin=admins.find(x=>String(x.id)===String(id));
+if(!currentAdmin||currentAdmin.is_main_admin)return;
 
-if(!current||current.is_main_admin)return;
+const p=permissions[currentAdmin.id]||{};
 
-const p=permissions[id]||{};
+if($("modalAdminName"))$("modalAdminName").textContent=currentAdmin.email||currentAdmin.id;
 
-$("modalAdminName").textContent=current.email;
+$("pagePermissions").innerHTML=pages.map(x=>`<label class="permission"><input type="checkbox" data-page="${x[0]}" ${p[x[0]]===true?"checked":""}><i class="fa-solid ${x[3]}"></i><span>${esc(x[1])}<small>Allow access to ${esc(x[1])}</small></span></label>`).join("");
 
-$("pagePermissions").innerHTML=pages.map(x=>`
-<label class="permission">
-<input type="checkbox" data-page="${x[0]}" ${p[x[0]]===true?"checked":""}>
-<i class="fa-solid ${x[3]}"></i>
-<span>${esc(x[1])}<small>Allow access to ${esc(x[1])}</small></span>
-</label>
-`).join("");
-
-$("permissionModal").classList.add("open")
+$("permissionModal")?.classList.add("open");
 };
 
-const save=async()=>{
-if(!current)return;
+const savePermissions=async()=>{
+if(!currentAdmin)return;
 
 const p={};
-
-$("pagePermissions").querySelectorAll("input").forEach(x=>p[x.dataset.page]=x.checked);
+$("pagePermissions")?.querySelectorAll("[data-page]").forEach(x=>p[x.dataset.page]=x.checked===true);
 
 const{error}=await supabase.from("admin_permissions").upsert({
-admin_id:current.id,
+admin_id:currentAdmin.id,
 permissions:p,
 updated_at:new Date().toISOString()
 },{onConflict:"admin_id"});
 
 if(error)throw error;
 
-permissions[current.id]=p;
-
-close();
-
+permissions[currentAdmin.id]=p;
+closePermissions();
+renderAdmins();
 msg("success","Administrator permissions updated successfully.");
-
-render()
 };
 
 const addAdmin=async()=>{
-const email=$("newAdminEmail").value.trim(),password=$("newAdminPassword").value,confirm=$("confirmAdminPassword").value;
+const email=$("newAdminEmail")?.value.trim(),password=$("newAdminPassword")?.value||"",confirmPassword=$("confirmAdminPassword")?.value||"",btn=$("addAdminBtn");
 
-if(!email||!password||!confirm)return msg("error","Complete all administrator fields.");
-if(password!==confirm)return msg("error","Passwords do not match.");
+if(!email||!password||!confirmPassword)return msg("error","Complete all administrator fields.");
+if(password!==confirmPassword)return msg("error","Passwords do not match.");
 if(password.length<8)return msg("error","Password must be at least 8 characters.");
 
 try{
-$("addAdminBtn").disabled=true;
-$("addAdminBtn").textContent="Creating...";
+if(btn){btn.disabled=true;btn.textContent="Creating...";}
 
 const{data,error}=await supabase.functions.invoke("admin-management",{body:{action:"create",email,password}});
-
 if(error)throw error;
 if(data?.error)throw new Error(data.error);
 
@@ -174,44 +160,39 @@ $("newAdminPassword").value="";
 $("confirmAdminPassword").value="";
 
 msg("success",`${email} was created as an administrator.`);
-
-await load()
+await refreshAll();
 
 }catch(e){
-msg("error",e.message||"Unable to create administrator.")
+console.error(e);
+msg("error",e.message||"Unable to create administrator.");
 }finally{
-$("addAdminBtn").disabled=false;
-$("addAdminBtn").innerHTML='<i class="fa-solid fa-user-plus"></i> Create Administrator'
+if(btn){btn.disabled=false;btn.innerHTML=`<i class="fa-solid fa-user-plus"></i> Create Administrator`;}
 }
 };
 
 const removeAdmin=async id=>{
-const a=admins.find(x=>x.id===id);
+const admin=admins.find(x=>String(x.id)===String(id));
+if(!admin||admin.is_main_admin)return;
 
-if(!a||a.is_main_admin)return;
-
-if(!confirm(`Permanently delete administrator ${a.email}? This will also remove their login account.`))return;
+if(!confirm(`Permanently delete administrator ${admin.email}? This will also remove their login account.`))return;
 
 try{
-const{data,error}=await supabase.functions.invoke("admin-management",{body:{action:"delete",id}});
-
+const{data,error}=await supabase.functions.invoke("admin-management",{body:{action:"delete",id:admin.id}});
 if(error)throw error;
 if(data?.error)throw new Error(data.error);
 
-delete permissions[id];
-
-msg("success",`${a.email} was deleted.`);
-
-await load()
+delete permissions[admin.id];
+msg("success",`${admin.email} was deleted.`);
+await refreshAll();
 
 }catch(e){
-msg("error",e.message||"Unable to delete administrator.")
+console.error(e);
+msg("error",e.message||"Unable to delete administrator.");
 }
 };
 
-async function loadPaymentSettings(){
-try{
-const{data,error}=await supabase.from("admin_payment_settings").select("*").maybeSingle();
+const loadPaymentSettings=async()=>{
+const{data,error}=await supabase.from("admin_payment_settings").select("*").limit(1).maybeSingle();
 
 if(error&&error.code!=="PGRST116")throw error;
 
@@ -220,87 +201,53 @@ approval_amount:Number(data?.approval_amount||0),
 sale_amount:Number(data?.sale_amount||0)
 };
 
-if($("approvalPaymentAmount"))$("approvalPaymentAmount").value=paymentSettings.approval_amount||"";
-if($("salePaymentAmount"))$("salePaymentAmount").value=paymentSettings.sale_amount||"";
+if($("approvalPaymentAmount"))$("approvalPaymentAmount").value=paymentSettings.approval_amount||0;
+if($("salePaymentAmount"))$("salePaymentAmount").value=paymentSettings.sale_amount||0;
+};
 
-}catch(e){
-console.error("Payment settings error:",e)
-}
-}
-
-async function loadPaymentRecords(){
-try{
+const loadPaymentRecords=async()=>{
 const{data,error}=await supabase.from("admin_payments").select("*").order("created_at",{ascending:false});
-
 if(error)throw error;
-
 paymentRecords=data||[];
-
-}catch(e){
-console.error("Payment records error:",e);
-paymentRecords=[]
-}
-}
-
-async function loadPayments(){
-await loadPaymentSettings();
-await loadPaymentRecords();
-renderPaymentOverview();
-renderAdminPayments();
-renderPaymentHistory()
-}
+};
 
 const paymentStats=id=>{
-const records=paymentRecords.filter(x=>x.admin_id===id),
-approvals=records.filter(x=>x.type==="approval"),
-sales=records.filter(x=>x.type==="sale"),
-approvalPaid=approvals.filter(x=>x.paid===true).length,
-salePaid=sales.filter(x=>x.paid===true).length,
-approvalUnpaid=approvals.filter(x=>x.paid!==true).length,
-saleUnpaid=sales.filter(x=>x.paid!==true).length,
-earned=records.filter(x=>x.paid===true).reduce((s,x)=>s+Number(x.amount||0),0),
-pending=records.filter(x=>x.paid!==true).reduce((s,x)=>s+Number(x.amount||0),0);
+const r=paymentRecords.filter(x=>String(x.admin_id)===String(id));
+const approvals=r.filter(x=>x.type==="approval"),sales=r.filter(x=>x.type==="sale");
+const approvalPaid=approvals.filter(x=>x.paid===true),salePaid=sales.filter(x=>x.paid===true);
+const unpaid=r.filter(x=>x.paid!==true),paid=r.filter(x=>x.paid===true);
 
 return{
 approvals:approvals.length,
 sales:sales.length,
-approvalPaid,
-salePaid,
-approvalUnpaid,
-saleUnpaid,
-earned,
-pending
-}
+approvalPaid:approvalPaid.length,
+salePaid:salePaid.length,
+approvalUnpaid:approvals.length-approvalPaid.length,
+saleUnpaid:sales.length-salePaid.length,
+earned:paid.reduce((s,x)=>s+Number(x.amount||0),0),
+pending:unpaid.reduce((s,x)=>s+Number(x.amount||0),0)
+};
 };
 
 const renderPaymentOverview=()=>{
-const el=$("paymentOverview");
-if(!el)return;
+let approvals=0,sales=0,approvalPaid=0,salePaid=0,paid=0,pending=0;
 
-const staff=admins.filter(a=>!a.is_main_admin);
-let approvals=0,sales=0,paid=0,pending=0;
-
-staff.forEach(a=>{
+admins.filter(a=>!a.is_main_admin).forEach(a=>{
 const s=paymentStats(a.id);
 approvals+=s.approvals;
 sales+=s.sales;
+approvalPaid+=s.approvalPaid;
+salePaid+=s.salePaid;
 paid+=s.earned;
-pending+=s.pending
+pending+=s.pending;
 });
 
-el.innerHTML=`
-<div class="payment-overview-card">
-<div class="payment-overview-icon"><i class="fa-solid fa-circle-check"></i></div>
-<div><span>Total Approvals</span><strong>${approvals}</strong><small>All administrator approvals</small></div>
-</div>
-<div class="payment-overview-card">
-<div class="payment-overview-icon"><i class="fa-solid fa-car"></i></div>
-<div><span>Total Sales</span><strong>${sales}</strong><small>All administrator sales</small></div>
-</div>
-<div class="payment-overview-card total-earnings-card">
-<div class="payment-overview-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
-<div><span>Paid / Pending</span><strong>${money(paid)}</strong><small>${money(pending)} pending payment</small></div>
-</div>`
+if($("totalApprovals"))$("totalApprovals").textContent=approvals;
+if($("totalSales"))$("totalSales").textContent=sales;
+if($("totalPaidApprovals"))$("totalPaidApprovals").textContent=`${approvalPaid} paid · ${approvals-approvalPaid} unpaid`;
+if($("totalPaidSales"))$("totalPaidSales").textContent=`${salePaid} paid · ${sales-salePaid} unpaid`;
+if($("totalOutstanding"))$("totalOutstanding").textContent=money(pending);
+if($("totalPaidAmount"))$("totalPaidAmount").textContent=`${money(paid)} paid`;
 };
 
 const renderAdminPayments=()=>{
@@ -311,7 +258,7 @@ const staff=admins.filter(a=>!a.is_main_admin);
 
 if(!staff.length){
 grid.innerHTML=`<div class="payment-empty-record"><i class="fa-solid fa-users"></i>No administrators available for payment management.</div>`;
-return
+return;
 }
 
 grid.innerHTML=staff.map(a=>{
@@ -320,183 +267,157 @@ const s=paymentStats(a.id),name=(a.email||a.id).split("@")[0];
 return`<article class="admin-payment-card">
 <div class="admin-payment-head">
 <div class="admin-payment-avatar"><i class="fa-solid fa-user"></i></div>
-<div class="admin-payment-info">
-<strong>${esc(name)}</strong>
-<span>${esc(a.email||a.id)}</span>
-</div>
+<div class="admin-payment-info"><strong>${esc(name)}</strong><span>${esc(a.email||a.id)}</span></div>
 </div>
 <div class="admin-payment-body">
 <div class="payment-stat-grid">
-<div class="payment-stat approvals">
-<span>APPROVALS</span>
-<strong>${s.approvals}</strong>
-<small>${s.approvalPaid} paid · ${s.approvalUnpaid} unpaid</small>
+<div class="payment-stat approvals"><span>APPROVALS</span><strong>${s.approvals}</strong><small>${s.approvalPaid} paid · ${s.approvalUnpaid} unpaid</small></div>
+<div class="payment-stat sales"><span>SALES</span><strong>${s.sales}</strong><small>${s.salePaid} paid · ${s.saleUnpaid} unpaid</small></div>
 </div>
-<div class="payment-stat sales">
-<span>SALES</span>
-<strong>${s.sales}</strong>
-<small>${s.salePaid} paid · ${s.saleUnpaid} unpaid</small>
+<div class="payment-card-total"><span>Paid Earnings</span><strong>${money(s.earned)}</strong></div>
+<div class="payment-card-actions"><button class="manage-payment-btn" data-payment-admin="${esc(a.id)}" type="button"><i class="fa-solid fa-money-check-dollar"></i> Manage Payments</button></div>
 </div>
-</div>
-<div class="payment-card-total">
-<span>Paid Earnings</span>
-<strong>${money(s.earned)}</strong>
-</div>
-<div class="payment-card-actions">
-<button class="manage-payment-btn" data-payment-admin="${a.id}">
-<i class="fa-solid fa-money-check-dollar"></i> Manage Payments
-</button>
-</div>
-</div>
-</article>`
+</article>`;
 }).join("");
 
-document.querySelectorAll("[data-payment-admin]").forEach(b=>b.onclick=()=>openPaymentAdmin(b.dataset.paymentAdmin))
+grid.querySelectorAll("[data-payment-admin]").forEach(b=>b.onclick=()=>openPaymentAdmin(b.dataset.paymentAdmin));
 };
 
-const renderPaymentHistory=filter=>{
-const body=$("paymentHistoryBody");
+const filteredRecords=()=>{
+let r=[...paymentRecords];
+
+if(historyFilter==="approval"||historyFilter==="sale")r=r.filter(x=>x.type===historyFilter);
+if(historyFilter==="paid")r=r.filter(x=>x.paid===true);
+if(historyFilter==="unpaid")r=r.filter(x=>x.paid!==true);
+
+return r;
+};
+
+const renderPaymentHistory=()=>{
+const body=$("paymentHistoryBody"),empty=$("paymentHistoryEmpty");
 if(!body)return;
 
-let records=[...paymentRecords];
+const records=filteredRecords();
 
-if(filter==="approval"||filter==="sale")records=records.filter(x=>x.type===filter);
-if(filter==="paid")records=records.filter(x=>x.paid===true);
-if(filter==="unpaid")records=records.filter(x=>x.paid!==true);
+if(empty)empty.style.display=records.length?"none":"block";
 
 body.innerHTML=records.map(r=>{
-const a=admins.find(x=>x.id===r.admin_id),name=(a?.email||r.admin_email||"Unknown Admin").split("@")[0],vehicle=r.vehicle||r.vehicle_name||"Vehicle record",date=r.created_at?new Date(r.created_at).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"}):"—";
+const admin=admins.find(x=>String(x.id)===String(r.admin_id));
+const name=(admin?.email||r.admin_email||"Unknown Admin").split("@")[0];
+const vehicle=r.vehicle||r.vehicle_name||r.vehicle_title||"Vehicle record";
 
 return`<tr>
 <td class="payment-history-admin">${esc(name)}</td>
-<td><span class="activity-badge ${r.type==="sale"?"sale":"approval"}">${r.type==="sale"?"Sale":"Approval"}</span></td>
 <td class="payment-history-vehicle">${esc(vehicle)}</td>
+<td><span class="activity-badge ${r.type==="sale"?"sale":"approval"}">${r.type==="sale"?"Sale":"Approval"}</span></td>
 <td>${money(r.amount)}</td>
 <td><span class="payment-status ${r.paid===true?"paid":"unpaid"}">${r.paid===true?"Paid":"Unpaid"}</span></td>
-<td>${date}</td>
-<td><button class="history-payment-action" data-record="${r.id}">${r.paid===true?"Mark Unpaid":"Mark Paid"}</button></td>
-</tr>`
+<td>${date(r.created_at)}</td>
+<td><button class="history-payment-action" data-record="${esc(r.id)}" type="button">${r.paid===true?"Mark Unpaid":"Mark Paid"}</button></td>
+</tr>`;
 }).join("");
 
-document.querySelectorAll("[data-record]").forEach(b=>b.onclick=()=>togglePayment(b.dataset.record))
+body.querySelectorAll("[data-record]").forEach(b=>b.onclick=()=>togglePayment(b.dataset.record));
 };
 
 const openPaymentAdmin=id=>{
-paymentAdmin=admins.find(a=>a.id===id);
-
+paymentAdmin=admins.find(x=>String(x.id)===String(id));
 if(!paymentAdmin)return;
-
-const modal=$("paymentModal");
-
-if(!modal)return;
 
 if($("paymentAdminName"))$("paymentAdminName").textContent=(paymentAdmin.email||paymentAdmin.id).split("@")[0];
 if($("paymentAdminEmail"))$("paymentAdminEmail").textContent=paymentAdmin.email||paymentAdmin.id;
 
 paymentTab="approval";
 renderPaymentModalRecords();
-
-modal.classList.add("open")
-};
-
-const closePaymentModal=()=>{
-$("paymentModal")?.classList.remove("open");
-paymentAdmin=null
+$("paymentModal")?.classList.add("open");
 };
 
 const renderPaymentModalRecords=()=>{
-const list=$("paymentRecords");
+if(!paymentAdmin)return;
 
-if(!list||!paymentAdmin)return;
+const approvalRecords=$("paymentApprovalRecords"),saleRecords=$("paymentSaleRecords");
+const records=paymentRecords.filter(x=>String(x.admin_id)===String(paymentAdmin.id));
+const approvals=records.filter(x=>x.type==="approval"),sales=records.filter(x=>x.type==="sale");
+const pending=records.filter(x=>x.paid!==true).reduce((s,x)=>s+Number(x.amount||0),0);
 
-const records=paymentRecords.filter(x=>x.admin_id===paymentAdmin.id&&x.type===paymentTab);
+if($("paymentAdminOutstanding"))$("paymentAdminOutstanding").textContent=money(pending);
+if($("modalApprovalCount"))$("modalApprovalCount").textContent=approvals.filter(x=>x.paid!==true).length;
+if($("modalSalesCount"))$("modalSalesCount").textContent=sales.filter(x=>x.paid!==true).length;
 
-const tabApproval=$("paymentTabApproval"),tabSale=$("paymentTabSale");
+const render=(list,type)=>{
+const el=type==="approval"?approvalRecords:saleRecords;
+if(!el)return;
 
-tabApproval?.classList.toggle("active",paymentTab==="approval");
-tabSale?.classList.toggle("active",paymentTab==="sale");
+const data=list.filter(x=>x.type===type);
 
-if(tabApproval)tabApproval.querySelector("span")&&(tabApproval.querySelector("span").textContent=paymentRecords.filter(x=>x.admin_id===paymentAdmin.id&&x.type==="approval"&&x.paid!==true).length);
-if(tabSale)tabSale.querySelector("span")&&(tabSale.querySelector("span").textContent=paymentRecords.filter(x=>x.admin_id===paymentAdmin.id&&x.type==="sale"&&x.paid!==true).length);
+el.innerHTML=data.length?data.map(r=>`<div class="payment-record ${type==="sale"?"sale":""}">
+<div class="payment-record-icon"><i class="fa-solid ${type==="sale"?"fa-car":"fa-circle-check"}"></i></div>
+<div class="payment-record-info"><strong>${esc(r.vehicle||r.vehicle_name||r.vehicle_title||"Vehicle record")}</strong><span>${date(r.created_at)}</span></div>
+<div class="payment-record-amount"><strong>${money(r.amount)}</strong><span class="payment-status ${r.paid===true?"paid":"unpaid"}">${r.paid===true?"Paid":"Unpaid"}</span></div>
+<button class="record-toggle ${r.paid===true?"mark-unpaid":"mark-paid"}" data-record="${esc(r.id)}" type="button">${r.paid===true?"Mark Unpaid":"Mark Paid"}</button>
+</div>`).join(""):`<div class="payment-empty-record"><i class="fa-solid fa-receipt"></i>No ${type} payment records found.</div>`;
 
-if(!records.length){
-list.innerHTML=`<div class="payment-empty-record"><i class="fa-solid fa-receipt"></i>No ${paymentTab} payment records found.</div>`;
-return
-}
+el.querySelectorAll("[data-record]").forEach(b=>b.onclick=()=>togglePayment(b.dataset.record));
+};
 
-list.innerHTML=records.map(r=>`
-<div class="payment-record ${r.type==="sale"?"sale":""}">
-<div class="payment-record-icon"><i class="fa-solid ${r.type==="sale"?"fa-car":"fa-circle-check"}"></i></div>
-<div class="payment-record-info">
-<strong>${esc(r.vehicle||r.vehicle_name||"Vehicle record")}</strong>
-<span>${r.created_at?new Date(r.created_at).toLocaleDateString("en-KE"):"No date"}</span>
-</div>
-<div class="payment-record-amount">
-<strong>${money(r.amount)}</strong>
-<span class="payment-status ${r.paid===true?"paid":"unpaid"}">${r.paid===true?"Paid":"Unpaid"}</span>
-</div>
-<button class="record-toggle ${r.paid===true?"mark-unpaid":"mark-paid"}" data-record="${r.id}">
-${r.paid===true?"Mark Unpaid":"Mark Paid"}
-</button>
-</div>
-`).join("");
+render(approvals,"approval");
+render(sales,"sale");
 
-list.querySelectorAll("[data-record]").forEach(b=>b.onclick=()=>togglePayment(b.dataset.record))
+const approvalTab=document.querySelector('[data-payment-tab="approvals"]');
+const saleTab=document.querySelector('[data-payment-tab="sales"]');
+
+approvalTab?.classList.toggle("active",paymentTab==="approval");
+saleTab?.classList.toggle("active",paymentTab==="sale");
+
+approvalRecords?.classList.toggle("hidden",paymentTab!=="approval");
+saleRecords?.classList.toggle("hidden",paymentTab!=="sale");
+
+$("markAllApprovalsPaid")?.classList.toggle("hidden",paymentTab!=="approval");
+$("markAllSalesPaid")?.classList.toggle("hidden",paymentTab!=="sale");
 };
 
 const togglePayment=async id=>{
 const record=paymentRecords.find(x=>String(x.id)===String(id));
-
 if(!record)return;
 
 const paid=record.paid!==true;
+const now=paid?new Date().toISOString():null;
 
 try{
-const{error}=await supabase.from("admin_payments").update({
-paid,
-paid_at:paid?new Date().toISOString():null
-}).eq("id",id);
-
+const{error}=await supabase.from("admin_payments").update({paid,paid_at:now}).eq("id",record.id);
 if(error)throw error;
 
 record.paid=paid;
-record.paid_at=paid?new Date().toISOString():null;
+record.paid_at=now;
 
 renderPaymentOverview();
 renderAdminPayments();
 renderPaymentHistory();
-
 if(paymentAdmin)renderPaymentModalRecords();
 
-msg("success",paid?"Payment marked as paid.":"Payment marked as unpaid.")
+msg("success",paid?"Payment marked as paid.":"Payment marked as unpaid.");
 
 }catch(e){
 console.error(e);
-msg("error",e.message||"Unable to update payment.")
+msg("error",e.message||"Unable to update payment.");
 }
 };
 
-const markAllPayments=async()=>{
+const markAllPayments=async type=>{
 if(!paymentAdmin)return;
 
-const records=paymentRecords.filter(x=>x.admin_id===paymentAdmin.id&&x.type===paymentTab&&x.paid!==true);
-
-if(!records.length)return;
+const records=paymentRecords.filter(x=>String(x.admin_id)===String(paymentAdmin.id)&&x.type===type&&x.paid!==true);
+if(!records.length)return msg("error",`No unpaid ${type} payments found.`);
 
 try{
 const ids=records.map(x=>x.id),now=new Date().toISOString();
-
-const{error}=await supabase.from("admin_payments").update({
-paid:true,
-paid_at:now
-}).in("id",ids);
-
+const{error}=await supabase.from("admin_payments").update({paid:true,paid_at:now}).in("id",ids);
 if(error)throw error;
 
 paymentRecords.forEach(x=>{
-if(ids.includes(x.id)){
+if(ids.some(id=>String(id)===String(x.id))){
 x.paid=true;
-x.paid_at=now
+x.paid_at=now;
 }
 });
 
@@ -505,136 +426,168 @@ renderAdminPayments();
 renderPaymentHistory();
 renderPaymentModalRecords();
 
-msg("success",`All ${paymentTab} payments marked as paid.`)
+msg("success",`All ${type} payments marked as paid.`);
 
 }catch(e){
 console.error(e);
-msg("error",e.message||"Unable to update payments.")
+msg("error",e.message||"Unable to update payments.");
 }
 };
 
 const savePaymentSettings=async()=>{
-const approval=Number($("approvalPaymentAmount")?.value||0),sale=Number($("salePaymentAmount")?.value||0);
+const approval=Number($("approvalPaymentAmount")?.value||0),sale=Number($("salePaymentAmount")?.value||0),btn=$("savePaymentSettings");
 
-if(approval<0||sale<0)return msg("error","Payment amounts cannot be negative.");
-
-const btn=$("savePaymentSettings");
+if(!Number.isFinite(approval)||!Number.isFinite(sale)||approval<0||sale<0)return msg("error","Payment amounts must be valid positive numbers.");
 
 try{
-if(btn){
-btn.disabled=true;
-btn.textContent="Saving..."
-}
+if(btn){btn.disabled=true;btn.textContent="Saving...";}
 
-let{data,error}=await supabase.from("admin_payment_settings").select("id").limit(1).maybeSingle();
+const{data,error:findError}=await supabase.from("admin_payment_settings").select("id").limit(1).maybeSingle();
+if(findError&&findError.code!=="PGRST116")throw findError;
 
-if(error&&error.code!=="PGRST116")throw error;
+let error;
 
 if(data?.id){
 ({error}=await supabase.from("admin_payment_settings").update({
 approval_amount:approval,
 sale_amount:sale,
 updated_at:new Date().toISOString()
-}).eq("id",data.id))
+}).eq("id",data.id));
 }else{
 ({error}=await supabase.from("admin_payment_settings").insert({
 approval_amount:approval,
 sale_amount:sale
-}))
+}));
 }
 
 if(error)throw error;
 
-paymentSettings.approval_amount=approval;
-paymentSettings.sale_amount=sale;
-
-msg("success","Payment amounts updated successfully.")
+paymentSettings={approval_amount:approval,sale_amount:sale};
+msg("success","Payment rates updated successfully.");
 
 }catch(e){
 console.error(e);
-msg("error",e.message||"Unable to save payment settings.")
+msg("error",e.message||"Unable to save payment settings.");
 }finally{
-if(btn){
-btn.disabled=false;
-btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Payment Rates'
-}
+if(btn){btn.disabled=false;btn.innerHTML=`<i class="fa-solid fa-floppy-disk"></i> Save Payment Rates`;}
 }
 };
 
-$("addAdminBtn").onclick=addAdmin;
+const loadPayments=async()=>{
+setLoading("paymentsLoading",true,"Loading administrator payment records...");
+setLoading("paymentHistoryLoading",true,"Loading payment history...");
 
-$("savePermissions").onclick=async()=>{
 try{
-$("savePermissions").disabled=true;
-$("savePermissions").textContent="Saving...";
-
-await save()
-
+await Promise.all([loadPaymentSettings(),loadPaymentRecords()]);
+renderPaymentOverview();
+renderAdminPayments();
+renderPaymentHistory();
 }catch(e){
-msg("error",e.message)
+console.error(e);
+msg("error",e.message||"Unable to load payment information.");
 }finally{
-$("savePermissions").disabled=false;
-$("savePermissions").innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Permissions'
+setLoading("paymentsLoading",false);
+setLoading("paymentHistoryLoading",false);
 }
 };
 
-$("closeModal").onclick=close;
-$("cancelPermissions").onclick=close;
-$("modalBg").onclick=close;
+const refreshAll=async()=>{
+setLoading("loading",true,"Loading administrators...");
 
-$("refreshAdmins").onclick=load;
+try{
+await loadAdmins();
+await loadPayments();
+}catch(e){
+console.error(e);
+msg("error",e.message||"Unable to load administrator information.");
+}finally{
+setLoading("loading",false);
+}
+};
 
+const init=async()=>{
+$("addAdminBtn")?.addEventListener("click",addAdmin);
+
+$("savePermissions")?.addEventListener("click",async()=>{
+const btn=$("savePermissions");
+try{
+if(btn){btn.disabled=true;btn.textContent="Saving...";}
+await savePermissions();
+}catch(e){
+console.error(e);
+msg("error",e.message||"Unable to save permissions.");
+}finally{
+if(btn){btn.disabled=false;btn.innerHTML=`<i class="fa-solid fa-floppy-disk"></i> Save Permissions`;}
+}
+});
+
+$("closeModal")?.addEventListener("click",closePermissions);
+$("cancelPermissions")?.addEventListener("click",closePermissions);
+$("modalBg")?.addEventListener("click",closePermissions);
+
+$("refreshAdmins")?.addEventListener("click",refreshAll);
+$("refreshPayments")?.addEventListener("click",loadPayments);
+$("refreshPaymentHistory")?.addEventListener("click",loadPayments);
 $("savePaymentSettings")?.addEventListener("click",savePaymentSettings);
 
-$("paymentTabApproval")?.addEventListener("click",()=>{
+document.querySelector('[data-payment-tab="approvals"]')?.addEventListener("click",()=>{
 paymentTab="approval";
-renderPaymentModalRecords()
+renderPaymentModalRecords();
 });
 
-$("paymentTabSale")?.addEventListener("click",()=>{
+document.querySelector('[data-payment-tab="sales"]')?.addEventListener("click",()=>{
 paymentTab="sale";
-renderPaymentModalRecords()
+renderPaymentModalRecords();
 });
 
-$("markAllPayments")?.addEventListener("click",markAllPayments);
+$("markAllApprovalsPaid")?.addEventListener("click",()=>markAllPayments("approval"));
+$("markAllSalesPaid")?.addEventListener("click",()=>markAllPayments("sale"));
 
 $("closePaymentModal")?.addEventListener("click",closePaymentModal);
 $("paymentModalBg")?.addEventListener("click",closePaymentModal);
 
-$("paymentModal")?.addEventListener("click",e=>{
-if(e.target===$("paymentModal"))closePaymentModal()
-});
-
 document.querySelectorAll("[data-payment-filter]").forEach(b=>{
 b.addEventListener("click",()=>{
-document.querySelectorAll("[data-payment-filter]").forEach(x=>x.classList.remove("active"));
-b.classList.add("active");
-renderPaymentHistory(b.dataset.paymentFilter)
-})
+historyFilter=b.dataset.paymentFilter||"all";
+document.querySelectorAll("[data-payment-filter]").forEach(x=>x.classList.toggle("active",x===b));
+renderPaymentHistory();
+});
 });
 
-$("menu").onclick=()=>{
-$("sidebar").classList.add("open");
-$("overlay").classList.add("show")
+$("menu")?.addEventListener("click",()=>{
+$("sidebar")?.classList.add("open");
+$("overlay")?.classList.add("show");
+});
+
+const closeMenu=()=>{
+$("sidebar")?.classList.remove("open");
+$("overlay")?.classList.remove("show");
 };
 
-$("closeMenu").onclick=$("overlay").onclick=()=>{
-$("sidebar").classList.remove("open");
-$("overlay").classList.remove("show")
-};
+$("closeMenu")?.addEventListener("click",closeMenu);
+$("overlay")?.addEventListener("click",closeMenu);
 
-$("logoutBtn").onclick=async()=>{
+$("logoutBtn")?.addEventListener("click",async()=>{
 await supabase.auth.signOut();
-location.replace("auth.html")
-};
+location.replace("auth.html");
+});
 
 document.addEventListener("keydown",e=>{
-if(e.key==="Escape"){
-if($("permissionModal")?.classList.contains("open"))close();
-if($("paymentModal")?.classList.contains("open"))closePaymentModal()
-}
+if(e.key!=="Escape")return;
+if($("permissionModal")?.classList.contains("open"))closePermissions();
+if($("paymentModal")?.classList.contains("open"))closePaymentModal();
 });
 
-window.addEventListener("load",()=>setTimeout(()=>$("loader").classList.add("hide"),400));
+window.addEventListener("load",()=>setTimeout(()=>$("loader")?.classList.add("hide"),400));
 
-requireAdmin("webpage").then(x=>x&&load());
+try{
+me=await auth();
+if(!me)return;
+await refreshAll();
+}catch(e){
+console.error(e);
+msg("error",e.message||"Unable to initialize administrator management.");
+}
+};
+
+init();
