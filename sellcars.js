@@ -327,6 +327,17 @@ if(!session)throw new Error("Your session has expired. Please log in again.");
 
 let requestCheck=await supabase.from("sell_car_requests").select("approved_car_id").eq("id",current.id).maybeSingle();
 if(requestCheck.error)throw requestCheck.error;
+let existingCar=await supabase.from("cars").select("id").eq("source_request_id",current.id).maybeSingle();
+if(existingCar.error)throw existingCar.error;
+if(existingCar.data){
+let requestUpdate={status:"approved",negotiated_price:buy,inventory_price:sell,approved_car_id:existingCar.data.id,approved_at:new Date().toISOString(),approved_by:session.user.id,updated_at:new Date().toISOString()};
+let{error}=await supabase.from("sell_car_requests").update(requestUpdate).eq("id",current.id);
+if(error)throw error;
+current={...current,...requestUpdate};
+requests=requests.map(x=>x.id===current.id?current:x);
+alert("This vehicle was already in inventory. The request has been reconnected to the existing vehicle.");
+closeRequest();load();return;
+}
 if(requestCheck.data?.approved_car_id)throw new Error("This request has already been approved by another administrator.");
 
 let colour=current.colour||null;
@@ -360,7 +371,13 @@ updated_at:new Date().toISOString()
 };
 
 let{data:car,error:carError}=await supabase.from("cars").insert(carData).select().single();
-if(carError)throw carError;
+if(carError){
+if(carError.code==="23505"){
+let{data:existing,error}=await supabase.from("cars").select("*").eq("source_request_id",current.id).single();
+if(error)throw error;
+car=existing;
+}else throw carError;
+}
 
 let images=imageFiles();
 
