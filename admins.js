@@ -84,12 +84,12 @@ return;
 }
 
 grid.innerHTML=admins.map(a=>{
-const p=permissions[a.id]||{},isMain=a.is_main_admin===true,name=(a.email||a.id).split("@")[0],allowed=pages.filter(x=>p[x[0]]===true).length;
+const p=permissions[a.id]||{},isMain=a.is_main_admin===true,name=a.full_name||a.email?.split("@")[0]||a.id,allowed=pages.filter(x=>p[x[0]]===true).length;
 
 return`<article class="admin-card">
 <div class="admin-card-top">
 <div class="admin-avatar"><i class="fa-solid fa-user"></i></div>
-<div class="admin-details"><strong>${esc(name)}</strong><span>${esc(a.email||a.id)}</span></div>
+<div class="admin-details"><strong>${esc(name)}</strong><span>${esc(a.email||"—")}</span><small>ID: ${esc(a.id_number||"—")}</small></div>
 <span class="admin-role">${isMain?"Main Admin":"Administrator"}</span>
 </div>
 <div class="admin-card-body">
@@ -262,12 +262,12 @@ return;
 }
 
 grid.innerHTML=staff.map(a=>{
-const s=paymentStats(a.id),name=(a.email||a.id).split("@")[0];
+const s=paymentStats(a.id),name=a.full_name||a.email?.split("@")[0]||a.id;
 
 return`<article class="admin-payment-card">
 <div class="admin-payment-head">
 <div class="admin-payment-avatar"><i class="fa-solid fa-user"></i></div>
-<div class="admin-payment-info"><strong>${esc(name)}</strong><span>${esc(a.email||a.id)}</span></div>
+<div class="admin-payment-info"><strong>${esc(name)}</strong><span>${esc(a.email||"—")}</span><small>ID: ${esc(a.id_number||"—")}</small></div>
 </div>
 <div class="admin-payment-body">
 <div class="payment-stat-grid">
