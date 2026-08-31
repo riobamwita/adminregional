@@ -28,8 +28,8 @@
 
 <main class="main">
 <section class="page-heading">
-<div><span class="eyebrow"><b></b> BUSINESS PERFORMANCE</span><h1>Sales <strong>Statistics</strong></h1><p>Track inventory sales, revenue records and manually recorded ground sales.</p></div>
-<div class="heading-actions"><button id="refreshStats" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button><button id="openSaleModal" class="primary-btn"><i class="fa-solid fa-plus"></i> Add Ground Sale</button></div>
+<div><span class="eyebrow"><b></b> BUSINESS PERFORMANCE</span><h1>Income <strong>Statistics</strong></h1><p>Track inventory sales, revenue records and manually recorded income entries.</p></div>
+<div class="heading-actions"><button id="refreshStats" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button><button id="openSaleModal" class="primary-btn"><i class="fa-solid fa-plus"></i> Add New Entry</button></div>
 </section>
 
 <div id="error" class="error"></div>
@@ -37,10 +37,10 @@
 
 <section class="stats">
 <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div><span>Total Recorded Revenue</span><strong id="totalRevenue">KES 0</strong></div></div>
-<div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-car-side"></i></div><div><span>Total Sales</span><strong id="totalSales">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-car-side"></i></div><div><span>Total</span><strong id="totalSales">0</strong></div></div>
 <div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-car"></i></div><div><span>Inventory Sales</span><strong id="inventorySales">0</strong></div></div>
-<div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-handshake"></i></div><div><span>Ground Sales</span><strong id="groundSales">0</strong></div></div>
-<div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-chart-line"></i></div><div><span>Average Sale</span><strong id="averageSale">KES 0</strong></div></div>
+<div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-handshake"></i></div><div><span>Other Entries</span><strong id="groundSales">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-chart-line"></i></div><div><span>Average Income</span><strong id="averageSale">KES 0</strong></div></div>
 </section>
 
 <section class="insights-grid">
@@ -60,12 +60,12 @@
 
 <section class="records-panel">
 <div class="panel-head">
-<div><span class="eyebrow dark"><b></b> SALES LEDGER</span><h2>All Sales Records</h2><p>Sold inventory is automatically included. Ground sales are manually recorded.</p></div>
+<div><span class="eyebrow dark"><b></b> SALES LEDGER</span><h2>All Income Records</h2><p>Sold inventory is automatically included. Ground deals are manually recorded.</p></div>
 </div>
 
 <div class="toolbar">
 <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search vehicle, make, model or notes..."></div>
-<select id="sourceFilter"><option value="all">All Sources</option><option value="inventory">Inventory Sales</option><option value="ground">Ground Sales</option></select>
+<select id="sourceFilter"><option value="all">All Sources</option><option value="inventory">Inventory Sales</option><option value="ground">Other Entries</option></select>
 <select id="dateFilter"><option value="all">All Time</option><option value="today">Today</option><option value="month">This Month</option><option value="year">This Year</option></select>
 </div>
 
@@ -73,12 +73,12 @@
 
 <div class="table-wrap">
 <table>
-<thead><tr><th>Deal / Sale</th><th>Source</th><th>Sale Amount</th><th>Date</th><th>Details</th><th>Action</th></tr></thead>
+<thead><tr><th>Deal / Sale</th><th>Source</th><th>Amount</th><th>Date</th><th>Details</th><th>Action</th></tr></thead>
 <tbody id="salesTable"></tbody>
 </table>
 </div>
 
-<div id="empty" class="empty"><div><i class="fa-solid fa-chart-column"></i></div><h3>No sales records found</h3><p>Sold vehicles and manually added ground sales will appear here.</p><button id="emptyAddSale" class="primary-btn"><i class="fa-solid fa-plus"></i> Add Ground Sale</button></div>
+<div id="empty" class="empty"><div><i class="fa-solid fa-chart-column"></i></div><h3>No sales records found</h3><p>Sold vehicles and manually added income entries will appear here.</p><button id="emptyAddSale" class="primary-btn"><i class="fa-solid fa-plus"></i> Add New Entry</button></div>
 </section>
 </main>
 </div>
@@ -87,12 +87,12 @@
 <div class="modal-bg" id="saleModalBg"></div>
 <section class="modal-box">
 <button id="closeSaleModal" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
-<div class="modal-head"><span>MANUAL SALE RECORD</span><h2>Add Ground <strong>Sale</strong></h2><p>Record a vehicle sale that was completed outside the online inventory workflow.</p></div>
+<div class="modal-head"><span>MANUAL ENTRY RECORD</span><h2>Add Ground <strong>Sale</strong></h2><p>Record a vehicle sale that was completed outside the online inventory workflow.</p></div>
 <form id="groundSaleForm">
 <div class="form-grid">
 <div class="field full"><label>Deal *</label><input id="saleVehicle" name="vehicle" required placeholder="e.g. Toyota Prado TX 2020"></div>
-<div class="field"><label>Sale Amount (KES) *</label><input id="saleAmount" name="amount" type="number" min="0" step="0.01" required placeholder="0"></div>
-<div class="field"><label>Sale Date *</label><input id="saleDate" name="sale_date" type="date" required></div>
+<div class="field"><label>Income (KES) *</label><input id="saleAmount" name="amount" type="number" min="0" step="0.01" required placeholder="0"></div>
+<div class="field"><label>Date *</label><input id="saleDate" name="sale_date" type="date" required></div>
 <div class="field"><label>Make</label><input id="saleMake" name="make" placeholder="Toyota"></div>
 <div class="field"><label>Model</label><input id="saleModel" name="model" placeholder="Prado"></div>
 <div class="field"><label>Year</label><input id="saleYear" name="year" type="number" min="1900" max="2100" placeholder="2020"></div>
