@@ -144,7 +144,7 @@ Logout
 
 <div>
 <span class="eyebrow"><b></b> ADMINISTRATION</span>
-<h1>Manage <strong>Admins</strong></h1>
+<h1>Manage <strong>Agents</strong></h1>
 <p>Control administrator access and manage administrator performance payments.</p>
 </div>
 
@@ -161,7 +161,7 @@ Logout
 </div>
 
 <div>
-<span>Total Administrators</span>
+<span>All Agents</span>
 <strong id="adminCount">0</strong>
 </div>
 </div>
@@ -182,8 +182,8 @@ Logout
 <section class="add-admin-panel">
 
 <div>
-<span class="eyebrow dark"><b></b> NEW ADMINISTRATOR</span>
-<h2>Add Administrator</h2>
+<span class="eyebrow dark"><b></b> NEW AGENT</span>
+<h2>Add Agent</h2>
 <p>Create a new dashboard login account.</p>
 </div>
 
@@ -201,7 +201,7 @@ Logout
 
 <button id="addAdminBtn" class="add-admin-btn" type="button">
 <i class="fa-solid fa-user-plus"></i>
-Create Administrator
+Create Agent
 </button>
 
 </div>
@@ -213,8 +213,8 @@ Create Administrator
 <div class="panel-head">
 
 <div>
-<span class="eyebrow dark"><b></b> ADMIN ACCOUNTS</span>
-<h2>Administrator Access</h2>
+<span class="eyebrow dark"><b></b> AGENT ACCOUNTS</span>
+<h2>Agent Access</h2>
 </div>
 
 <button id="refreshAdmins" class="outline-btn" type="button">
@@ -226,7 +226,7 @@ Refresh
 
 <div id="loading" class="loading">
 <i class="fa-solid fa-spinner fa-spin"></i>
-Loading administrators...
+Loading ...
 </div>
 
 <div id="adminsGrid" class="admins-grid"></div>
@@ -238,8 +238,8 @@ Loading administrators...
 <div class="panel-head payments-panel-head">
 
 <div>
-<span class="eyebrow dark"><b></b> ADMIN PAYMENTS</span>
-<h2>Administrator <strong>Payments</strong></h2>
+<span class="eyebrow dark"><b></b> AGENT PAYMENTS</span>
+<h2>Agent <strong>Payments</strong></h2>
 <p>Track earnings for approved and sold vehicles. Main administrators with full roles are excluded.</p>
 </div>
 
@@ -431,7 +431,7 @@ Loading payment history...
 <thead>
 
 <tr>
-<th>Administrator</th>
+<th>Agent</th>
 <th>Vehicle</th>
 <th>Activity</th>
 <th>Amount</th>
@@ -454,7 +454,7 @@ Loading payment history...
 
 <h3>No Payment Records</h3>
 
-<p>Administrator approvals and vehicle sales will appear here.</p>
+<p>Agent approvals and vehicle sales will appear here.</p>
 
 </div>
 
@@ -515,9 +515,9 @@ Save Permissions
 
 <div class="modal-head">
 
-<span>ADMIN PAYMENT</span>
+<span>AGENT PAYMENT</span>
 
-<h2>Manage Payment for <strong id="paymentAdminName">Administrator</strong></h2>
+<h2>Manage Payment for <strong id="paymentAdminName">Agent</strong></h2>
 
 <p>Review and update approval and sales payment records.</p>
 
@@ -527,7 +527,7 @@ Save Permissions
 
 <div>
 
-<span>Administrator</span>
+<span>Agent</span>
 
 <strong id="paymentAdminEmail">—</strong>
 
