@@ -79,7 +79,6 @@ return`<article class="request-card" onclick="openRequest('${esc(x.id)}')">
 <p><i class="fa-solid fa-phone"></i> ${esc(x.phone||"—")}</p>
 <p><i class="fa-solid fa-car"></i> ${esc(vehicle(x))}</p>
 <div class="request-meta"><span>${esc(x.stock_number||"No stock number")}</span><strong>KES ${money(x.vehicle_price)}</strong></div>
-<div class="source-person"><div><i class="fa-solid fa-user"></i><span>${esc(z.person)}</span></div><b class="${z.tagClass}">${esc(z.tag)}</b></div>
 <div class="request-bottom"><span>${esc(x.proceed_option||"General enquiry")}</span><button type="button" onclick="event.stopPropagation();openRequest('${esc(x.id)}')">View Enquiry <i class="fa-solid fa-arrow-right"></i></button></div>
 </article>`;
 }).join("");
