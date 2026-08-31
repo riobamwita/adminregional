@@ -57,7 +57,7 @@ let r=tradeRequests.find(x=>String(x.id)===String(id));
 return{type:"trade",label:"Trade-In",icon:"fa-right-left",person:r?.full_name||"Trade-in customer unavailable",phone:r?.phone||"",email:r?.email||"",tag:isAgentEmail(r?.email)?"AGENT":"CLIENT",tagClass:isAgentEmail(r?.email)?"agent":"client"};
 }
 
-return{type:"inventory",label:"Inventory",icon:"fa-warehouse",person:car.created_by_name||"Regional AutoSelections Inventory",phone:"",email:car.created_by_email||"",tag:"INVENTORY",tagClass:"inventory"};
+return{type:"inventory",label:"Inventory",icon:"fa-warehouse",person:car.created_by_name||"From Inventory",phone:"",email:car.created_by_email||"",tag:"INVENTORY",tagClass:"inventory"};
 }
 
 function render(){
