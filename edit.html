@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="edit.css"><title>Edit Vehicle | Regional Autoselections</title></head><body>
 <header class="navbar"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><button id="backBtn" class="back"><i class="fa-solid fa-arrow-left"></i> Listings</button></header>
-<main class="page"><header class="page-head"><div><small>ADMIN / LISTINGS</small><h1>Edit Vehicle</h1><p>Update vehicle information using the controlled vehicle catalogue.</p></div><div class="actions"><a href="index.html" id="cancelBtn" class="cancel">Cancel</a><button id="saveBtn" type="submit" form="carForm" class="save">Save Changes</button></div></header>
+<main class="page"><header class="page-head"><div><small>ADMIN / LISTINGS</small><h1>Edit Vehicle</h1><p>Update vehicle information using the controlled vehicle catalogue.</p></div></header>
 <div id="loading" class="loading">Loading vehicle...</div><div id="error" class="msg error"></div><div id="success" class="msg success"></div>
 <form id="carForm" style="display:none">
 <section class="section"><h2>Vehicle Information</h2><div class="grid"><div><label>Make *</label><select id="make" required></select></div><div><label>Model *</label><select id="model" required></select></div><div><label>Trim / Variant</label><input id="trim"></div><div><label>Year *</label><select id="year" required></select></div><div><label>Price *</label><input id="price" type="number" min="0" required></div><div><label>Condition</label><select id="condition"><option value="">Select</option><option>New</option><option>Imported Used</option><option>Locally Used</option></select></div><div><label>Body Type</label><select id="body_type"></select></div><div><label>Status</label><select id="status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option><option value="inactive">Inactive</option></select></div></div></section>
@@ -14,5 +14,19 @@
 <section class="section"><h2>Display Image</h2><p class="hint">Main image shown on vehicle cards.</p><div id="displayPreview" class="display-preview"></div><label class="upload"><input id="displayInput" type="file" accept="image/*"><span><i class="fa-solid fa-image"></i> Choose Display Image</span></label><button type="button" id="removeDisplay" class="remove">Remove Display Image</button></section>
 <section class="section"><h2>Gallery Images</h2><p class="hint">Upload additional vehicle images.</p><label class="upload"><input id="galleryInput" type="file" accept="image/*" multiple><span><i class="fa-solid fa-images"></i> Choose Gallery Images</span></label><div id="galleryPreview" class="gallery"></div></section>
 <section class="section"><h2>Listing Options</h2><div class="checks"><label><input id="negotiable" type="checkbox"> Negotiable Price</label><label><input id="financing_available" type="checkbox"> Financing Available</label><label><input id="test_drive_available" type="checkbox"> Test Drive Available</label><label><input id="featured" type="checkbox"> Featured Vehicle</label></div></section>
-<footer class="bottom"><button type="button" id="deleteBtn" class="delete"><i class="fa-solid fa-trash"></i> Delete Vehicle</button><div><a href="index.html" id="bottomCancel" class="cancel">Cancel</a><button type="submit" class="save">Save Changes</button></div></footer>
+<footer class="bottom">
+    <button type="button" id="deleteBtn" class="delete">
+        <i class="fa-solid fa-trash"></i> Delete Vehicle
+    </button>
+
+    <div class="bottom-actions">
+        <button type="button" id="bottomCancel" class="cancel">
+            Cancel
+        </button>
+
+        <button type="submit" class="save">
+            Save Changes
+        </button>
+    </div>
+</footer>
 </form></main><script type="module" src="edit.js"></script></body></html>

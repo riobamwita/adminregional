@@ -637,19 +637,18 @@ form.onsubmit = async event => {
         };
 
         showMessage(
-            "success",
-            "Vehicle saved successfully."
-        );
+    "success",
+    "Vehicle saved successfully. Returning to listings..."
+);
 
-        saveButtons.forEach(button => {
-            button.textContent = "Saved";
-        });
+saveButtons.forEach(button => {
+    button.textContent = "Saved";
+});
 
-        setTimeout(() => {
-            saveButtons.forEach(button => {
-                button.textContent = "Save Changes";
-            });
-        }, 1000);
+/* Automatically close the edit form and return to listings */
+setTimeout(() => {
+    window.location.href = "index.html";
+}, 700);
 
     } catch (error) {
         showMessage(
@@ -719,11 +718,11 @@ $("deleteBtn").onclick = async () => {
 };
 
 function goBack() {
-    location.href = "index.html";
+    window.location.href = "index.html";
 }
 
 $("backBtn").onclick = goBack;
-$("cancelBtn").onclick = goBack;
 $("bottomCancel").onclick = goBack;
 
+/* Load the vehicle when the page opens */
 loadVehicle();
