@@ -1,10 +1,152 @@
 import{supabase}from"./supabase.js";
-import{requireAdmin}from"./admin-guard.js";const $=id=>document.getElementById(id),grid=$("requestsGrid"),esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),money=v=>Number(v||0).toLocaleString("en-KE"),fmt=v=>v?new Date(v).toLocaleString("en-KE",{dateStyle:"medium",timeStyle:"short"}):"—";let requests=[],current=null;
-async function load(){$("loading").style.display="block";grid.innerHTML="";$("empty").style.display="none";try{let{data,error}=await supabase.from("import_requests").select("*").order("created_at",{ascending:false});if(error)throw error;requests=data||[];stats();render()}catch(e){$("error").textContent=e.message;$("error").classList.add("active")}finally{$("loading").style.display="none"}}
-function stats(){$("totalRequests").textContent=requests.length;$("newRequests").textContent=requests.filter(x=>x.status==="new").length;$("progressRequests").textContent=requests.filter(x=>x.status==="in-progress").length;$("completedRequests").textContent=requests.filter(x=>x.status==="completed").length}
-function render(){let q=$("searchInput").value.toLowerCase().trim(),s=$("statusFilter").value,o=$("sortFilter").value,l=requests.filter(x=>`${x.full_name||""} ${x.phone||""} ${x.email||""} ${x.make||""} ${x.model||""} ${x.country||""}`.toLowerCase().includes(q)&&(s==="all"||x.status===s));l.sort((a,b)=>o==="oldest"?new Date(a.created_at)-new Date(b.created_at):o==="budget-high"?(b.budget||0)-(a.budget||0):o==="budget-low"?(a.budget||0)-(b.budget||0):new Date(b.created_at)-new Date(a.created_at));if(!l.length){$("empty").style.display="block";return}grid.innerHTML=l.map(x=>`<article class="request-card" onclick="openRequest('${x.id}')"><div class="request-top"><span class="request-status ${esc(x.status||"new")}">${esc(x.status||"new")}</span><small>${fmt(x.created_at)}</small></div><h3>${esc(x.full_name)}</h3><p><i class="fa-solid fa-phone"></i> ${esc(x.phone)}</p><p><i class="fa-solid fa-car"></i> ${esc(x.make)} ${esc(x.model||"")}</p><div class="request-meta"><span>${esc(x.country)}</span><strong>KES ${money(x.budget)}</strong></div><div class="request-bottom"><span>${esc(x.timeline)}</span><button type="button" onclick="event.stopPropagation();openRequest('${x.id}')">View Request <i class="fa-solid fa-arrow-right"></i></button></div></article>`).join("")}
-window.openRequest=id=>{current=requests.find(x=>x.id===id);if(!current)return;$("modalTitle").textContent=`${current.full_name}'s Request`;$("modalStatus").value=current.status||"new";$("modalBody").innerHTML=`<div class="detail-grid"><div><span>Full Name</span><strong>${esc(current.full_name)}</strong></div><div><span>Phone / WhatsApp</span><strong>${esc(current.phone)}</strong></div><div><span>Email</span><strong>${esc(current.email||"—")}</strong></div><div><span>Country of Origin</span><strong>${esc(current.country)}</strong></div><div><span>Preferred Make</span><strong>${esc(current.make)}</strong></div><div><span>Preferred Model</span><strong>${esc(current.model||"—")}</strong></div><div><span>Year From</span><strong>${esc(current.year||"—")}</strong></div><div><span>Budget</span><strong>KES ${money(current.budget)}</strong></div><div><span>Timeline</span><strong>${esc(current.timeline)}</strong></div><div><span>Submitted</span><strong>${fmt(current.created_at)}</strong></div></div><div class="notes"><span>Additional Notes</span><p>${esc(current.notes||"No additional notes.")}</p></div>`;$("requestModal").classList.add("show");document.body.classList.add("locked")}
-async function saveStatus(){if(!current)return;let status=$("modalStatus").value,{error}=await supabase.from("import_requests").update({status,updated_at:new Date().toISOString()}).eq("id",current.id);if(error)return alert(error.message);current.status=status;closeRequest();load()}
-async function deleteRequest(){if(!current||!confirm(`Delete import request from ${current.full_name}?`))return;let{error}=await supabase.from("import_requests").delete().eq("id",current.id);if(error)return alert(error.message);closeRequest();load()}
-function closeRequest(){$("requestModal").classList.remove("show");document.body.classList.remove("locked");current=null}
-$("searchInput").oninput=render;$("statusFilter").onchange=render;$("sortFilter").onchange=render;$("refreshBtn").onclick=load;$("saveStatus").onclick=saveStatus;$("deleteRequest").onclick=deleteRequest;$("closeRequest").onclick=closeRequest;$("closeRequestBg").onclick=closeRequest;$("menu").onclick=()=>{$("sidebar").classList.add("open");$("overlay").classList.add("show")};$("closeMenu").onclick=$("overlay").onclick=()=>{$("sidebar").classList.remove("open");$("overlay").classList.remove("show")};$("logoutBtn").onclick=async()=>{await supabase.auth.signOut();location.href="auth.html"};window.addEventListener("load",()=>setTimeout(()=>$("loader").classList.add("hide"),450));requireAdmin("imports").then(x=>x&&load());
+import{requireAdmin}from"./admin-guard.js";
+
+const $=id=>document.getElementById(id),grid=$("requestsGrid"),esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),money=v=>Number(v||0).toLocaleString("en-KE"),fmt=v=>v?new Date(v).toLocaleString("en-KE",{dateStyle:"medium",timeStyle:"short"}):"—";
+
+let requests=[],current=null;
+
+async function load(){
+ $("loading").style.display="block";grid.innerHTML="";$("empty").style.display="none";$("error").classList.remove("active");$("error").textContent="";
+ try{
+  const{data,error}=await supabase.from("import_requests").select("*").order("created_at",{ascending:false});
+  if(error)throw error;
+  requests=data||[];stats();render()
+ }catch(e){
+  $("error").textContent=e.message;$("error").classList.add("active")
+ }finally{$("loading").style.display="none"}
+}
+
+function stats(){
+ $("totalRequests").textContent=requests.length;
+ $("newRequests").textContent=requests.filter(x=>x.status==="new").length;
+ $("progressRequests").textContent=requests.filter(x=>x.status==="in-progress").length;
+ $("completedRequests").textContent=requests.filter(x=>x.status==="completed").length
+}
+
+function render(){
+ const q=$("searchInput").value.toLowerCase().trim(),s=$("statusFilter").value,o=$("sortFilter").value;
+ let l=requests.filter(x=>`${x.full_name||""} ${x.phone||""} ${x.email||""} ${x.make||""} ${x.model||""} ${x.country||""}`.toLowerCase().includes(q)&&(s==="all"||x.status===s));
+ l.sort((a,b)=>o==="oldest"?new Date(a.created_at)-new Date(b.created_at):o==="budget-high"?(b.budget||0)-(a.budget||0):o==="budget-low"?(a.budget||0)-(b.budget||0):new Date(b.created_at)-new Date(a.created_at));
+ if(!l.length){$("empty").style.display="block";return}
+ grid.innerHTML=l.map(x=>`<article class="request-card" data-id="${esc(x.id)}"><div class="request-top"><span class="request-status ${esc(x.status||"new")}">${esc(x.status||"new")}</span><small>${fmt(x.created_at)}</small></div><h3>${esc(x.full_name||"Unnamed Customer")}</h3><p><i class="fa-solid fa-phone"></i> ${esc(x.phone||"No phone")}</p><p><i class="fa-solid fa-car"></i> ${esc([x.make,x.model].filter(Boolean).join(" ")||"Vehicle not specified")}</p><div class="request-meta"><span>${esc(x.country||"Country not provided")}</span><strong>KES ${money(x.budget)}</strong></div><div class="request-bottom"><span>${esc(x.timeline||"Timeline not provided")}</span><button type="button" data-id="${esc(x.id)}">View Request <i class="fa-solid fa-arrow-right"></i></button></div></article>`).join("");
+ grid.querySelectorAll(".request-card").forEach(c=>c.addEventListener("click",()=>openRequest(c.dataset.id)));
+ grid.querySelectorAll(".request-bottom button").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();openRequest(b.dataset.id)}))
+}
+
+function detail(label,value){
+ return `<div><span>${label}</span><strong>${esc(value||"—")}</strong></div>`
+}
+
+function openRequest(id){
+ current=requests.find(x=>String(x.id)===String(id));
+ if(!current)return;
+
+ $("modalTitle").textContent=`${current.full_name||"Customer"}'s Request`;
+ $("modalSubtitle").textContent=`Submitted ${fmt(current.created_at)}`;
+ $("modalStatus").value=current.status||"new";
+
+ $("customerDetails").innerHTML=
+  detail("Full Name",current.full_name)+
+  detail("Phone / WhatsApp",current.phone)+
+  detail("Email",current.email)+
+  detail("Country",current.country)+
+  detail("Timeline",current.timeline)+
+  detail("Submitted",fmt(current.created_at));
+
+ $("vehicleName").textContent=[current.make,current.model].filter(Boolean).join(" ")||"Vehicle Not Specified";
+ $("vehicleSpecs").textContent=[current.year?`From ${current.year}`:"",current.country?`Import to ${current.country}`:""].filter(Boolean).join(" · ")||"Requested import vehicle";
+
+ $("vehicleDetails").innerHTML=
+  detail("Preferred Make",current.make)+
+  detail("Preferred Model",current.model)+
+  detail("Year From",current.year)+
+  detail("Budget",current.budget?`KES ${money(current.budget)}`:"—")+
+  detail("Country",current.country)+
+  detail("Timeline",current.timeline)+
+  detail("Submitted",fmt(current.created_at));
+
+ $("customerNotes").innerHTML=`<span>Additional Notes</span><p>${esc(current.notes||"No additional notes.")}</p>`;
+
+ let actions=[];
+
+ if(current.phone){
+  const raw=String(current.phone).replace(/\D/g,"");
+  const wa=raw.startsWith("254")?raw:raw.startsWith("0")?`254${raw.slice(1)}`:`254${raw}`;
+  const tel=raw.startsWith("254")?`+${raw}`:raw.startsWith("0")?`+254${raw.slice(1)}`:`+254${raw}`;
+  actions.push(`<a class="call-btn" href="tel:${esc(tel)}"><i class="fa-solid fa-phone"></i> Call Customer</a>`);
+  actions.push(`<a class="whatsapp-btn" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>`);
+  actions.push(`<button class="copy-btn" type="button" id="copyPhone"><i class="fa-solid fa-copy"></i> Copy Phone</button>`)
+ }
+
+ if(current.email)actions.push(`<a class="email-btn" href="mailto:${esc(current.email)}"><i class="fa-solid fa-envelope"></i> Email Customer</a>`);
+
+ $("contactActions").innerHTML=actions.join("");
+
+ $("copyPhone")?.addEventListener("click",async()=>{
+  try{
+   await navigator.clipboard.writeText(current.phone);
+   const b=$("copyPhone");
+   b.innerHTML='<i class="fa-solid fa-check"></i> Copied';
+   setTimeout(()=>b.innerHTML='<i class="fa-solid fa-copy"></i> Copy Phone',1200)
+  }catch{}
+ });
+
+ $("requestModal").classList.add("show");
+ document.body.classList.add("locked")
+}
+
+async function saveStatus(){
+ if(!current)return;
+ const status=$("modalStatus").value;
+ const{error}=await supabase.from("import_requests").update({status,updated_at:new Date().toISOString()}).eq("id",current.id);
+ if(error)return alert(error.message);
+ current.status=status;
+ closeRequest();
+ load()
+}
+
+async function deleteRequest(){
+ if(!current||!confirm(`Delete import request from ${current.full_name}?`))return;
+ const{error}=await supabase.from("import_requests").delete().eq("id",current.id);
+ if(error)return alert(error.message);
+ closeRequest();
+ load()
+}
+
+function closeRequest(){
+ $("requestModal").classList.remove("show");
+ document.body.classList.remove("locked");
+ current=null
+}
+
+$("searchInput").oninput=render;
+$("statusFilter").onchange=render;
+$("sortFilter").onchange=render;
+$("refreshBtn").onclick=load;
+$("saveStatus").onclick=saveStatus;
+$("deleteRequest").onclick=deleteRequest;
+$("closeRequest").onclick=closeRequest;
+$("closeRequestBg").onclick=closeRequest;
+
+$("menu").onclick=()=>{
+ $("sidebar").classList.add("open");
+ $("overlay").classList.add("show")
+};
+
+$("closeMenu").onclick=$("overlay").onclick=()=>{
+ $("sidebar").classList.remove("open");
+ $("overlay").classList.remove("show")
+};
+
+$("logoutBtn").onclick=async()=>{
+ await supabase.auth.signOut();
+ location.href="auth.html"
+};
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"&&$("requestModal").classList.contains("show"))closeRequest()
+});
+
+window.addEventListener("load",()=>setTimeout(()=>$("loader").classList.add("hide"),450));
+
+requireAdmin("imports").then(ok=>{if(ok)load()});
