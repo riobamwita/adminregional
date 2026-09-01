@@ -164,6 +164,23 @@ let x=requests.find(x=>x.id===id);if(x)x.status=status;if(current)current.status
 updateDetailStatus(current?.approved_car_id?"approved":status);stats();render();$("saveStatus").disabled=false
 }
 
+async function deleteRequest(){
+if(!current)return;
+if(!confirm(`Delete trade-in request from ${current.full_name||"this customer"}? This cannot be undone.`))return;
+const id=current.id;
+try{
+let{data:files,error}=await supabase.from("tradein_files").select("file_url,file_name").eq("tradein_id",id);
+if(error)throw error;
+let{error:e}=await supabase.from("tradein_requests").delete().eq("id",id);
+if(e)throw e;
+requests=requests.filter(x=>x.id!==id);
+closeDetail();
+stats();
+render();
+alert("Trade-in request deleted successfully.");
+}catch(e){console.error(e);alert(e.message||"Unable to delete trade-in request.")}
+}
+
 function closeDetail(){ $("tradeDetail").classList.remove("show");document.body.classList.remove("locked");current=null;currentFiles=[]}
 
 window.openInventoryCar=()=>{if(current?.approved_car_id)location.href=`edit.html?id=${encodeURIComponent(current.approved_car_id)}`};
@@ -175,6 +192,7 @@ $("sortFilter").onchange=render;
 $("refreshBtn").onclick=load;
 $("detailStatus").onchange=e=>updateDetailStatus(e.target.value);
 $("saveStatus").onclick=()=>current&&updateStatus(current.id,$("detailStatus").value);
+$("deleteRequest").onclick=deleteRequest;
 $("closeDetail").onclick=closeDetail;
 $("detailBg").onclick=closeDetail;
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&current)closeDetail()});
