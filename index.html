@@ -34,8 +34,41 @@
 <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-star"></i></div><div><span>Featured</span><strong id="featuredCars">0</strong></div></div>
 </section>
 <section class="listing-panel">
-<div class="panel-head"><div><span class="eyebrow dark"><b></b> INVENTORY</span><h2>All Vehicles</h2></div><button id="refreshListings" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></div>
-<div class="toolbar"><div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search make, model, stock number..."></div><select id="statusFilter"><option value="all">All Status</option><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option><option value="inactive">Inactive</option></select><select id="sortFilter"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-high">Price: High → Low</option><option value="price-low">Price: Low → High</option><option value="year-new">Year: Newest</option><option value="mileage-low">Mileage: Low → High</option></select></div>
+<div class="panel-head"><div><span class="eyebrow dark"><b></b> INVENTORY</span><h2>All Vehicles</h2></div><div class="panel-actions"><button id="filterToggle" class="outline-btn"><i class="fa-solid fa-sliders"></i> Filters <span id="filterCount"></span></button><button id="refreshListings" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></div></div>
+<div class="toolbar">
+<div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search vehicles..."></div>
+<select id="sortFilter"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-high">Price: High → Low</option><option value="price-low">Price: Low → High</option><option value="year-new">Year: Newest</option><option value="mileage-low">Mileage: Low → High</option></select>
+</div>
+
+<div id="adminFilters" class="admin-filters">
+<div class="filter-top"><strong>Advanced Filters</strong><button id="clearFilters" type="button">Clear All</button></div>
+
+<div class="filter-grid">
+<div class="filter-group"><label>Status</label><div id="statusFilters"></div></div>
+<div class="filter-group"><label>Make</label><div id="makeFilters"></div></div>
+<div class="filter-group"><label>Body Type</label><div id="bodyFilters"></div></div>
+<div class="filter-group"><label>Fuel Type</label><div id="fuelFilters"></div></div>
+<div class="filter-group"><label>Transmission</label><div id="transFilters"></div></div>
+
+<div class="filter-group">
+<label>Condition</label>
+<label class="check-row"><span><input type="checkbox" id="foreignUsedFilter"> Foreign Used</span></label>
+<label class="check-row"><span><input type="checkbox" id="localUsedFilter"> Local Used</span></label>
+</div>
+
+<div class="filter-group">
+<label>Colour</label>
+<select id="colorFilter"><option value="">Any Colour</option></select>
+</div>
+</div>
+
+<div class="range-grid">
+<div class="range-group"><label>Price</label><div><span id="priceMinText">Any</span><span id="priceMaxText">Any</span></div><input id="priceMin" type="range"><input id="priceMax" type="range"></div>
+<div class="range-group"><label>Year</label><div><span id="yearMinText">Any</span><span id="yearMaxText">Any</span></div><input id="yearMin" type="range"><input id="yearMax" type="range"></div>
+<div class="range-group"><label>Mileage</label><div><span id="mileageMinText">Any</span><span id="mileageMaxText">Any</span></div><input id="mileageMin" type="range"><input id="mileageMax" type="range"></div>
+<div class="range-group"><label>Engine Size</label><div><span id="engineMinText">Any</span><span id="engineMaxText">Any</span></div><input id="engineMin" type="range"><input id="engineMax" type="range"></div>
+</div>
+</div>
 <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading vehicles...</div>
 <div id="error" class="error"></div>
 <div id="propertiesGrid" class="cars-grid"></div>
