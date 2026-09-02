@@ -1,5 +1,6 @@
 import { supabase } from "./supabase.js";
 import { initVehicleCatalogue } from "./vehicle-catalog.js";
+import{recordAgentSale}from"./agent-payments.js";
 
 const BUCKET = "car-images";
 
@@ -635,6 +636,7 @@ form.onsubmit = async event => {
             ...car,
             ...updates
         };
+        if(updates.status==="sold")await recordAgentSale({...car,...updates});
 
         showMessage(
     "success",

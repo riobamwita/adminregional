@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d">
+<link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="agents.css">
+<title>Agent Submissions | Regional Autoselections Ltd</title>
+</head>
+<body>
+<div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div>
+<header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg" alt=""><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-user-tie"></i> AGENT SUBMISSIONS</div><button id="menu" class="menu" type="button"><i class="fa-solid fa-bars"></i></button></div></header>
+<div class="admin-layout">
+<aside class="sidebar" id="sidebar">
+<div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional</strong></div><button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button></div>
+<nav>
+<a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a>
+<a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a>
+<a class="side-link" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
+<a class="side-link active" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a>
+<a class="side-link" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
+<a class="side-link" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a>
+<a class="side-link" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a>
+<a class="side-link" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell Your Car Requests</a>
+<a class="side-link" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a>
+<a class="side-link" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a>
+<a class="side-link" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a>
+<a class="side-link" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a>
+<a class="side-link" href="statistics.html"><i class="fa-solid fa-chart-column"></i> Statistics</a>
+</nav>
+<div class="side-bottom"><span class="side-title">ACCOUNT</span><a class="side-link" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Agents</a><a class="side-link" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a><button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></div>
+</aside>
+<div class="overlay" id="overlay"></div>
+<main class="main">
+<section class="page-heading"><div><span class="eyebrow"><b></b> AGENT MANAGEMENT</span><h1>Agent <strong>Submissions</strong></h1><p>Review vehicle listings submitted by sales agents, approve them into inventory, and track agent earnings.</p></div><button id="refreshBtn" class="outline-btn" type="button"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></section>
+<div id="error" class="error"></div><div id="success" class="success"></div>
+<section class="agent-summary">
+<div class="summary-card"><i class="fa-solid fa-file-circle-plus"></i><div><span>Total</span><strong id="totalRequests">0</strong></div></div>
+<div class="summary-card"><i class="fa-solid fa-hourglass-half"></i><div><span>Pending</span><strong id="pendingRequests">0</strong></div></div>
+<div class="summary-card"><i class="fa-solid fa-circle-check"></i><div><span>Approved</span><strong id="approvedRequests">0</strong></div></div>
+<div class="summary-card"><i class="fa-solid fa-car"></i><div><span>In Inventory</span><strong id="inventoryRequests">0</strong></div></div>
+<div class="summary-card"><i class="fa-solid fa-handshake"></i><div><span>Agent Sales</span><strong id="soldRequests">0</strong></div></div>
+</section>
+<section class="listing-panel">
+<div class="panel-head"><div><span class="eyebrow dark"><b></b> SUBMISSION QUEUE</span><h2>Agent Vehicle <strong>Listings</strong></h2></div><div class="listing-tools"><input id="searchInput" type="search" placeholder="Search agent, registration, make, model..."><select id="statusFilter"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="reviewing">Reviewing</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="sold">Sold</option></select><select id="sortFilter"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-high">Price High</option><option value="price-low">Price Low</option></option></select></div></div>
+<div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading agent submissions...</div>
+<div id="submissionsGrid" class="submissions-grid"></div>
+<div id="empty" class="empty-state"><i class="fa-solid fa-inbox"></i><h3>No agent submissions</h3><p>New vehicle submissions from agents will appear here.</p></div>
+</section>
+</main></div>
+<div class="detail-modal" id="detailModal"><div class="modal-bg" id="modalBg"></div><section class="detail-shell">
+<header class="detail-header"><div><span>AGENT VEHICLE SUBMISSION</span><h2 id="modalTitle">Vehicle</h2><p id="modalMeta"></p></div><button id="closeModal" class="modal-close" type="button"><i class="fa-solid fa-xmark"></i></button></header>
+<div class="detail-layout">
+<main class="detail-main">
+<section class="detail-card status-card"><div class="detail-card-head"><div><span class="section-kicker">WORKFLOW</span><h3>Submission Status</h3></div><span id="detailStatus" class="status-badge"></span></div><div class="status-controls"><select id="modalStatus"><option value="pending">Pending</option><option value="reviewing">Reviewing</option><option value="rejected">Rejected</option><option value="approved">Approved / In Inventory</option></select><button id="saveStatus" class="primary-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Status</button></div></section>
+<section class="detail-card"><div class="detail-card-head"><div><span class="section-kicker">AGENT</span><h3>Agent Information</h3></div><i class="fa-solid fa-user-tie"></i></div><div id="agentDetails" class="detail-grid"></div></section>
+<section class="detail-card"><div class="detail-card-head"><div><span class="section-kicker">VEHICLE</span><h3>Vehicle Information</h3></div><i class="fa-solid fa-car"></i></div><div id="vehicleDetails" class="detail-grid"></div></section>
+<section class="detail-card"><div class="detail-card-head"><div><span class="section-kicker">LOCATION</span><h3>Vehicle Location</h3></div><i class="fa-solid fa-location-dot"></i></div><div id="locationDetails" class="detail-grid"></div></section>
+<section class="detail-card"><div class="detail-card-head"><div><span class="section-kicker">DESCRIPTION</span><h3>Listing Content</h3></div><i class="fa-solid fa-align-left"></i></div><div id="descriptionDetails"></div></section>
+<section class="detail-card"><div class="detail-card-head"><div><span class="section-kicker">PHOTOS</span><h3>Submitted Photos</h3></div><i class="fa-solid fa-images"></i></div><div id="photoGrid" class="photo-grid"></div></section>
+<section id="approvalCard" class="detail-card approval-card"></section>
+</main>
+<aside class="detail-side"><div class="side-sticky"><div class="earnings-card"><span>AGENT EARNINGS</span><strong id="agentEarnings">KES 0</strong><div><b id="approvalEarned">KES 0</b><small>Approval</small></div><div><b id="saleEarned">KES 0</b><small>Sale</small></div></div><div class="detail-card"><div class="detail-card-head"><div><span class="section-kicker">ACTIVITY</span><h3>Payment Events</h3></div><i class="fa-solid fa-money-check-dollar"></i></div><div id="paymentEvents"></div></div><div class="detail-card"><div class="detail-card-head"><div><span class="section-kicker">INVENTORY</span><h3>Linked Vehicle</h3></div><i class="fa-solid fa-link"></i></div><div id="inventoryLink"></div></div></div></aside>
+</div>
+</section></div>
+<script type="module" src="agents.js"></script>
+</body>
+</html>
