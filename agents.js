@@ -570,38 +570,8 @@ x.county||
 )}
 </p>
 
-<div class="submission-meta">
-
-<span>
-${Number(
-x.mileage||0
-).toLocaleString()} KM
-</span>
-
-<span>
-${esc(x.fuel_type||"—")}
-</span>
-
-<span>
-${esc(x.transmission||"—")}
-</span>
-
-<span>
-${esc(x.body_type||"—")}
-</span>
-
-</div>
-
 <div class="submission-price">
 ${money(x.asking_price)}
-</div>
-
-<div class="submission-agent-name">
-
-<i class="fa-solid fa-user-tie"></i>
-
-${esc(agentName)}
-
 </div>
 
 </div>
@@ -2116,6 +2086,28 @@ await load();
 
 };
 
+const deleteSubmission=async()=>{
+ if(!current||!confirm(`Delete ${current.make||"vehicle"} ${current.model||""} submission from ${current.agent_name||"this agent"}?`))return;
+ const id=current.id;
+ const files=filesBySubmission[id]||[];
+ const button=$("deleteSubmission");
+ if(button){button.disabled=true;button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Deleting...'}
+ try{
+  const{error:fileError}=await supabase.from("agent_vehicle_files").delete().eq("submission_id",id);
+  if(fileError)throw fileError;
+  const{error:actionError}=await supabase.from("agent_vehicle_actions").delete().eq("submission_id",id);
+  if(actionError)console.warn(actionError);
+  for(const f of files)if(f.storage_path)await supabase.storage.from(AGENT_BUCKET).remove([f.storage_path]);
+  const{error}=await supabase.from("agent_vehicle_submissions").delete().eq("id",id);
+  if(error)throw error;
+  close();
+  await load();
+ }catch(e){
+  alert(e.message||"Unable to delete submission.");
+  if(button){button.disabled=false;button.innerHTML='<i class="fa-solid fa-trash"></i> Delete'}
+ }
+};
+
 const close=()=>{
 
 $("detailModal")
@@ -2156,6 +2148,8 @@ load;
 
 $("saveStatus").onclick=
 saveStatus;
+
+$("deleteSubmission").onclick=deleteSubmission;
 
 $("closeModal").onclick=
 close;
