@@ -62,32 +62,103 @@ const loadAdmins=async()=>{
 
 const openEditAdmin=id=>{
  const a=admins.find(x=>String(x.id)===String(id));
+
  if(!a||a.is_main_admin)return;
+
  currentAdmin=a;
- if($("editAdminDbId"))$("editAdminDbId").value=a.id||"";
- if($("editAdminIdNumber"))$("editAdminIdNumber").value=a.id_number||"";
- if($("editAdminName"))$("editAdminName").value=a.full_name||"";
- if($("editAdminEmail"))$("editAdminEmail").value=a.email||"";
- $("agentModal")?.classList.add("open")
+
+ $("editAdminIdNumber").value=a.id_number||"";
+ $("editAdminName").value=a.full_name||"";
+ $("editAdminEmail").value=a.email||"";
+ $("editAdminPassword").value="";
+ $("editAdminPasswordConfirm").value="";
+
+ $("agentModal")?.classList.add("open");
+
+ setTimeout(()=>$("editAdminIdNumber")?.focus(),100);
 };
 
 const saveAdminEdit=async()=>{
  if(!currentAdmin)return;
- const full_name=$("editAdminName")?.value.trim(),id_number=$("editAdminIdNumber")?.value.trim(),email=$("editAdminEmail")?.value.trim(),btn=$("saveAgentEdit");
- if(!full_name||!id_number||!email)return msg("error","Complete all agent fields.");
+
+ const full_name=$("editAdminName")?.value.trim();
+ const id_number=$("editAdminIdNumber")?.value.trim();
+ const email=$("editAdminEmail")?.value.trim().toLowerCase();
+ const password=$("editAdminPassword")?.value||"";
+ const passwordConfirm=$("editAdminPasswordConfirm")?.value||"";
+ const btn=$("saveAgentEdit");
+
+ if(!full_name||!id_number||!email){
+  return msg("error","Full name, Agent ID number and email are required.");
+ }
+
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+  return msg("error","Enter a valid email address.");
+ }
+
+ const duplicateId=admins.some(a=>
+  String(a.id)!==String(currentAdmin.id)&&
+  String(a.id_number||"").trim()===id_number
+ );
+
+ if(duplicateId){
+  return msg("error","That Agent ID number is already assigned to another agent.");
+ }
+
+ const duplicateEmail=admins.some(a=>
+  String(a.id)!==String(currentAdmin.id)&&
+  String(a.email||"").trim().toLowerCase()===email
+ );
+
+ if(duplicateEmail){
+  return msg("error","That email address is already assigned to another agent.");
+ }
+
+ if(password&&password.length<8){
+  return msg("error","New password must be at least 8 characters.");
+ }
+
+ if(password!==passwordConfirm){
+  return msg("error","New passwords do not match.");
+ }
+
  try{
-  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...'}
-  const{data,error}=await supabase.functions.invoke("admin-management",{body:{action:"update",id:currentAdmin.id,full_name,id_number,email}});
+  if(btn){
+   btn.disabled=true;
+   btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+
+  const{data,error}=await supabase.functions.invoke("admin-management",{
+   body:{
+    action:"update",
+    id:currentAdmin.id,
+    full_name,
+    id_number,
+    email,
+    password:password||null
+   }
+  });
+
   if(error)throw error;
-  if(data?.error)throw new Error(data.error);
+
+  if(data?.error){
+   throw new Error(data.error);
+  }
+
   closeEditAdmin();
-  msg("success","Agent details updated successfully.");
-  await refreshAll()
+
+  msg("success","Agent account updated successfully.");
+
+  await refreshAll();
+
  }catch(e){
-  console.error(e);
-  msg("error",e.message||"Unable to update agent.")
+  console.error("Agent update failed:",e);
+  msg("error",e.message||"Unable to update agent.");
  }finally{
-  if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Changes'}
+  if(btn){
+   btn.disabled=false;
+   btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+  }
  }
 };
 
@@ -116,7 +187,7 @@ const renderAdmins=()=>{
  if(!admins.length){grid.innerHTML=`<div class="payment-empty-record"><i class="fa-solid fa-users"></i>No administrators found.</div>`;return}
  grid.innerHTML=admins.map(a=>{
   const p=permissions[a.id]||{},isMain=a.is_main_admin===true,name=a.full_name||a.email?.split("@")[0]||a.id,allowed=pages.filter(x=>p[x[0]]===true).length;
-  return`<article class="admin-card"><div class="admin-card-top"><div class="admin-avatar"><i class="fa-solid fa-user"></i></div><div class="admin-details"><strong>${esc(name)}</strong><span>${esc(a.email||"—")}</span><small>ID: ${esc(a.id_number||"—")}</small></div><span class="admin-role">${isMain?"Main Admin":"Administrator"}</span></div><div class="admin-card-body"><div class="access-title"><span>PAGE ACCESS</span><small class="access-count">${isMain?"All Access":`${allowed}/${pages.length} Pages`}</small></div><div class="access-list">${isMain?`<span class="access-tag all"><i class="fa-solid fa-check"></i> Full Dashboard Access</span>`:pages.filter(x=>p[x[0]]===true).map(x=>`<span class="access-tag">${esc(x[1])}</span>`).join("")||`<span class="access-tag">No pages assigned</span>`}</div><div class="admin-card-actions">${!isMain?`<button class="edit-admin" data-edit="${esc(a.id)}" type="button"><i class="fa-solid fa-pen"></i> Edit</button><button class="manage-btn" data-manage="${esc(a.id)}" type="button"><i class="fa-solid fa-sliders"></i> Access</button><button class="reset-admin" data-reset="${esc(a.id)}" type="button"><i class="fa-solid fa-key"></i> Reset Password</button><button class="delete-admin" data-delete="${esc(a.id)}" type="button"><i class="fa-solid fa-trash"></i> Delete</button>`:`<div class="main-admin"><i class="fa-solid fa-crown"></i>&nbsp; Full Administrative Control</div>`}</div></div></article>`
+  return`<article class="admin-card"><div class="admin-card-top"><div class="admin-avatar"><i class="fa-solid fa-user"></i></div><div class="admin-details"><strong>${esc(name)}</strong><span>${esc(a.email||"—")}</span><small class="agent-id">AGENT ID: ${esc(a.id_number||"Not assigned")}</small></div><span class="admin-role">${isMain?"Main Admin":"Administrator"}</span></div><div class="admin-card-body"><div class="access-title"><span>PAGE ACCESS</span><small class="access-count">${isMain?"All Access":`${allowed}/${pages.length} Pages`}</small></div><div class="access-list">${isMain?`<span class="access-tag all"><i class="fa-solid fa-check"></i> Full Dashboard Access</span>`:pages.filter(x=>p[x[0]]===true).map(x=>`<span class="access-tag">${esc(x[1])}</span>`).join("")||`<span class="access-tag">No pages assigned</span>`}</div><div class="admin-card-actions">${!isMain?`<button class="edit-admin" data-edit="${esc(a.id)}" type="button"><i class="fa-solid fa-pen"></i> Edit</button><button class="manage-btn" data-manage="${esc(a.id)}" type="button"><i class="fa-solid fa-sliders"></i> Access</button><button class="reset-admin" data-reset="${esc(a.id)}" type="button"><i class="fa-solid fa-key"></i> Reset Password</button><button class="delete-admin" data-delete="${esc(a.id)}" type="button"><i class="fa-solid fa-trash"></i> Delete</button>`:`<div class="main-admin"><i class="fa-solid fa-crown"></i>&nbsp; Full Administrative Control</div>`}</div></div></article>`
  }).join("");
  grid.querySelectorAll("[data-manage]").forEach(b=>b.onclick=()=>openPermissions(b.dataset.manage));
  grid.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>removeAdmin(b.dataset.delete));
@@ -224,7 +295,7 @@ const renderAdminPayments=()=>{
  if(!staff.length){grid.innerHTML=`<div class="payment-empty-record"><i class="fa-solid fa-users"></i>No administrators available for payment management.</div>`;return}
  grid.innerHTML=staff.map(a=>{
   const s=paymentStats(a.id),name=a.full_name||a.email?.split("@")[0]||a.id;
-  return`<article class="admin-payment-card"><div class="admin-payment-head"><div class="admin-payment-avatar"><i class="fa-solid fa-user"></i></div><div class="admin-payment-info"><strong>${esc(name)}</strong><span>${esc(a.email||"—")}</span><small>ID: ${esc(a.id_number||"—")}</small></div></div><div class="admin-payment-body"><div class="payment-stat-grid"><div class="payment-stat approvals"><span>APPROVALS</span><strong>${s.approvals}</strong><small>${s.approvalPaid} paid · ${s.approvalUnpaid} unpaid</small></div><div class="payment-stat sales"><span>SALES</span><strong>${s.sales}</strong><small>${s.salePaid} paid · ${s.saleUnpaid} unpaid</small></div></div><div class="payment-card-total"><span>Paid Earnings</span><strong>${money(s.earned)}</strong></div><div class="payment-card-actions"><button class="manage-payment-btn" data-payment-admin="${esc(a.id)}" type="button"><i class="fa-solid fa-money-check-dollar"></i> Manage Payments</button></div></div></article>`
+  return`<article class="admin-payment-card"><div class="admin-payment-head"><div class="admin-payment-avatar"><i class="fa-solid fa-user"></i></div><div class="admin-payment-info"><strong>${esc(name)}</strong><span>${esc(a.email||"—")}</span><small class="agent-id">AGENT ID: ${esc(a.id_number||"Not assigned")}</small></div></div><div class="admin-payment-body"><div class="payment-stat-grid"><div class="payment-stat approvals"><span>APPROVALS</span><strong>${s.approvals}</strong><small>${s.approvalPaid} paid · ${s.approvalUnpaid} unpaid</small></div><div class="payment-stat sales"><span>SALES</span><strong>${s.sales}</strong><small>${s.salePaid} paid · ${s.saleUnpaid} unpaid</small></div></div><div class="payment-card-total"><span>Paid Earnings</span><strong>${money(s.earned)}</strong></div><div class="payment-card-actions"><button class="manage-payment-btn" data-payment-admin="${esc(a.id)}" type="button"><i class="fa-solid fa-money-check-dollar"></i> Manage Payments</button></div></div></article>`
  }).join("");
  grid.querySelectorAll("[data-payment-admin]").forEach(b=>b.onclick=()=>openPaymentAdmin(b.dataset.paymentAdmin))
 };
@@ -414,7 +485,24 @@ const init=async()=>{
  $("closeAgentModal")?.addEventListener("click",closeEditAdmin);
  $("cancelAgentEdit")?.addEventListener("click",closeEditAdmin);
  $("agentModalBg")?.addEventListener("click",closeEditAdmin);
-
+$("toggleEditPassword")?.addEventListener("click",()=>{
+ const input=$("editAdminPassword");
+ const btn=$("toggleEditPassword");
+ if(!input||!btn)return;
+ input.type=input.type==="password"?"text":"password";
+ btn.innerHTML=input.type==="password"
+  ?'<i class="fa-solid fa-eye"></i>'
+  :'<i class="fa-solid fa-eye-slash"></i>';
+});
+$("toggleEditPasswordConfirm")?.addEventListener("click",()=>{
+ const input=$("editAdminPasswordConfirm");
+ const btn=$("toggleEditPasswordConfirm");
+ if(!input||!btn)return;
+ input.type=input.type==="password"?"text":"password";
+ btn.innerHTML=input.type==="password"
+  ?'<i class="fa-solid fa-eye"></i>'
+  :'<i class="fa-solid fa-eye-slash"></i>';
+});
  $("menu")?.addEventListener("click",()=>{$("sidebar")?.classList.add("open");$("overlay")?.classList.add("show")});
 
  const closeMenu=()=>{$("sidebar")?.classList.remove("open");$("overlay")?.classList.remove("show")};

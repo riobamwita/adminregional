@@ -195,7 +195,7 @@ Logout
 
 <input id="newAdminIdNumber" type="text" placeholder="ID number">
 
-<input id="newAdminEmail" type="email" placeholder="Administrator email">
+<input id="newAdminEmail" type="email" placeholder="Agent email">
 
 <input id="newAdminPassword" type="password" placeholder="Password">
 
@@ -593,10 +593,21 @@ Mark All Sales Paid
 <p>Update the agent's account information.</p>
 </div>
 <div class="agent-form">
-<label>Database ID<input id="editAdminDbId" type="text" readonly></label>
-<label>ID Number<input id="editAdminIdNumber" type="text"></label>
-<label>Full Name<input id="editAdminName" type="text"></label>
-<label>Email<input id="editAdminEmail" type="email"></label>
+<label>Agent ID Number<input id="editAdminIdNumber" type="text" autocomplete="off"></label>
+<label>Full Name<input id="editAdminName" type="text" autocomplete="name"></label>
+<label>Email<input id="editAdminEmail" type="email" autocomplete="email"></label>
+<label>New Password
+<div class="password-edit-wrap">
+<input id="editAdminPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep current password">
+<button id="toggleEditPassword" type="button"><i class="fa-solid fa-eye"></i></button>
+</div>
+</label>
+<label>Confirm New Password
+<div class="password-edit-wrap">
+<input id="editAdminPasswordConfirm" type="password" autocomplete="new-password" placeholder="Repeat new password">
+<button id="toggleEditPasswordConfirm" type="button"><i class="fa-solid fa-eye"></i></button>
+</div>
+</label>
 </div>
 <div class="agent-modal-actions">
 <button id="cancelAgentEdit" class="cancel-btn" type="button">Cancel</button>
