@@ -111,6 +111,8 @@ Insurance Requests
 Statistics
 </a>
 
+<a class="side-link" data-permission="statistics" href="summary.html"><i class="fa-solid fa-chart-pie"></i> Summary</a>
+
 </nav>
 
 <div class="side-bottom">
@@ -579,6 +581,28 @@ Mark All Sales Paid
 
 </section>
 
+</div>
+
+<div class="agent-modal" id="agentModal">
+<div class="modal-bg" id="agentModalBg"></div>
+<section class="agent-modal-box">
+<button id="closeAgentModal" class="modal-close" type="button"><i class="fa-solid fa-xmark"></i></button>
+<div class="modal-head">
+<span>AGENT ACCOUNT</span>
+<h2>Edit <strong>Agent</strong></h2>
+<p>Update the agent's account information.</p>
+</div>
+<div class="agent-form">
+<label>Database ID<input id="editAdminDbId" type="text" readonly></label>
+<label>ID Number<input id="editAdminIdNumber" type="text"></label>
+<label>Full Name<input id="editAdminName" type="text"></label>
+<label>Email<input id="editAdminEmail" type="email"></label>
+</div>
+<div class="agent-modal-actions">
+<button id="cancelAgentEdit" class="cancel-btn" type="button">Cancel</button>
+<button id="saveAgentEdit" class="save-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+</div>
+</section>
 </div>
 
 <script type="module" src="admins.js"></script>
