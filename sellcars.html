@@ -155,45 +155,7 @@ Loading Sell Your Car Requests...
 </main>
 </div>
 
-<div id="requestModal" class="request-modal">
-
-<div class="request-bg" id="closeRequestBg"></div>
-
-<div class="request-box">
-
-<div class="request-head">
-<div>
-<span>SELL IN REQUEST</span>
-<h2 id="modalTitle">Request Details</h2>
-</div>
-<button id="closeRequest" type="button"><i class="fa-solid fa-xmark"></i></button>
-</div>
-
-<div id="modalBody"></div>
-
-<div class="modal-actions">
-
-<select id="modalStatus">
-<option value="new">New</option>
-<option value="contacted">Contacted</option>
-<option value="inspected">Inspected</option>
-<option value="completed">Completed</option>
-<option value="approved">Approved / In Inventory</option>
-<option value="cancelled">Cancelled</option>
-</select>
-
-<button id="saveStatus" class="primary-btn" type="button">
-Save Status
-</button>
-
-<button id="deleteRequest" class="delete-btn" type="button">
-Delete
-</button>
-
-</div>
-
-</div>
-</div>
+<div class="sell-detail" id="requestModal"><div class="detail-bg" id="closeRequestBg"></div><section class="sell-detail-shell"><header class="sell-detail-header"><div><span class="eyebrow"><i class="fa-solid fa-car-side"></i> SELL IN REQUEST</span><h2 id="modalTitle">Sell In Request</h2><p id="detailDate"></p></div><button class="modal-close" id="closeRequest" type="button"><i class="fa-solid fa-xmark"></i></button></header><div class="sell-detail-layout"><main class="sell-person-panel"><section class="sell-card status-card"><div class="detail-card-heading"><div><span class="section-kicker">REQUEST STATUS</span><h3>Request Management</h3></div><span id="detailStatusLabel" class="large-status new">NEW</span></div><div class="status-controls"><div class="status-select-wrap"><label for="modalStatus">Status</label><select id="modalStatus"><option value="new">New</option><option value="contacted">Contacted</option><option value="inspected">Inspected</option><option value="completed">Completed</option><option value="approved">Approved / In Inventory</option><option value="cancelled">Cancelled</option></select></div><button id="saveStatus" class="primary-action" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Status</button></div></section><div id="agentBanner"></div><section class="sell-card"><div class="detail-card-heading"><div><span class="section-kicker">SELLER</span><h3>Customer Information</h3></div><i class="fa-solid fa-user detail-heading-icon"></i></div><div id="customerDetails" class="detail-grid-large"></div><div id="contactActions" class="contact-actions-large"></div></section><section class="sell-card"><div class="detail-card-heading"><div><span class="section-kicker">FINANCIAL</span><h3>Sale Information</h3></div><i class="fa-solid fa-coins detail-heading-icon"></i></div><div id="financialDetails" class="detail-grid-large"></div></section><section class="sell-card"><div class="detail-card-heading"><div><span class="section-kicker">ADDITIONAL INFORMATION</span><h3>Seller Notes</h3></div><i class="fa-solid fa-note-sticky detail-heading-icon"></i></div><div id="additionalDetails" class="detail-grid-large"></div></section><div id="approvalContent"></div><section class="sell-card danger-card"><div><span class="section-kicker danger-kicker">DANGER ZONE</span><h3>Delete Sell In Request</h3><p>This permanently removes this sell-in request and its submitted files.</p></div><button id="deleteRequest" class="delete-action" type="button"><i class="fa-solid fa-trash"></i> Delete Request</button></section></main><aside class="sell-vehicle-panel"><section class="sell-card vehicle-hero-card"><div class="source-card-top"><span class="section-kicker">SELL IN VEHICLE</span><span class="source-type-badge sell"><i class="fa-solid fa-car-side"></i> SELL-IN</span></div><div class="source-title"><h3 id="vehicleTitle">Vehicle</h3><p id="vehicleMeta">Vehicle information</p></div></section><section class="sell-card vehicle-summary-card"><div class="detail-card-heading"><div><span class="section-kicker">VEHICLE</span><h3>Vehicle Details</h3></div><i class="fa-solid fa-car detail-heading-icon"></i></div><div id="vehicleDetails" class="detail-grid-large"></div></section><section class="sell-card files-card"><div class="detail-card-heading"><div><span class="section-kicker">SUBMITTED FILES</span><h3>Documents & Photos</h3></div><i class="fa-solid fa-paperclip detail-heading-icon"></i></div><div id="filesContent"></div></section></aside></div></section></div>
 
 <script type="module" src="sellcars.js"></script>
 
