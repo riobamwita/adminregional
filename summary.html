@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="summary.css"><title>Admin | Business Summary</title></head><body>
+<div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div>
+<header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-chart-pie"></i> SUMMARY</div><button class="menu" id="menu"><i class="fa-solid fa-bars"></i></button></div></header>
+<div class="admin-layout"><div id="adminNav"></div><main class="main">
+<section class="page-heading"><div><span class="eyebrow"><b></b> BUSINESS OVERVIEW</span><h1>Executive <strong>Summary</strong></h1><p>One chronological view of inventory, sales, customers and operational requests.</p></div><div class="heading-actions"><button class="outline-btn" id="refreshSummary"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button><button class="primary-btn" id="exportCsv"><i class="fa-solid fa-file-csv"></i> Export CSV</button></div></section>
+
+<section class="summary-filter listing-panel">
+<div class="filter-title"><div><span class="eyebrow dark"><b></b> REPORT PERIOD</span><h2>Chronological Filter</h2></div><span id="periodLabel" class="period-label">All time</span></div>
+<div class="period-buttons"><button data-period="today">Today</button><button data-period="7">7 Days</button><button data-period="30" class="active">30 Days</button><button data-period="90">90 Days</button><button data-period="year">This Year</button><button data-period="all">All Time</button></div>
+<div class="date-range"><label>From<input id="dateFrom" type="date"></label><label>To<input id="dateTo" type="date"></label><button class="outline-btn" id="applyDates"><i class="fa-solid fa-filter"></i> Apply</button><button class="outline-btn" id="clearDates">Clear</button></div>
+</section>
+
+<section class="stats summary-stats">
+<div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div><div><span>Total Activity</span><strong id="totalActivity">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-users"></i></div><div><span>Customer Requests</span><strong id="totalRequests">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-car"></i></div><div><span>Active Inventory</span><strong id="activeInventory">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-tags"></i></div><div><span>Sales in Period</span><strong id="salesCount">0</strong></div></div>
+<div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-coins"></i></div><div><span>Sales Value</span><strong id="salesValue">KES 0</strong></div></div>
+</section>
+
+<div id="error" class="error"></div><div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading summary...</div>
+
+<section class="summary-grid">
+<div class="summary-panel listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> REQUEST PIPELINE</span><h2>Customer Requests</h2></div></div><div id="requestBreakdown" class="metric-list"></div></div>
+<div class="summary-panel listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> INVENTORY</span><h2>Vehicle Position</h2></div></div><div id="inventoryBreakdown" class="metric-list"></div></div>
+<div class="summary-panel listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> REVENUE</span><h2>Sales Performance</h2></div></div><div id="revenueBreakdown" class="metric-list"></div></div>
+<div class="summary-panel listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> OPERATIONS</span><h2>Service Activity</h2></div></div><div id="operationsBreakdown" class="metric-list"></div></div>
+</section>
+
+<section class="summary-grid wide">
+<div class="listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> DEMAND</span><h2>Request Sources</h2></div></div><div id="sourceBars" class="bar-list"></div></div>
+<div class="listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> STATUS</span><h2>Workflow Distribution</h2></div></div><div id="statusBars" class="bar-list"></div></div>
+</section>
+
+<section class="listing-panel activity-panel">
+<div class="panel-head"><div><span class="eyebrow dark"><b></b> CHRONOLOGY</span><h2>All Activity</h2></div><div class="activity-tools"><input id="activitySearch" type="search" placeholder="Search activity..."><select id="activitySource"><option value="all">All Sources</option></select><select id="activityLimit"><option value="25">25 rows</option><option value="50">50 rows</option><option value="100">100 rows</option></select></div></div>
+<div class="activity-wrap"><table class="activity-table"><thead><tr><th>Date</th><th>Source</th><th>Customer / Record</th><th>Reference</th><th>Status</th><th>Value</th></tr></thead><tbody id="activityBody"></tbody></table></div>
+<div id="activityEmpty" class="empty-inline"><i class="fa-solid fa-inbox"></i><span>No activity matches the current filters.</span></div>
+</section>
+
+<section class="listing-panel detail-panel">
+<div class="panel-head"><div><span class="eyebrow dark"><b></b> DETAIL</span><h2>Operational Metrics</h2></div></div>
+<div id="detailMetrics" class="detail-metric-grid"></div>
+</section>
+</main></div>
+<script type="module">import{loadAdminNav}from"./admin-nav.js";loadAdminNav()</script><script type="module" src="summary.js"></script></body></html>
