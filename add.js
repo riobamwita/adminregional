@@ -334,14 +334,18 @@ form.onsubmit = async event => {
 
 async function initialise() {
     try {
-        catalog = await initVehicleCatalogue({
+
+
+catalog = await initVehicleCatalogue({
     makeId: "make",
     modelId: "model",
+    yearId: "year",
     bodyId: "body_type",
     fuelId: "fuel_type",
     transId: "transmission",
     driveId: "drive_type"
 });
+
 
         if (!catalog.rows.length) {
             showMessage(
