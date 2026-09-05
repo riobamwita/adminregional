@@ -95,19 +95,15 @@ function safeFileName(name) {
 function populateYears(id) {
     const select = $(id);
     const currentYear = new Date().getFullYear();
-
     select.innerHTML = '<option value="">Select</option>';
-
-    for (let year = currentYear; year >= 2016; year--) {
+    for (let year = currentYear; year >= 1990; year--) {
         const option = document.createElement("option");
-
         option.value = year;
         option.textContent = year;
-
         select.appendChild(option);
     }
 }
-
+populateYears("year");
 populateYears("import_year");
 populateYears("registration_year");
 
@@ -339,14 +335,13 @@ form.onsubmit = async event => {
 async function initialise() {
     try {
         catalog = await initVehicleCatalogue({
-            makeId: "make",
-            modelId: "model",
-            yearId: "year",
-            bodyId: "body_type",
-            fuelId: "fuel_type",
-            transId: "transmission",
-            driveId: "drive_type"
-        });
+    makeId: "make",
+    modelId: "model",
+    bodyId: "body_type",
+    fuelId: "fuel_type",
+    transId: "transmission",
+    driveId: "drive_type"
+});
 
         if (!catalog.rows.length) {
             showMessage(

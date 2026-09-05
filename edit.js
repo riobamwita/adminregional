@@ -115,6 +115,7 @@ function populateYears(id) {
     }
 }
 
+populateYears("year");
 populateYears("import_year");
 populateYears("registration_year");
 
@@ -208,24 +209,24 @@ async function loadVehicle() {
          */
         try {
             catalog = await initVehicleCatalogue({
-                makeId: "make",
-                modelId: "model",
-                yearId: "year",
-                bodyId: "body_type",
-                fuelId: "fuel_type",
-                transId: "transmission",
-                driveId: "drive_type"
-            });
+    makeId: "make",
+    modelId: "model",
+    bodyId: "body_type",
+    fuelId: "fuel_type",
+    transId: "transmission",
+    driveId: "drive_type"
+});
 
             catalog.setVehicleValues({
-                make: car.make,
-                model: car.model,
-                year: car.year,
-                body_type: car.body_type,
-                fuel_type: car.fuel_type,
-                transmission: car.transmission,
-                drive_type: car.drive_type
-            });
+    make: car.make,
+    model: car.model,
+    body_type: car.body_type,
+    fuel_type: car.fuel_type,
+    transmission: car.transmission,
+    drive_type: car.drive_type
+});
+
+$("year").value = car.year != null ? String(car.year) : "";
 
         } catch (catalogError) {
             /*
