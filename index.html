@@ -2,29 +2,7 @@
 <div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div>
 <header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div><button class="menu" id="menu"><i class="fa-solid fa-bars"></i></button></div></header>
 <div class="admin-layout">
-<aside class="sidebar" id="sidebar">
-<div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional</strong></div><button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button></div>
-<nav>
-<a class="side-link active" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a>
-<a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a>
-<a class="side-link" data-permission="tradeins" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
-<a class="side-link" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a>
-<a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
-<a class="side-link" data-permission="financing" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a>
-<a class="side-link" data-permission="diaspora" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a>
-<a class="side-link" data-permission="sellcars" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell Your Car Requests</a>
-<a class="side-link" data-permission="accessiblecars" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a><a class="side-link" data-permission="reservations" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a>
-<a class="side-link" data-permission="testdrives" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a>
-<a class="side-link" data-permission="insurance" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a>
-<a class="side-link" data-permission="statistics" href="statistics.html"><i class="fa-solid fa-chart-column"></i> Income Statistics</a>
-<a class="side-link" data-permission="statistics" href="summary.html"><i class="fa-solid fa-chart-pie"></i> Summary</a>
-<div class="side-bottom">
-<span class="side-title">ACCOUNT</span>
-<a class="side-link" data-permission="admins" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Agents</a><a class="side-link" data-permission="webpage" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a>
-<button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-</div>
-</aside>
-<div class="overlay" id="overlay"></div>
+<div id="adminNav"></div>
 <main class="main">
 <section class="page-heading"><div><span class="eyebrow"><b></b> ADMIN DASHBOARD</span><h1>Vehicle <strong>Listings</strong></h1><p>Manage inventory, deals and customer requests.</p></div><a href="add.html" class="primary-btn add-vehicle"><i class="fa-solid fa-plus"></i> Add Vehicle</a></section>
 <section class="stats">
@@ -77,4 +55,4 @@
 </section>
 </main>
 </div>
-<script type="module" src="script.js"></script></body></html>
+<script type="module">import{loadAdminNav}from"./admin-nav.js";loadAdminNav()</script><script type="module" src="script.js"></script></body></html>
