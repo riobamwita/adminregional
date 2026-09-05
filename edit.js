@@ -208,9 +208,11 @@ async function loadVehicle() {
          * existing vehicle from being edited.
          */
         try {
-            catalog = await initVehicleCatalogue({
+         
+catalog = await initVehicleCatalogue({
     makeId: "make",
     modelId: "model",
+    yearId: "year",
     bodyId: "body_type",
     fuelId: "fuel_type",
     transId: "transmission",
