@@ -16,11 +16,7 @@ const galleryInput = $("galleryInput");
 const displayPreview = $("displayPreview");
 const galleryPreview = $("galleryPreview");
 
-let car = null;
-let gallery = [];
-let newDisplay = null;
-let removeDisplay = false;
-let catalog = null;
+let car=null,gallery=[],newDisplay=null,removeDisplay=false,catalog=null,manualEngine=false,manualDescription=false;
 
 const fields = [
     "make",
@@ -74,6 +70,10 @@ const numericFields = new Set([
     "registration_year"
 ]);
 
+function generateVehicleText(){const v=id=>$(id)?.value?.trim()||"",make=v("make"),model=v("model"),trim=v("trim"),year=v("year"),body=v("body_type"),size=v("engine_size"),hp=v("horsepower"),fuel=v("fuel_type"),trans=v("transmission"),drive=v("drive_type"),mileage=v("mileage"),condition=v("condition"),ext=v("exterior_color"),int=v("interior_color"),seats=v("seats"),doors=v("doors"),origin=v("country_of_origin"),reg=v("registration_year"),service=v("service_history"),accident=v("accident_history"),engine=[size?`${size}L`:"",hp?`${hp} hp`:"",fuel,trans,drive].filter(Boolean).join(" • "),name=[year,make,model,trim].filter(Boolean).join(" ");if(!manualEngine&&$("engine_description"))$("engine_description").value=engine;if(!manualDescription&&$("description"))$("description").value=`${name||"This vehicle"}${body?` is a ${body.toLowerCase()}`:""}${engine?`, powered by ${engine}`:""}. ${mileage?`It has covered ${Number(mileage).toLocaleString("en-KE")} km. `:""}${condition?`The vehicle is in ${condition.toLowerCase()} condition. `:""}${ext?`The exterior is finished in ${ext}. `:""}${int?`The interior is ${int}. `:""}${seats?`It has ${seats} seats${doors?` and ${doors} doors`:""}. `:""}${origin?`Country of origin: ${origin}. `:""}${reg?`Registered in ${reg}. `:""}${service?`Service history: ${service}. `:""}${accident?`Accident history: ${accident}. `:""}`.trim()}
+$("engine_description")?.addEventListener("input",()=>manualEngine=true);
+$("description")?.addEventListener("input",()=>manualDescription=true);
+["make","model","trim","year","body_type","engine_size","horsepower","fuel_type","transmission","drive_type","mileage","condition","exterior_color","interior_color","seats","doors","country_of_origin","registration_year","service_history","accident_history"].forEach(id=>$(id)?.addEventListener("change",()=>{manualEngine=false;manualDescription=false;generateVehicleText()}));
 function showMessage(id, text) {
     const element = $(id);
 
@@ -275,6 +275,9 @@ $("year").value = car.year != null ? String(car.year) : "";
                     ? String(car[field])
                     : "";
         });
+
+        manualEngine=!!car.engine_description;
+manualDescription=!!car.description;
 
         $("negotiable").checked = !!car.negotiable;
 
