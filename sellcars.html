@@ -1,31 +1,282 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="assets/logo.jpg"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="sellcars.css"><title>Admin | Sell In</title></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="assets/logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="sellcars.css">
+<title>Admin | Sell In</title>
+</head>
+<body>
+
 <div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS</p></div>
-<header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg" alt=""><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div><button id="menu" class="menu" type="button"><i class="fa-solid fa-bars"></i></button></div></header>
-<div class="admin-layout"><aside class="sidebar" id="sidebar"><div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional</strong></div><button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button></div><nav>
-<a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a><a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a><a class="side-link" data-permission="tradeins" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a><a class="side-link" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a><a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a><a class="side-link" data-permission="financing" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a><a class="side-link" data-permission="diaspora" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a><a class="side-link active" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell Your Car Requests</a><a class="side-link" data-permission="accessiblecars" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a><a class="side-link" data-permission="reservations" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a><a class="side-link" data-permission="testdrives" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a><a class="side-link" data-permission="insurance" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a><a class="side-link" data-permission="statistics" href="statistics.html"><i class="fa-solid fa-chart-column"></i> Statistics</a><a class="side-link" data-permission="statistics" href="summary.html"><i class="fa-solid fa-chart-pie"></i> Summary</a></nav>
-<div class="side-bottom"><span class="side-title">ACCOUNT</span><a class="side-link" data-permission="admins" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Agents</a><a class="side-link" data-permission="webpage" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a><button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></div></aside><div class="overlay" id="overlay"></div>
-<main class="main"><div class="page-heading"><div><span class="eyebrow"><b></b> ADMIN REQUESTS</span><h1>SELL IN <strong>REQUESTS</strong></h1><p>Review vehicle valuation requests, negotiate purchases and add approved vehicles to inventory.</p></div><button class="primary-btn" id="refreshBtn" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
-<div class="stats"><div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-inbox"></i></div><div><span>Total</span><strong id="totalRequests">0</strong></div></div><div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-bell"></i></div><div><span>New</span><strong id="newRequests">0</strong></div></div><div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-phone"></i></div><div><span>Contacted</span><strong id="contactedRequests">0</strong></div></div><div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-car"></i></div><div><span>Inspected</span><strong id="inspectedRequests">0</strong></div></div><div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-check"></i></div><div><span>Approved</span><strong id="completedRequests">0</strong></div></div></div>
-<section class="listing-panel"><div class="panel-head"><div><span class="eyebrow dark"><b></b> VEHICLE VALUATIONS</span><h2>Sell In</h2></div></div><div id="error" class="error"></div><div class="toolbar"><label class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search name, phone, registration, make, model..."></label><select id="statusFilter"><option value="all">All Statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="inspected">Inspected</option><option value="completed">Completed</option><option value="approved">Approved / In Inventory</option><option value="cancelled">Cancelled</option></select><select id="sortFilter"><option value="newest">Newest First</option><option value="oldest">Oldest First</option><option value="price-high">Price High → Low</option><option value="price-low">Price Low → High</option></select></div><div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading Sell Your Car Requests...</div><div id="empty" class="empty"><div><i class="fa-solid fa-car-side"></i></div><h3>No Sell In Requests</h3><p>Customer and agent vehicle valuation requests will appear here.</p></div><div id="requestsGrid" class="requests-grid"></div></section></main></div>
 
-<div class="sell-detail" id="requestModal"><div class="detail-bg" id="closeRequestBg"></div><section class="sell-detail-shell">
-<header class="sell-detail-header"><div><span class="eyebrow"><i class="fa-solid fa-car-side"></i> SELL IN REQUEST</span><h2 id="modalTitle">Sell In Request</h2><p id="detailDate"></p></div><div class="modal-head-actions"><button id="downloadForm" class="header-action" type="button"><i class="fa-solid fa-file-arrow-down"></i> Download Form</button><button class="modal-close" id="closeRequest" type="button"><i class="fa-solid fa-xmark"></i></button></div></header>
-<div class="sell-detail-layout"><main class="sell-person-panel">
-<section class="sell-card status-card"><div class="detail-card-heading"><div><span class="section-kicker">REQUEST STATUS</span><h3>Request Management</h3></div><span id="detailStatusLabel" class="large-status new">NEW</span></div><div class="status-controls"><div class="status-select-wrap"><label>Status</label><select id="modalStatus"><option value="new">New</option><option value="contacted">Contacted</option><option value="inspected">Inspected</option><option value="completed">Completed</option><option value="approved">Approved / In Inventory</option><option value="cancelled">Cancelled</option></select></div><button id="saveStatus" class="primary-action" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Status</button></div></section>
-<div id="agentBanner"></div>
-<section class="sell-card"><div class="detail-card-heading"><div><span class="section-kicker">SELLER</span><h3>Customer Information</h3></div><i class="fa-solid fa-user detail-heading-icon"></i></div><div id="customerDetails" class="detail-grid-large"></div><div id="contactActions" class="contact-actions-large"></div></section>
-<section class="sell-card"><div class="detail-card-heading"><div><span class="section-kicker">FINANCIAL</span><h3>Sale Information</h3></div><i class="fa-solid fa-coins detail-heading-icon"></i></div><div id="financialDetails" class="detail-grid-large"></div></section>
-<section class="sell-card"><div class="detail-card-heading"><div><span class="section-kicker">ADDITIONAL INFORMATION</span><h3>Seller Notes</h3></div><i class="fa-solid fa-note-sticky detail-heading-icon"></i></div><div id="additionalDetails" class="detail-grid-large"></div></section>
-<div id="approvalContent"></div>
-<section class="sell-card danger-card"><div><span class="section-kicker danger-kicker">DANGER ZONE</span><h3>Delete Sell In Request</h3><p>This permanently removes this sell-in request and its submitted files.</p></div><button id="deleteRequest" class="delete-action" type="button"><i class="fa-solid fa-trash"></i> Delete Request</button></section>
-</main>
-<aside class="sell-vehicle-panel"><section class="sell-card vehicle-hero-card"><div class="source-card-top"><span class="section-kicker">SELL IN VEHICLE</span><span class="source-type-badge sell"><i class="fa-solid fa-car-side"></i> SELL-IN</span></div><div class="source-title"><h3 id="vehicleTitle">Vehicle</h3><p id="vehicleMeta">Vehicle information</p></div><div class="vehicle-actions"><button id="editVehicleBtn" class="vehicle-edit-btn" type="button"><i class="fa-solid fa-pen-to-square"></i> Edit Vehicle</button></div></section>
-<section class="sell-card vehicle-summary-card"><div class="detail-card-heading"><div><span class="section-kicker">VEHICLE</span><h3>Vehicle Details</h3></div><i class="fa-solid fa-car detail-heading-icon"></i></div><div id="vehicleDetails" class="detail-grid-large"></div></section>
-<section class="sell-card files-card"><div class="detail-card-heading"><div><span class="section-kicker">SUBMITTED FILES</span><h3>Documents & Photos</h3></div><i class="fa-solid fa-paperclip detail-heading-icon"></i></div><div id="filesContent"></div></section></aside></div></section></div>
+<header class="header">
+  <div class="nav wrap">
+    <a class="brand" href="index.html"><img src="assets/logo.jpg" alt=""><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a>
+    <div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div>
+    <button id="menu" class="menu" type="button"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</header>
 
-<div class="editor-modal" id="editorModal"><div class="editor-bg" id="closeEditorBg"></div><section class="editor-shell"><header class="editor-header"><div><span class="section-kicker">VEHICLE EDITOR</span><h2 id="editorTitle">Edit Vehicle</h2><p id="editorMode">Changes will be saved directly to the vehicle record.</p></div><button id="closeEditor" class="modal-close" type="button"><i class="fa-solid fa-xmark"></i></button></header><div class="editor-body"><div id="editorMessage"></div><form id="vehicleEditorForm"><div id="vehicleEditorFields" class="editor-grid"></div><div class="editor-images"><div class="editor-section-title"><span class="section-kicker">IMAGES</span><h3>Vehicle Images</h3></div><div class="image-upload-row"><label class="upload-btn"><i class="fa-solid fa-image"></i> Add Gallery Images<input id="editorGalleryInput" type="file" accept="image/*" multiple hidden></label><label class="upload-btn"><i class="fa-solid fa-star"></i> Replace Display Image<input id="editorDisplayInput" type="file" accept="image/*" hidden></label></div><div id="editorGallery" class="editor-gallery"></div></div><div class="editor-footer"><button id="cancelEditor" class="secondary-action" type="button">Cancel</button><button class="primary-action editor-save" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button></div></form></div></section></div>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <div><span>ADMIN PANEL</span><strong>Regional</strong></div>
+      <button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <nav>
+      <a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a>
+      <a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a>
+      <a class="side-link" data-permission="tradeins" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
+      <a class="side-link" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a>
+      <a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
+      <a class="side-link" data-permission="financing" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a>
+      <a class="side-link" data-permission="diaspora" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a>
+      <a class="side-link active" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell Your Car Requests</a>
+      <a class="side-link" data-permission="accessiblecars" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a>
+      <a class="side-link" data-permission="reservations" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a>
+      <a class="side-link" data-permission="testdrives" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a>
+      <a class="side-link" data-permission="insurance" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a>
+      <a class="side-link" data-permission="statistics" href="statistics.html"><i class="fa-solid fa-chart-column"></i> Statistics</a>
+      <a class="side-link" data-permission="statistics" href="summary.html"><i class="fa-solid fa-chart-pie"></i> Summary</a>
+    </nav>
+    <div class="side-bottom">
+      <span class="side-title">ACCOUNT</span>
+      <a class="side-link" data-permission="admins" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Agents</a>
+      <a class="side-link" data-permission="webpage" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a>
+      <button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    </div>
+  </aside>
 
-<div class="lightbox" id="lightbox"><div class="lightbox-bg" id="lightboxBg"></div><button id="lightboxClose" class="lightbox-close" type="button"><i class="fa-solid fa-xmark"></i></button><button id="lightboxPrev" class="lightbox-nav prev" type="button"><i class="fa-solid fa-chevron-left"></i></button><img id="lightboxImage" src="" alt="Vehicle image"><button id="lightboxNext" class="lightbox-nav next" type="button"><i class="fa-solid fa-chevron-right"></i></button><div id="lightboxCount" class="lightbox-count"></div></div>
+  <div class="overlay" id="overlay"></div>
 
+  <main class="main">
+    <div class="page-heading">
+      <div>
+        <span class="eyebrow"><b></b> ADMIN REQUESTS</span>
+        <h1>SELL IN <strong>REQUESTS</strong></h1>
+        <p>Review vehicle valuation requests, negotiate purchases and add approved vehicles to inventory.</p>
+      </div>
+      <button class="primary-btn" id="refreshBtn" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-inbox"></i></div><div><span>Total</span><strong id="totalRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-bell"></i></div><div><span>New</span><strong id="newRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-phone"></i></div><div><span>Contacted</span><strong id="contactedRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-car"></i></div><div><span>Inspected</span><strong id="inspectedRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-check"></i></div><div><span>Approved</span><strong id="completedRequests">0</strong></div></div>
+    </div>
+
+    <section class="listing-panel">
+      <div class="panel-head">
+        <div><span class="eyebrow dark"><b></b> VEHICLE VALUATIONS</span><h2>Sell In</h2></div>
+      </div>
+
+      <div id="error" class="error"></div>
+
+      <div class="toolbar">
+        <label class="search"><i class="fa-solid fa-magnifying-glass"></i>
+          <input id="searchInput" type="search" placeholder="Search name, phone, registration, make, model...">
+        </label>
+        <select id="statusFilter">
+          <option value="all">All Statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="inspected">Inspected</option>
+          <option value="completed">Completed</option>
+          <option value="approved">Approved / In Inventory</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="sortFilter">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="price-high">Price High → Low</option>
+          <option value="price-low">Price Low → High</option>
+        </select>
+      </div>
+
+      <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading Sell Your Car Requests...</div>
+
+      <div id="empty" class="empty">
+        <div><i class="fa-solid fa-car-side"></i></div>
+        <h3>No Sell In Requests</h3>
+        <p>Customer and agent vehicle valuation requests will appear here.</p>
+      </div>
+
+      <div id="requestsGrid" class="requests-grid"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ===================== REQUEST DETAIL MODAL ===================== -->
+<div class="sell-detail" id="requestModal">
+  <div class="detail-bg" id="closeRequestBg"></div>
+  <section class="sell-detail-shell">
+    <header class="sell-detail-header">
+      <div>
+        <span class="eyebrow"><i class="fa-solid fa-car-side"></i> SELL IN REQUEST</span>
+        <h2 id="modalTitle">Sell In Request</h2>
+        <p id="detailDate"></p>
+      </div>
+      <div class="modal-head-actions">
+        <button id="downloadForm" class="header-action" type="button"><i class="fa-solid fa-file-arrow-down"></i> Download Form</button>
+        <button class="modal-close" id="closeRequest" type="button"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </header>
+
+    <div class="sell-detail-layout">
+      <main class="sell-person-panel">
+        <section class="sell-card status-card">
+          <div class="detail-card-heading">
+            <div><span class="section-kicker">REQUEST STATUS</span><h3>Request Management</h3></div>
+            <span id="detailStatusLabel" class="large-status new">NEW</span>
+          </div>
+          <div class="status-controls">
+            <div class="status-select-wrap">
+              <label>Status</label>
+              <select id="modalStatus">
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="inspected">Inspected</option>
+                <option value="completed">Completed</option>
+                <option value="approved">Approved / In Inventory</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <button id="saveStatus" class="primary-action" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Status</button>
+          </div>
+        </section>
+
+        <div id="agentBanner"></div>
+
+        <section class="sell-card">
+          <div class="detail-card-heading">
+            <div><span class="section-kicker">SELLER</span><h3>Customer Information</h3></div>
+            <i class="fa-solid fa-user detail-heading-icon"></i>
+          </div>
+          <div id="customerDetails" class="detail-grid-large"></div>
+          <div id="contactActions" class="contact-actions-large"></div>
+        </section>
+
+        <section class="sell-card">
+          <div class="detail-card-heading">
+            <div><span class="section-kicker">FINANCIAL</span><h3>Sale Information</h3></div>
+            <i class="fa-solid fa-coins detail-heading-icon"></i>
+          </div>
+          <div id="financialDetails" class="detail-grid-large"></div>
+        </section>
+
+        <section class="sell-card">
+          <div class="detail-card-heading">
+            <div><span class="section-kicker">ADDITIONAL INFORMATION</span><h3>Seller Notes</h3></div>
+            <i class="fa-solid fa-note-sticky detail-heading-icon"></i>
+          </div>
+          <div id="additionalDetails" class="detail-grid-large"></div>
+        </section>
+
+        <div id="approvalContent"></div>
+
+        <section class="sell-card danger-card">
+          <div>
+            <span class="section-kicker danger-kicker">DANGER ZONE</span>
+            <h3>Delete Sell In Request</h3>
+            <p>This permanently removes this sell-in request and its submitted files.</p>
+          </div>
+          <button id="deleteRequest" class="delete-action" type="button"><i class="fa-solid fa-trash"></i> Delete Request</button>
+        </section>
+      </main>
+
+      <aside class="sell-vehicle-panel">
+        <section class="sell-card vehicle-hero-card">
+          <div class="source-card-top">
+            <span class="section-kicker">SELL IN VEHICLE</span>
+            <span class="source-type-badge sell"><i class="fa-solid fa-car-side"></i> SELL-IN</span>
+          </div>
+          <div class="source-title">
+            <h3 id="vehicleTitle">Vehicle</h3>
+            <p id="vehicleMeta">Vehicle information</p>
+          </div>
+          <div class="vehicle-actions">
+            <button id="editVehicleBtn" class="vehicle-edit-btn" type="button"><i class="fa-solid fa-pen-to-square"></i> Edit Vehicle</button>
+          </div>
+        </section>
+
+        <section class="sell-card vehicle-summary-card">
+          <div class="detail-card-heading">
+            <div><span class="section-kicker">VEHICLE</span><h3>Vehicle Details</h3></div>
+            <i class="fa-solid fa-car detail-heading-icon"></i>
+          </div>
+          <div id="vehicleDetails" class="detail-grid-large"></div>
+        </section>
+
+        <section class="sell-card files-card">
+          <div class="detail-card-heading">
+            <div><span class="section-kicker">SUBMITTED FILES</span><h3>Documents & Photos</h3></div>
+            <i class="fa-solid fa-paperclip detail-heading-icon"></i>
+          </div>
+          <div id="filesContent"></div>
+        </section>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== VEHICLE EDITOR MODAL ===================== -->
+<div class="editor-modal" id="editorModal">
+  <div class="editor-bg" id="closeEditorBg"></div>
+  <section class="editor-shell">
+    <header class="editor-header">
+      <div>
+        <span class="section-kicker">VEHICLE EDITOR</span>
+        <h2 id="editorTitle">Edit Vehicle</h2>
+        <p id="editorMode">Changes will be saved to the request record.</p>
+      </div>
+      <button id="closeEditor" class="modal-close" type="button"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+    <div class="editor-body">
+      <div id="editorMessage"></div>
+      <form id="vehicleEditorForm">
+        <div id="vehicleEditorFields" class="editor-grid"></div>
+
+        <div class="editor-gallery-card">
+          <div class="editor-section-title">
+            <span class="section-kicker">IMAGES</span>
+            <h3>Vehicle Images</h3>
+          </div>
+          <div class="image-upload-row">
+            <label class="upload-btn"><i class="fa-solid fa-image"></i> Add Gallery Images<input id="editorGalleryInput" type="file" accept="image/*" multiple hidden></label>
+            <label class="upload-btn"><i class="fa-solid fa-star"></i> Replace Display Image<input id="editorDisplayInput" type="file" accept="image/*" hidden></label>
+          </div>
+          <div id="editorGallery" class="editor-gallery"></div>
+        </div>
+
+        <div class="editor-footer">
+          <button id="cancelEditor" class="secondary-action" type="button">Cancel</button>
+          <button class="primary-action editor-save" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== LIGHTBOX ===================== -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-bg" id="lightboxBg"></div>
+  <button id="lightboxClose" class="lightbox-close" type="button"><i class="fa-solid fa-xmark"></i></button>
+  <button id="lightboxPrev" class="lightbox-nav prev" type="button"><i class="fa-solid fa-chevron-left"></i></button>
+  <img id="lightboxImage" src="" alt="Vehicle image">
+  <button id="lightboxNext" class="lightbox-nav next" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+  <div id="lightboxCount" class="lightbox-count"></div>
+</div>
+
+<!-- printable form target -->
 <div id="printForm" class="print-form"></div>
-<script type="module" src="sellcars.js"></script></body></html>
+
+<script type="module" src="sellcars.js"></script>
+</body>
+</html>
