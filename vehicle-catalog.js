@@ -177,31 +177,31 @@ export async function initVehicleCatalogue({
         );
     }
 
-    function validate() {
-        if (!make.value) return "Please select a make.";
-        if (!model.value) return "Please select a model.";
+    function validate({ skipYear = false } = {}) {
+    if (!make.value) return "Please select a make.";
+    if (!model.value) return "Please select a model.";
 
-        const record = getModelRecord();
-        if (!record) return "Please select a valid make and model from the vehicle catalogue.";
+    const record = getModelRecord();
+    if (!record) return "Please select a valid make and model from the vehicle catalogue.";
 
-        if (year.value && record.years.length && !record.years.includes(Number(year.value))) {
-            return "Selected year is not valid for this model.";
-        }
-        if (body.value && record.body_types.length && !record.body_types.includes(body.value)) {
-            return "Selected body type is not valid for this model.";
-        }
-        if (fuel.value && record.fuel_types.length && !record.fuel_types.includes(fuel.value)) {
-            return "Selected fuel type is not valid for this model.";
-        }
-        if (trans.value && record.transmissions.length && !record.transmissions.includes(trans.value)) {
-            return "Selected transmission is not valid for this model.";
-        }
-        if (drive.value && record.drive_types.length && !record.drive_types.includes(drive.value)) {
-            return "Selected drive type is not valid for this model.";
-        }
-
-        return null;
+    if (!skipYear && year.value && record.years.length && !record.years.includes(Number(year.value))) {
+        return "Selected year is not valid for this model.";
     }
+    if (body.value && record.body_types.length && !record.body_types.includes(body.value)) {
+        return "Selected body type is not valid for this model.";
+    }
+    if (fuel.value && record.fuel_types.length && !record.fuel_types.includes(fuel.value)) {
+        return "Selected fuel type is not valid for this model.";
+    }
+    if (trans.value && record.transmissions.length && !record.transmissions.includes(trans.value)) {
+        return "Selected transmission is not valid for this model.";
+    }
+    if (drive.value && record.drive_types.length && !record.drive_types.includes(drive.value)) {
+        return "Selected drive type is not valid for this model.";
+    }
+
+    return null;
+}
 
     function setVehicleValues(values = {}) {
         const selectedMake = values.make || "";

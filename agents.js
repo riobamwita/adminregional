@@ -4,7 +4,7 @@
    - Scrollable lightbox with thumbnails & zoom
    - Download submission as printable form
    - Send submission back to agent for corrections
-   - Year fix (no client-side bounds other than number input)
+   - Mirrors year / vehicle edits into linked inventory car
    ============================================================ */
 
 import { supabase } from "./supabase.js";
@@ -24,6 +24,24 @@ const CATS = {
   interior_front: "Interior – front", interior_rear: "Interior – rear",
   dashboard: "Dashboard", odometer: "Odometer", engine_bay: "Engine bay",
   wheels_tyres: "Wheels / tyres", damage_feature: "Damage / notable feature"
+};
+
+/* Submission column → cars column mapping, for mirroring edits into inventory */
+const SUBMISSION_TO_CAR_FIELD = {
+  registration_number: "registration_number",
+  make:                "make",
+  model:               "model",
+  year:                "year",
+  body_type:           "body_type",
+  engine_cc:           "engine_size",
+  fuel_type:           "fuel_type",
+  transmission:        "transmission",
+  drive_type:          "drive_type",
+  mileage:             "mileage",
+  exterior_color:      "exterior_color",
+  seats:               "seats",
+  condition:           "condition",
+  description:         "description"
 };
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g,
@@ -275,7 +293,8 @@ function buildEditForm() {
       </button>
     </div>
     <p class="edit-note">
-      Saved changes are written back to the agent submission and are used when the vehicle is approved into inventory.
+      Saved changes are written back to the agent submission. If this submission
+      is already in inventory, the linked vehicle listing is updated too.
     </p>
   `;
 
@@ -312,18 +331,55 @@ async function saveVehicleEdits() {
 
   try {
     updates.updated_at = new Date().toISOString();
+
+    /* 1) Update the submission itself */
     const { error } = await supabase
       .from("agent_vehicle_submissions")
       .update(updates)
       .eq("id", current.id);
     if (error) throw error;
 
+    /* 2) If already in inventory, mirror the fields to the linked car */
+    if (current._car?.id) {
+      const carUpdates = {};
+
+      Object.entries(SUBMISSION_TO_CAR_FIELD).forEach(([subKey, carKey]) => {
+        if (subKey in updates) carUpdates[carKey] = updates[subKey];
+      });
+
+      if ("town_area" in updates) {
+        carUpdates.location = updates.town_area;
+        carUpdates.city     = updates.town_area;
+      }
+      if ("county" in updates) {
+        carUpdates.county = updates.county;
+      }
+
+      if (Object.keys(carUpdates).length) {
+        carUpdates.updated_at = new Date().toISOString();
+        const carRes = await supabase
+          .from("cars")
+          .update(carUpdates)
+          .eq("id", current._car.id);
+        if (carRes.error) {
+          console.warn("Failed to sync to inventory car:", carRes.error);
+          alert(
+            "Submission saved, but the linked inventory vehicle could not be updated:\n\n" +
+            carRes.error.message
+          );
+        }
+      }
+    }
+
+    /* 3) Refresh local state */
     current = { ...current, ...updates };
     submissions = submissions.map(x => (x.id === current.id ? current : x));
 
-    $("detailTitle").textContent = `${current.agent_name || current.agent_email || "Agent"} — ${current.make || ""} ${current.model || ""}`.trim();
+    $("detailTitle").textContent =
+      `${current.agent_name || current.agent_email || "Agent"} — ${current.make || ""} ${current.model || ""}`.trim();
     $("vehicleTitle").textContent = `${current.make || "Vehicle"} ${current.model || ""}`.trim();
-    $("vehicleMeta").textContent = [current.year, current.registration_number].filter(Boolean).join(" • ") || "Agent submitted vehicle";
+    $("vehicleMeta").textContent =
+      [current.year, current.registration_number].filter(Boolean).join(" • ") || "Agent submitted vehicle";
 
     renderSummary();
     render();
@@ -572,7 +628,6 @@ async function sendBackToAgent() {
   try {
     const now = new Date().toISOString();
 
-    // 1) Create the action row for the agent
     const { error: actionError } = await supabase
       .from("agent_vehicle_actions")
       .insert({
@@ -588,7 +643,6 @@ async function sendBackToAgent() {
       });
     if (actionError) throw actionError;
 
-    // 2) Update the submission status
     const { error: subError } = await supabase
       .from("agent_vehicle_submissions")
       .update({
@@ -830,7 +884,6 @@ function downloadAgentSubmission() {
   win.document.open();
   win.document.write(html);
   win.document.close();
-  // Give the images a moment, then trigger print dialog
   setTimeout(() => { try { win.focus(); win.print(); } catch(e) { /* user can print manually */ } }, 400);
 }
 
@@ -1003,7 +1056,6 @@ async function approveToInventory() {
     current = { ...current, ...saved, _car: { id: car.id, status: "available", source_request_id: current.id, source_type: "agent" } };
     submissions = submissions.map(x => (x.id === current.id ? current : x));
 
-    // Mark any open correction actions for this submission as completed
     await supabase.from("agent_vehicle_actions")
       .update({ completed: true, completed_at: now, updated_at: now })
       .eq("submission_id", current.id)
@@ -1068,7 +1120,6 @@ async function viewRequest(id) {
       ? `<div class="files-grid">${currentFiles.map((f, i) => fileCard(f, i)).join("")}</div>`
       : `<div class="notes"><p>No photos were submitted with this vehicle.</p></div>`;
 
-    // Status card also gets a "Download" quick action
     const statusCard = document.querySelector(".status-card .status-controls");
     if (statusCard && !statusCard.querySelector(".download-btn")) {
       const dl = document.createElement("button");
@@ -1091,7 +1142,6 @@ async function viewRequest(id) {
 
     wireReturnPanel();
 
-    // Lightbox wiring for photos
     $("filesContent").onclick = (e) => {
       const card = e.target.closest("[data-lightbox-index]");
       if (!card) return;

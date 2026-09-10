@@ -112,13 +112,12 @@ function safeFileName(name) {
     return String(name).toLowerCase().replace(/[^a-z0-9.]+/g, "-");
 }
 
-/* ---------------- YEAR FALLBACK ---------------- */
-
-/**
- * Populate a year <select> with a sensible fallback range.
- * Used ONLY for import_year / registration_year (fields that are NOT
- * managed by the vehicle catalogue cascade).
- */
+/* ---------------- YEAR RANGE (import_year / registration_year only) ---------------- */
+/*
+   The vehicle <select id="year"> is managed by the catalogue cascade, so we
+   do NOT populate it here. Only import_year and registration_year get a
+   static range.
+*/
 function populateYears(id) {
     const select = $(id);
     if (!select) return;
@@ -150,45 +149,71 @@ function populateYears(id) {
 populateYears("import_year");
 populateYears("registration_year");
 
-/* ---------------- YEAR SAFETY NET ---------------- */
+/* ---------------- YEAR OVERRIDE (admin can pick any year) ---------------- */
+
 /**
- * Guarantees the year <select> is editable and contains the car's stored
- * year even when vehicle_catalog has no years for this make/model.
- * Runs AFTER setVehicleValues() so it never fights the cascade.
+ * Rebuilds the year <select> with:
+ *   - every year already provided by the catalogue cascade
+ *   - every year from 1990 → (currentYear + 1)
+ *   - the preferredYear (usually car.year) if provided
+ *
+ * Sorted descending. Restores the selection.
+ *
+ * Call with no args after cascade updates.
+ * Call with car.year once on initial load.
  */
-function ensureYearSelectable() {
+function expandYearRange(preferredYear = null) {
     const sel = $("year");
     if (!sel) return;
 
-    const stored = car && car.year != null && car.year !== "" ? String(car.year) : "";
+    const currentYear = new Date().getFullYear();
+    const prevValue = sel.value;
+    const values = new Set(
+        [...sel.options].filter(o => o.value !== "").map(o => String(o.value))
+    );
 
-    /* Count real (non-placeholder) options currently in the list */
-    const real = [...sel.options].filter(o => o.value !== "");
+    for (let y = currentYear + 1; y >= 1990; y--) values.add(String(y));
 
-    /* If the catalog gave us nothing, fill a full range */
-    if (real.length === 0) {
-        const currentYear = new Date().getFullYear();
-        const minYear = 1990;
-        const maxYear = currentYear + 1;
-        sel.innerHTML = '<option value="">Select year</option>';
-        for (let y = maxYear; y >= minYear; y--) {
-            const opt = document.createElement("option");
-            opt.value = String(y);
-            opt.textContent = String(y);
-            sel.appendChild(opt);
-        }
+    if (preferredYear !== null && preferredYear !== undefined && preferredYear !== "") {
+        values.add(String(preferredYear));
     }
 
-    /* Always make sure the stored year exists */
-    if (stored && ![...sel.options].some(o => o.value === stored)) {
+    const sorted = [...values].sort((a, b) => Number(b) - Number(a));
+
+    sel.innerHTML = '<option value="">Select year</option>';
+    for (const v of sorted) {
         const opt = document.createElement("option");
-        opt.value = stored;
-        opt.textContent = stored;
+        opt.value = v;
+        opt.textContent = v;
         sel.appendChild(opt);
     }
 
-    if (stored) sel.value = stored;
+    const target = (preferredYear !== null && preferredYear !== undefined && preferredYear !== "")
+        ? String(preferredYear)
+        : prevValue;
+
+    if (target && sorted.includes(target)) sel.value = target;
+
     sel.disabled = false;
+}
+
+/**
+ * Wraps make/model onchange so we re-expand the year range after every
+ * cascade rewrite. Runs only once per element.
+ */
+function hookYearOverride() {
+    const wrap = (el, key) => {
+        if (!el || el.dataset[key]) return;
+        const original = el.onchange;
+        el.onchange = function (e) {
+            if (original) original.call(this, e);
+            setTimeout(() => expandYearRange(), 0);
+        };
+        el.dataset[key] = "1";
+    };
+
+    wrap($("make"), "yearHooked");
+    wrap($("model"), "yearHooked");
 }
 
 /* ---------------- DISPLAY IMAGE ---------------- */
@@ -262,7 +287,7 @@ async function loadVehicle() {
             catalog.setVehicleValues({
                 make: car.make,
                 model: car.model,
-                year: car.year,               // ← the missing bit from before
+                year: car.year,
                 body_type: car.body_type,
                 fuel_type: car.fuel_type,
                 transmission: car.transmission,
@@ -276,8 +301,9 @@ async function loadVehicle() {
             );
         }
 
-        /* -------- Year safety net (always runs) -------- */
-        ensureYearSelectable();
+        /* -------- Year override: full range + hook future cascade updates -------- */
+        hookYearOverride();
+        expandYearRange(car.year);
 
         /* -------- Populate ordinary fields -------- */
         fields.forEach(field => {
@@ -466,9 +492,13 @@ form.onsubmit = async event => {
     event.preventDefault();
     clearMessages();
 
-    /* Catalogue validation only if the catalogue actually loaded */
+    /*
+     * Catalogue validation:
+     *   skipYear = true → admin can save any year, even outside the catalogue.
+     *   Other dependent fields (body / fuel / transmission / drive) still validated.
+     */
     if (catalog && catalog.rows.length) {
-        const invalid = catalog.validate();
+        const invalid = catalog.validate({ skipYear: true });
         if (invalid) {
             showMessage("error", invalid);
             return;
