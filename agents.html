@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7941d">
+<link rel="icon" href="assets/logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="agents.css">
+<title>Admin | Agent Submissions</title>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-mark"><span></span><span></span><span></span></div>
+  <p>REGIONAL AUTOSELECTIONS</p>
+</div>
+
+<header class="header">
+  <div class="nav wrap">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.jpg" alt="Regional Autoselections Ltd">
+      <span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span>
+    </a>
+    <div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div>
+    <button class="menu" id="menu" type="button"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</header>
+
+<div class="admin-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <div><span>ADMIN PANEL</span><strong>Regional</strong></div>
+      <button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <nav>
+      <a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a>
+      <a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a>
+      <a class="side-link" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
+      <a class="side-link active" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a>
+      <a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
+      <a class="side-link" data-permission="financing" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a>
+      <a class="side-link" data-permission="diaspora" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a>
+      <a class="side-link" data-permission="sellcars" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell Your Car Requests</a>
+      <a class="side-link" data-permission="accessiblecars" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a>
+      <a class="side-link" data-permission="reservations" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a>
+      <a class="side-link" data-permission="testdrives" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a>
+      <a class="side-link" data-permission="insurance" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a>
+      <a class="side-link" data-permission="statistics" href="statistics.html"><i class="fa-solid fa-chart-column"></i> Income Statistics</a>
+      <a class="side-link" data-permission="statistics" href="summary.html"><i class="fa-solid fa-chart-pie"></i> Summary</a>
+      <div class="side-bottom">
+        <span class="side-title">ACCOUNT</span>
+        <a class="side-link" data-permission="admins" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Agents</a>
+        <a class="side-link" data-permission="webpage" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a>
+        <button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+
+    <div class="page-heading">
+      <div>
+        <span class="eyebrow"><b></b> ADMIN REQUESTS</span>
+        <h1>AGENT <strong>SUBMISSIONS</strong></h1>
+        <p>Review, edit and approve vehicles submitted by agents into live inventory.</p>
+      </div>
+      <button class="primary-btn" id="refreshBtn" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon gold"><i class="fa-solid fa-inbox"></i></div>
+        <div><span>Total Submissions</span><strong id="totalRequests">0</strong></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-clock"></i></div>
+        <div><span>Pending</span><strong id="pendingRequests">0</strong></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fa-solid fa-spinner"></i></div>
+        <div><span>Reviewing</span><strong id="reviewingRequests">0</strong></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-circle-check"></i></div>
+        <div><span>In Inventory</span><strong id="inventoryRequests">0</strong></div>
+      </div>
+    </div>
+
+    <section class="listing-panel">
+      <div class="panel-head">
+        <div>
+          <span class="eyebrow dark"><b></b> SUBMISSION QUEUE</span>
+          <h2>Submitted Vehicles</h2>
+        </div>
+      </div>
+
+      <div id="error" class="error"></div>
+
+      <div class="toolbar">
+        <div class="search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="searchInput" type="search" placeholder="Search agent, vehicle, registration or location...">
+        </div>
+        <select id="statusFilter">
+          <option value="all">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="reviewing">Reviewing</option>
+          <option value="approved">In Inventory</option>
+          <option value="returned">Returned</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <select id="sortFilter">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="price-high">Asking Price High</option>
+          <option value="price-low">Asking Price Low</option>
+        </select>
+      </div>
+
+      <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading submissions...</div>
+
+      <div id="empty" class="empty">
+        <div><i class="fa-solid fa-file-circle-check"></i></div>
+        <h3>No Agent Submissions</h3>
+        <p>No submissions match your current search or filter.</p>
+      </div>
+
+      <div id="requestsGrid" class="requests-grid"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================= DETAIL MODAL ============================= -->
+<div class="trade-detail" id="agentDetail">
+  <div class="detail-bg" id="detailBg"></div>
+
+  <section class="trade-detail-shell">
+
+    <header class="trade-detail-header">
+      <div class="trade-detail-heading">
+        <span class="eyebrow"><i class="fa-solid fa-file-circle-check"></i> AGENT SUBMISSION</span>
+        <h2 id="detailTitle">Agent Submission</h2>
+        <p id="detailDate"></p>
+      </div>
+      <button id="closeDetail" class="modal-close" type="button">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <div class="trade-detail-layout">
+
+      <!-- ------------------------- LEFT PANEL ------------------------- -->
+      <main class="trade-person-panel">
+
+        <section class="trade-card status-card">
+          <div class="detail-card-heading">
+            <div>
+              <span class="section-kicker">SUBMISSION STATUS</span>
+              <h3>Submission Management</h3>
+            </div>
+            <span id="detailStatusLabel" class="large-status pending">PENDING</span>
+          </div>
+          <div class="status-controls">
+            <div class="status-select-wrap">
+              <label for="detailStatus">Status</label>
+              <select id="detailStatus">
+                <option value="pending">Pending</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="approved">Approved (In Inventory)</option>
+                <option value="returned">Returned</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <button id="saveStatus" class="primary-action" type="button">
+              <i class="fa-solid fa-floppy-disk"></i> Save Status
+            </button>
+          </div>
+        </section>
+
+        <div id="agentBanner"></div>
+
+        <section class="trade-card">
+          <div class="detail-card-heading">
+            <div>
+              <span class="section-kicker">AGENT</span>
+              <h3>Agent Information</h3>
+            </div>
+            <i class="fa-solid fa-user-tie detail-heading-icon"></i>
+          </div>
+          <div id="agentDetails" class="detail-grid-large"></div>
+        </section>
+
+        <section class="trade-card">
+          <div class="detail-card-heading">
+            <div>
+              <span class="section-kicker">VEHICLE · EDITABLE</span>
+              <h3>Edit Submitted Vehicle</h3>
+            </div>
+            <i class="fa-solid fa-pen-to-square detail-heading-icon"></i>
+          </div>
+          <div id="vehicleEditForm"></div>
+        </section>
+
+        <section class="trade-card">
+          <div class="detail-card-heading">
+            <div>
+              <span class="section-kicker">AGENT CONTACT</span>
+              <h3>Contact Agent</h3>
+            </div>
+          </div>
+          <div id="contactActions" class="contact-actions-large"></div>
+        </section>
+
+        <div id="approvalContent"></div>
+
+        <section class="trade-card danger-card">
+          <div>
+            <span class="section-kicker danger-kicker">DANGER ZONE</span>
+            <h3>Delete Agent Submission</h3>
+            <p>This permanently removes this submission and all of its uploaded photos.</p>
+          </div>
+          <button id="deleteRequest" class="delete-action" type="button">
+            <i class="fa-solid fa-trash"></i> Delete Submission
+          </button>
+        </section>
+
+      </main>
+
+      <!-- ------------------------- RIGHT PANEL ------------------------- -->
+      <aside class="trade-vehicle-panel">
+
+        <section class="trade-card vehicle-hero-card">
+          <div class="source-card-top">
+            <span class="section-kicker">SUBMITTED VEHICLE</span>
+            <span class="source-type-badge trade">
+              <i class="fa-solid fa-file-circle-check"></i> AGENT
+            </span>
+          </div>
+          <div class="source-title">
+            <h3 id="vehicleTitle">Vehicle</h3>
+            <p id="vehicleMeta">Vehicle information</p>
+          </div>
+        </section>
+
+        <section class="trade-card vehicle-summary-card">
+          <div class="detail-card-heading">
+            <div>
+              <span class="section-kicker">SUBMISSION</span>
+              <h3>Submission Summary</h3>
+            </div>
+            <i class="fa-solid fa-clipboard-list detail-heading-icon"></i>
+          </div>
+          <div id="summaryDetails" class="detail-grid-large"></div>
+        </section>
+
+        <section class="trade-card files-card">
+          <div class="detail-card-heading">
+            <div>
+              <span class="section-kicker">SUBMITTED PHOTOS</span>
+              <h3>Vehicle Photos</h3>
+            </div>
+            <i class="fa-solid fa-paperclip detail-heading-icon"></i>
+          </div>
+          <div id="filesContent"></div>
+        </section>
+
+      </aside>
+
+    </div>
+  </section>
+</div>
+
+<script type="module" src="agents.js"></script>
+</body>
+</html>
