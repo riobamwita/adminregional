@@ -1,56 +1,36 @@
 /* ============================================================
    agents.js — Admin Agent Submissions
-   Mirrors tradeins.js architecture, adapted for
-   agent_vehicle_submissions + agent_vehicle_files
+   - Signed URLs for photos (private bucket safe)
+   - Scrollable lightbox with thumbnails & zoom
+   - Download submission as printable form
+   - Send submission back to agent for corrections
+   - Year fix (no client-side bounds other than number input)
    ============================================================ */
 
 import { supabase } from "./supabase.js";
 import { requireAdmin } from "./admin-guard.js";
-
-/* ---------------- CONSTANTS ---------------- */
 
 const $ = id => document.getElementById(id);
 const grid = $("requestsGrid");
 
 const SUBMISSION_BUCKET = "agent-vehicle-files";
 const CAR_BUCKET = "car-images";
+const SIGNED_URL_TTL = 60 * 60 * 24; // 24h
 
 const CATS = {
-  front: "Front",
-  front_left: "Front-left",
-  left_side: "Left side",
-  rear_left: "Rear-left",
-  rear: "Rear",
-  rear_right: "Rear-right",
-  right_side: "Right side",
-  front_right: "Front-right",
-  interior_front: "Interior – front",
-  interior_rear: "Interior – rear",
-  dashboard: "Dashboard",
-  odometer: "Odometer",
-  engine_bay: "Engine bay",
-  wheels_tyres: "Wheels / tyres",
-  damage_feature: "Damage / notable feature"
+  front: "Front", front_left: "Front-left", left_side: "Left side",
+  rear_left: "Rear-left", rear: "Rear", rear_right: "Rear-right",
+  right_side: "Right side", front_right: "Front-right",
+  interior_front: "Interior – front", interior_rear: "Interior – rear",
+  dashboard: "Dashboard", odometer: "Odometer", engine_bay: "Engine bay",
+  wheels_tyres: "Wheels / tyres", damage_feature: "Damage / notable feature"
 };
 
-/* ---------------- HELPERS ---------------- */
-
-const esc = v =>
-  String(v ?? "").replace(
-    /[&<>"']/g,
-    m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m])
-  );
-
+const esc = v => String(v ?? "").replace(/[&<>"']/g,
+  m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m]));
 const dash = v => (v === null || v === undefined || v === "" ? "—" : v);
-
 const money = v => Number(v || 0).toLocaleString("en-KE");
-
-const date = v =>
-  v
-    ? new Date(v).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" })
-    : "—";
-
-/* ---------------- STATE ---------------- */
+const date = v => v ? new Date(v).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" }) : "—";
 
 let submissions = [];
 let current = null;
@@ -59,26 +39,15 @@ let adminEmails = new Set();
 let currentFiles = [];
 
 /* ---------------- AUTH ---------------- */
-
 async function auth() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    location.replace("auth.html");
-    return null;
-  }
-
+  if (!session) { location.replace("auth.html"); return null; }
   const { data, error } = await supabase
     .from("admin_users")
     .select("id,email,full_name,is_main_admin")
     .eq("id", session.user.id)
     .maybeSingle();
-
-  if (error || !data) {
-    await supabase.auth.signOut();
-    location.replace("auth.html");
-    return null;
-  }
-
+  if (error || !data) { await supabase.auth.signOut(); location.replace("auth.html"); return null; }
   currentAdmin = data;
   return data;
 }
@@ -86,15 +55,11 @@ async function auth() {
 async function loadAdmins() {
   const { data, error } = await supabase.from("admin_users").select("email");
   if (error) throw error;
-  adminEmails = new Set(
-    (data || []).map(x => String(x.email || "").trim().toLowerCase()).filter(Boolean)
-  );
+  adminEmails = new Set((data || []).map(x => String(x.email || "").trim().toLowerCase()).filter(Boolean));
 }
-
 const isMainAdmin = () => currentAdmin?.is_main_admin === true;
 
 /* ---------------- LOAD ---------------- */
-
 async function load() {
   $("loading").style.display = "block";
   grid.innerHTML = "";
@@ -109,22 +74,17 @@ async function load() {
       .from("agent_vehicle_submissions")
       .select("*")
       .order("created_at", { ascending: false });
-
     if (error) throw error;
 
     const { data: cars, error: carError } = await supabase
       .from("cars")
       .select("id,status,source_request_id,source_type")
       .eq("source_type", "agent");
-
     if (carError) throw carError;
 
     submissions = (data || []).map(x => ({
       ...x,
-      _car:
-        (cars || []).find(
-          c => String(c.source_request_id) === String(x.id)
-        ) || null
+      _car: (cars || []).find(c => String(c.source_request_id) === String(x.id)) || null
     }));
 
     stats();
@@ -139,160 +99,131 @@ async function load() {
 }
 
 /* ---------------- STATS ---------------- */
-
 function stats() {
   $("totalRequests").textContent = submissions.length;
-  $("pendingRequests").textContent = submissions.filter(
-    x => !x._car && (x.status || "pending") === "pending"
-  ).length;
-  $("reviewingRequests").textContent = submissions.filter(
-    x => !x._car && x.status === "reviewing"
-  ).length;
+  $("pendingRequests").textContent = submissions.filter(x => !x._car && (x.status || "pending") === "pending").length;
+  $("reviewingRequests").textContent = submissions.filter(x => !x._car && x.status === "reviewing").length;
   $("inventoryRequests").textContent = submissions.filter(x => !!x._car).length;
 }
 
-/* ---------------- RENDER GRID ---------------- */
-
+/* ---------------- RENDER ---------------- */
 function render() {
   const q = $("searchInput").value.toLowerCase().trim();
   const s = $("statusFilter").value;
   const o = $("sortFilter").value;
 
   let list = submissions.filter(x => {
-    const text = `${x.agent_name || ""} ${x.agent_email || ""} ${
-      x.registration_number || ""
-    } ${x.make || ""} ${x.model || ""} ${x.town_area || ""} ${
-      x.county || ""
-    }`.toLowerCase();
-
+    const text = `${x.agent_name || ""} ${x.agent_email || ""} ${x.registration_number || ""} ${x.make || ""} ${x.model || ""} ${x.town_area || ""} ${x.county || ""}`.toLowerCase();
     const st = x._car ? "approved" : x.status || "pending";
-
     return (!q || text.includes(q)) && (s === "all" || st === s);
   });
 
   list.sort((a, b) =>
-    o === "oldest"
-      ? new Date(a.created_at) - new Date(b.created_at)
-      : o === "price-high"
-      ? Number(b.asking_price || 0) - Number(a.asking_price || 0)
-      : o === "price-low"
-      ? Number(a.asking_price || 0) - Number(b.asking_price || 0)
-      : new Date(b.created_at) - new Date(a.created_at)
-  );
+    o === "oldest" ? new Date(a.created_at) - new Date(b.created_at)
+    : o === "price-high" ? Number(b.asking_price || 0) - Number(a.asking_price || 0)
+    : o === "price-low" ? Number(a.asking_price || 0) - Number(b.asking_price || 0)
+    : new Date(b.created_at) - new Date(a.created_at));
 
-  if (!list.length) {
-    $("empty").style.display = "block";
-    grid.innerHTML = "";
-    return;
-  }
-
+  if (!list.length) { $("empty").style.display = "block"; grid.innerHTML = ""; return; }
   $("empty").style.display = "none";
 
-  grid.innerHTML = list
-    .map(x => {
-      const st = x._car ? "approved" : x.status || "pending";
-      const label = x._car
-        ? "in inventory"
-        : st;
-
-      const name =
-        `${x.make || "Vehicle"} ${x.model || ""} ${x.year || ""}`.trim();
-
-      return `
-        <article class="request-card" data-id="${esc(x.id)}">
-          <div class="request-top">
-            <small>${esc(date(x.created_at))}</small>
-            <span class="request-status ${esc(st)}">${esc(label)}</span>
-          </div>
-          <h3>${esc(name)}</h3>
-          <p><i class="fa-solid fa-user-tie"></i> ${esc(x.agent_name || x.agent_email || "Agent")}</p>
-          <p><i class="fa-solid fa-id-card"></i> ${esc(x.registration_number || "No registration")}</p>
-          <div class="request-meta">
-            <span>${Number(x.mileage || 0).toLocaleString()} KM</span>
-            <strong>KES ${money(x.asking_price)}</strong>
-          </div>
-          <div class="request-bottom">
-            <span>${esc(x.town_area || "Location not set")}</span>
-            <button type="button">View <i class="fa-solid fa-arrow-right"></i></button>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+  grid.innerHTML = list.map(x => {
+    const st = x._car ? "approved" : x.status || "pending";
+    const label = x._car ? "in inventory" : st;
+    const name = `${x.make || "Vehicle"} ${x.model || ""} ${x.year || ""}`.trim();
+    return `
+      <article class="request-card" data-id="${esc(x.id)}">
+        <div class="request-top">
+          <small>${esc(date(x.created_at))}</small>
+          <span class="request-status ${esc(st)}">${esc(label)}</span>
+        </div>
+        <h3>${esc(name)}</h3>
+        <p><i class="fa-solid fa-user-tie"></i> ${esc(x.agent_name || x.agent_email || "Agent")}</p>
+        <p><i class="fa-solid fa-id-card"></i> ${esc(x.registration_number || "No registration")}</p>
+        <div class="request-meta">
+          <span>${Number(x.mileage || 0).toLocaleString()} KM</span>
+          <strong>KES ${money(x.asking_price)}</strong>
+        </div>
+        <div class="request-bottom">
+          <span>${esc(x.town_area || "Location not set")}</span>
+          <button type="button">View <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
-/* ---------------- FIELD BUILDER ---------------- */
-
+/* ---------------- FIELD ---------------- */
 function field(label, value) {
-  return `<div class="detail-field"><span>${esc(label)}</span><strong>${esc(
-    dash(value)
-  )}</strong></div>`;
+  return `<div class="detail-field"><span>${esc(label)}</span><strong>${esc(dash(value))}</strong></div>`;
 }
 
 /* ---------------- FILES ---------------- */
-
 async function getFiles(id) {
   const { data, error } = await supabase
     .from("agent_vehicle_files")
     .select("*")
     .eq("submission_id", id)
     .order("display_order", { ascending: true });
-
   if (error) throw error;
   return data || [];
 }
 
-function fileUrl(f) {
-  if (f.file_url) return f.file_url;
-  if (f.storage_path) {
-    return supabase.storage.from(SUBMISSION_BUCKET).getPublicUrl(f.storage_path)
-      .data.publicUrl;
+async function getFileUrl(file) {
+  if (!file) return "";
+  if (file._url) return file._url;
+  if (file.storage_path) {
+    const { data, error } = await supabase.storage
+      .from(SUBMISSION_BUCKET)
+      .createSignedUrl(file.storage_path, SIGNED_URL_TTL);
+    if (!error && data?.signedUrl) return data.signedUrl;
+    return supabase.storage.from(SUBMISSION_BUCKET).getPublicUrl(file.storage_path).data.publicUrl;
   }
-  return "";
+  return file.file_url || "";
 }
 
 function isImageFile(f) {
-  const url = fileUrl(f);
-  return (
-    String(f.file_type || "").startsWith("image/") ||
-    /\.(jpg|jpeg|png|webp|gif|avif)(\?|$)/i.test(url)
-  );
+  if (String(f.file_type || "").startsWith("image/")) return true;
+  const name = String(f.file_name || f.storage_path || "");
+  return /\.(jpg|jpeg|png|webp|gif|avif|bmp|heic)(\?|$)/i.test(name);
 }
 
-function fileCard(f) {
-  const url = fileUrl(f);
+function fileCard(f, index) {
+  const url = f._url || "";
   const image = isImageFile(f);
   const video = String(f.file_type || "").startsWith("video/");
-  const label =
-    f.photo_category === "extra"
-      ? "Extra Photo"
-      : CATS[f.photo_category] || f.photo_category || "Photo";
+  const label = f.photo_category === "extra" ? "Extra Photo"
+    : CATS[f.photo_category] || f.photo_category || "Photo";
+
+  let media;
+  if (image && url) {
+    media = `<img src="${esc(url)}" alt="${esc(label)}" loading="lazy"
+      data-lightbox-index="${index}" data-lightbox-url="${esc(url)}" data-lightbox-label="${esc(label)}"
+      onerror="this.parentElement.innerHTML='<div class=\\'file-icon\\'><i class=\\'fa-solid fa-image\\'></i></div>'">`;
+  } else if (video && url) {
+    media = `<video src="${esc(url)}" controls></video>`;
+  } else {
+    media = `<div class="file-icon"><i class="fa-solid fa-file"></i></div>`;
+  }
 
   return `
-    <div class="file-card">
-      ${
-        image
-          ? `<img src="${esc(url)}" alt="${esc(label)}">`
-          : video
-          ? `<video src="${esc(url)}" controls></video>`
-          : `<div class="file-icon"><i class="fa-solid fa-file"></i></div>`
-      }
+    <div class="file-card" ${image && url ? `data-lightbox-index="${index}"` : ""}>
+      ${media}
       <div class="file-info">
         <span>${esc(f.file_name || label)}</span>
         <small>${esc(label)}</small>
-        <a href="${esc(url)}" target="_blank" rel="noopener">Open File <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+        ${url ? `<a href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open File <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ""}
       </div>
     </div>
   `;
 }
 
 /* ---------------- EDIT FORM ---------------- */
-
 const EDIT_FIELDS = [
   { k: "registration_number", l: "Registration Number", t: "text" },
   { k: "make", l: "Make", t: "text" },
   { k: "model", l: "Model", t: "text" },
-  { k: "year", l: "Year", t: "number" },
+  { k: "year", l: "Year", t: "number", min: "1900", max: "2100" },
   { k: "body_type", l: "Body Type", t: "text" },
   { k: "engine_cc", l: "Engine (CC)", t: "number" },
   { k: "fuel_type", l: "Fuel Type", t: "text" },
@@ -320,13 +251,13 @@ function buildEditForm() {
     <div class="edit-grid">
       ${EDIT_FIELDS.map(f => {
         const value = current[f.k] ?? "";
-        const input =
-          f.t === "textarea"
-            ? `<textarea id="ef_${f.k}" data-key="${esc(f.k)}">${esc(value)}</textarea>`
-            : `<input id="ef_${f.k}" data-key="${esc(f.k)}" type="${esc(f.t)}"${
-                f.step ? ` step="${esc(f.step)}"` : ""
-              } value="${esc(value)}">`;
-
+        const input = f.t === "textarea"
+          ? `<textarea id="ef_${f.k}" data-key="${esc(f.k)}">${esc(value)}</textarea>`
+          : `<input id="ef_${f.k}" data-key="${esc(f.k)}" type="${esc(f.t)}"
+              ${f.step ? ` step="${esc(f.step)}"` : ""}
+              ${f.min ? ` min="${esc(f.min)}"` : ""}
+              ${f.max ? ` max="${esc(f.max)}"` : ""}
+              value="${esc(value)}">`;
         return `
           <div class="edit-field ${f.full ? "full" : ""}">
             <label for="ef_${esc(f.k)}">${esc(f.l)}</label>
@@ -344,8 +275,7 @@ function buildEditForm() {
       </button>
     </div>
     <p class="edit-note">
-      Saved changes are written back to the agent submission and are used when the
-      vehicle is approved into inventory.
+      Saved changes are written back to the agent submission and are used when the vehicle is approved into inventory.
     </p>
   `;
 
@@ -355,7 +285,6 @@ function buildEditForm() {
 
 async function saveVehicleEdits() {
   if (!current) return;
-
   const button = $("saveVehicle");
   const updates = {};
 
@@ -365,58 +294,36 @@ async function saveVehicleEdits() {
     const raw = el.value.trim();
 
     if (def.t === "number") {
-      if (raw === "") {
-        updates[key] = null;
-      } else {
-        const num = Number(raw);
-        updates[key] = Number.isFinite(num) ? num : null;
-      }
+      updates[key] = raw === "" ? null : (Number.isFinite(Number(raw)) ? Number(raw) : null);
     } else {
       updates[key] = raw === "" ? null : raw;
     }
   });
 
-  if (!updates.registration_number) {
-    alert("Registration number is required.");
-    return;
-  }
-  if (!updates.make || !updates.model) {
-    alert("Make and model are required.");
-    return;
-  }
-  if (!Number.isFinite(Number(updates.asking_price)) || Number(updates.asking_price) <= 0) {
-    alert("Enter a valid asking price.");
-    return;
-  }
+  if (!updates.registration_number) return alert("Registration number is required.");
+  if (!updates.make || !updates.model) return alert("Make and model are required.");
+  if (!Number.isFinite(Number(updates.asking_price)) || Number(updates.asking_price) <= 0)
+    return alert("Enter a valid asking price.");
+  if (updates.year !== null && (updates.year < 1900 || updates.year > 2100))
+    return alert("Year must be between 1900 and 2100.");
 
   button.disabled = true;
   button.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
 
   try {
     updates.updated_at = new Date().toISOString();
-
     const { error } = await supabase
       .from("agent_vehicle_submissions")
       .update(updates)
       .eq("id", current.id);
-
     if (error) throw error;
 
     current = { ...current, ...updates };
     submissions = submissions.map(x => (x.id === current.id ? current : x));
 
-    /* refresh header + right panel */
-    $("detailTitle").textContent =
-      `${current.full_name || current.agent_name || "Agent"} — ${
-        current.make || ""
-      } ${current.model || ""}`.trim();
-
-    $("vehicleTitle").textContent =
-      `${current.make || "Vehicle"} ${current.model || ""}`.trim();
-
-    $("vehicleMeta").textContent =
-      [current.year, current.registration_number].filter(Boolean).join(" • ") ||
-      "Agent submitted vehicle";
+    $("detailTitle").textContent = `${current.agent_name || current.agent_email || "Agent"} — ${current.make || ""} ${current.model || ""}`.trim();
+    $("vehicleTitle").textContent = `${current.make || "Vehicle"} ${current.model || ""}`.trim();
+    $("vehicleMeta").textContent = [current.year, current.registration_number].filter(Boolean).join(" • ") || "Agent submitted vehicle";
 
     renderSummary();
     render();
@@ -434,13 +341,10 @@ async function saveVehicleEdits() {
   }
 }
 
-/* ---------------- SUMMARY (right panel) ---------------- */
-
+/* ---------------- SUMMARY ---------------- */
 function renderSummary() {
   if (!current) return;
-
   const carCount = currentFiles.length;
-
   $("summaryDetails").innerHTML = [
     field("Listing Reference", current.listing_reference || current.id),
     field("Submission Status", current._car ? "In Inventory" : current.status || "pending"),
@@ -454,33 +358,23 @@ function renderSummary() {
 }
 
 /* ---------------- STATUS ---------------- */
-
 function updateDetailStatus(status) {
   const badge = $("detailStatusLabel");
   if (!badge) return;
-
   const effective = current?._car ? "approved" : status;
-
   badge.className = `large-status ${effective}`;
   badge.textContent = effective === "approved" ? "IN INVENTORY" : effective.toUpperCase();
 }
 
 async function updateStatus(id, status) {
-  if (
-    current?._car &&
-    status !== "approved" &&
-    !confirm(
-      "This submission is already linked to an inventory vehicle. Change its request status anyway?"
-    )
-  ) {
+  if (current?._car && status !== "approved" &&
+      !confirm("This submission is already linked to an inventory vehicle. Change its request status anyway?")) {
     return;
   }
-
   const { error } = await supabase
     .from("agent_vehicle_submissions")
     .update({ status, updated_at: new Date().toISOString() })
     .eq("id", id);
-
   if (error) return alert(error.message);
 
   const item = submissions.find(x => x.id === id);
@@ -493,60 +387,40 @@ async function updateStatus(id, status) {
 }
 
 /* ---------------- CONTACT ---------------- */
-
 function renderContact() {
   const email = current?.agent_email || "";
   const html = [];
-
-  if (email) {
-    html.push(
-      `<a class="contact-action-large" href="mailto:${esc(email)}"><i class="fa-solid fa-envelope"></i>Email Agent</a>`
-    );
-  }
-
+  if (email) html.push(`<a class="contact-action-large" href="mailto:${esc(email)}"><i class="fa-solid fa-envelope"></i>Email Agent</a>`);
   if (current?.agent_phone) {
     const p = String(current.agent_phone).replace(/\D/g, "").replace(/^0/, "254");
-    html.push(
-      `<a class="contact-action-large" href="tel:+${esc(p)}"><i class="fa-solid fa-phone"></i>Call Agent</a>`
-    );
-    html.push(
-      `<a class="contact-action-large whatsapp" href="https://wa.me/${esc(p)}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i>WhatsApp</a>`
-    );
+    html.push(`<a class="contact-action-large" href="tel:+${esc(p)}"><i class="fa-solid fa-phone"></i>Call Agent</a>`);
+    html.push(`<a class="contact-action-large whatsapp" href="https://wa.me/${esc(p)}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i>WhatsApp</a>`);
   }
-
-  $("contactActions").innerHTML =
-    html.length
-      ? html.join("")
-      : `<div class="notes"><p>No contact details were captured for this agent.</p></div>`;
+  $("contactActions").innerHTML = html.length ? html.join("")
+    : `<div class="notes"><p>No contact details were captured for this agent.</p></div>`;
 }
 
 /* ---------------- APPROVAL PANEL ---------------- */
-
 function approvalPanel() {
   if (current._car) {
-    const profit =
-      Number(current.inventory_price || 0) - Number(current.negotiated_price || 0);
-
+    const profit = Number(current.inventory_price || 0) - Number(current.negotiated_price || 0);
     return `
       <section class="approval-panel approved-panel">
         <div class="approval-title">
           <div><i class="fa-solid fa-circle-check"></i></div>
-          <div>
-            <span>INVENTORY STATUS</span>
-            <h3>Vehicle Approved & Added</h3>
-          </div>
+          <div><span>INVENTORY STATUS</span><h3>Vehicle Approved & Added</h3></div>
         </div>
         <div class="approval-summary">
           <div><span>Agreed Value</span><strong>KES ${money(current.negotiated_price)}</strong></div>
           <div><span>Inventory Price</span><strong>KES ${money(current.inventory_price)}</strong></div>
-          <div>
-            <span>Estimated Gross Profit</span>
-            <strong class="${profit >= 0 ? "profit-positive" : "profit-negative"}">KES ${money(profit)}</strong>
-          </div>
+          <div><span>Estimated Gross Profit</span><strong class="${profit >= 0 ? "profit-positive" : "profit-negative"}">KES ${money(profit)}</strong></div>
         </div>
         <div class="approved-actions">
           <button type="button" class="inventory-btn" onclick="openInventoryCar()">
             <i class="fa-solid fa-pen-to-square"></i> Open & Edit Inventory Vehicle
+          </button>
+          <button type="button" class="download-btn" onclick="window.downloadAgentSubmission()">
+            <i class="fa-solid fa-file-arrow-down"></i> Download Submission Form
           </button>
         </div>
       </section>
@@ -587,31 +461,385 @@ function approvalPanel() {
       <div class="approval-grid">
         <div>
           <label>Agreed Vehicle Value *</label>
-          <input id="negotiatedPrice" type="number" min="0" step="1"
-            value="${esc(current.negotiated_price ?? "")}" placeholder="Final value agreed with agent">
+          <input id="negotiatedPrice" type="number" min="0" step="1" value="${esc(current.negotiated_price ?? "")}" placeholder="Final value agreed with agent">
         </div>
         <div>
           <label>Inventory Selling Price *</label>
-          <input id="inventoryPrice" type="number" min="0" step="1"
-            value="${esc(current.inventory_price ?? current.asking_price ?? "")}" placeholder="Vehicle listing price">
+          <input id="inventoryPrice" type="number" min="0" step="1" value="${esc(current.inventory_price ?? current.asking_price ?? "")}" placeholder="Vehicle listing price">
         </div>
       </div>
 
       <div class="profit-box">
-        <div>
-          <span>Estimated Gross Profit</span>
-          <strong id="profitValue">KES 0</strong>
-        </div>
+        <div><span>Estimated Gross Profit</span><strong id="profitValue">KES 0</strong></div>
         <small>Selling price minus agreed vehicle value.</small>
       </div>
 
       <button id="approveInventory" type="button" class="approve-btn">
         <i class="fa-solid fa-car-side"></i> Approve & Add to Inventory
       </button>
+
+      <div style="margin-top:12px">
+        <button type="button" class="download-btn" onclick="window.downloadAgentSubmission()">
+          <i class="fa-solid fa-file-arrow-down"></i> Download Submission Form
+        </button>
+      </div>
     </section>
   `;
 }
 
+/* ---------------- RETURN-TO-AGENT PANEL ---------------- */
+function returnPanel() {
+  if (current._car) {
+    return `
+      <div class="return-banner">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>
+          <strong>Already in inventory</strong>
+          This submission has been approved and moved into inventory. It can no longer be returned for corrections.
+        </div>
+      </div>
+    `;
+  }
+
+  if (current.status === "returned") {
+    return `
+      <div class="return-banner">
+        <i class="fa-solid fa-rotate-left"></i>
+        <div>
+          <strong>Currently returned to agent</strong>
+          ${esc(current.returned_reason || "Awaiting agent corrections.")}
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <section class="return-panel">
+      <div class="approval-title">
+        <div><i class="fa-solid fa-rotate-left"></i></div>
+        <div>
+          <span>RETURN FOR CORRECTION</span>
+          <h3>Send Back to Agent</h3>
+          <p>Select what needs fixing and add a comment. The agent will see this in their Actions page.</p>
+        </div>
+      </div>
+
+      <div class="return-reasons">
+        <label><input type="checkbox" value="Vehicle details incorrect"> Vehicle details incorrect</label>
+        <label><input type="checkbox" value="Photos missing or unclear"> Photos missing / unclear</label>
+        <label><input type="checkbox" value="Price needs review"> Price needs review</label>
+        <label><input type="checkbox" value="Location / GPS issue"> Location / GPS issue</label>
+        <label><input type="checkbox" value="Description needs work"> Description needs work</label>
+        <label><input type="checkbox" value="Other"> Other (specify below)</label>
+      </div>
+
+      <textarea id="returnComment" class="return-textarea" placeholder="Add detailed correction notes for the agent…"></textarea>
+
+      <button id="returnBtn" type="button" class="return-btn">
+        <i class="fa-solid fa-paper-plane"></i> Send Back to Agent
+      </button>
+    </section>
+  `;
+}
+
+function wireReturnPanel() {
+  const btn = $("returnBtn");
+  if (!btn) return;
+  btn.onclick = sendBackToAgent;
+}
+
+async function sendBackToAgent() {
+  if (!current) return;
+  if (current._car) return alert("Vehicle is already in inventory.");
+  if (current.status === "returned") return alert("This submission is already returned to the agent.");
+
+  const reasons = [...document.querySelectorAll(".return-reasons input:checked")].map(x => x.value);
+  const comment = ($("returnComment")?.value || "").trim();
+
+  if (!reasons.length && !comment) {
+    return alert("Select at least one reason or add a comment before sending back.");
+  }
+
+  const summary = [reasons.join(", "), comment].filter(Boolean).join(" — ");
+  const title = "Correction required on your vehicle submission";
+
+  if (!confirm("Send this submission back to the agent for corrections?")) return;
+
+  const btn = $("returnBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending…`;
+
+  try {
+    const now = new Date().toISOString();
+
+    // 1) Create the action row for the agent
+    const { error: actionError } = await supabase
+      .from("agent_vehicle_actions")
+      .insert({
+        agent_id: current.agent_id,
+        submission_id: current.id,
+        admin_id: currentAdmin?.id || null,
+        action_type: "correction",
+        title,
+        message: summary || "Please review and correct the submitted details, then resubmit.",
+        completed: false,
+        created_at: now,
+        updated_at: now
+      });
+    if (actionError) throw actionError;
+
+    // 2) Update the submission status
+    const { error: subError } = await supabase
+      .from("agent_vehicle_submissions")
+      .update({
+        status: "returned",
+        returned_reason: summary || "Please review and correct the submitted details, then resubmit.",
+        returned_at: now,
+        returned_by: currentAdmin?.id || null,
+        updated_at: now
+      })
+      .eq("id", current.id);
+    if (subError) throw subError;
+
+    current.status = "returned";
+    current.returned_reason = summary;
+    submissions = submissions.map(x => (x.id === current.id ? { ...x, status: "returned", returned_reason: summary } : x));
+
+    updateDetailStatus("returned");
+    stats();
+    render();
+
+    alert("Submission returned to agent. They will see the correction request in their Actions page.");
+    closeDetail();
+  } catch (e) {
+    console.error(e);
+    alert(e.message || "Unable to send submission back to agent.");
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Send Back to Agent`;
+  }
+}
+
+/* ---------------- LIGHTBOX ---------------- */
+let lbImages = [];
+let lbIndex = 0;
+let lbElement = null;
+
+function openLightbox(images, startIndex = 0) {
+  if (!images.length) return;
+  lbImages = images;
+  lbIndex = Math.max(0, Math.min(startIndex, images.length - 1));
+
+  if (lbElement) lbElement.remove();
+
+  lbElement = document.createElement("div");
+  lbElement.className = "agents-lightbox";
+  lbElement.innerHTML = `
+    <div class="lb-topbar">
+      <div class="lb-title" id="lbTitle"></div>
+      <div class="lb-topbar-actions">
+        <button class="lb-icon-btn" id="lbZoom" title="Zoom"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+        <button class="lb-icon-btn" id="lbClose" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="lb-stage" id="lbStage">
+      <button class="lb-nav lb-prev" id="lbPrev"><i class="fa-solid fa-chevron-left"></i></button>
+      <img class="lb-image" id="lbImage" src="" alt="">
+      <button class="lb-nav lb-next" id="lbNext"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+    <div class="lb-thumbs" id="lbThumbs"></div>
+    <div class="lb-counter" style="text-align:center;padding:6px 0 10px;background:rgba(0,0,0,.35);color:#a7bccd;font-size:10px;font-weight:700;" id="lbCounter"></div>
+  `;
+  document.body.appendChild(lbElement);
+  document.body.classList.add("locked");
+
+  const img = $("lbImage");
+  const title = $("lbTitle");
+  const counter = $("lbCounter");
+  const thumbs = $("lbThumbs");
+  const stage = $("lbStage");
+  let zoomed = false;
+
+  thumbs.innerHTML = images.map((im, i) => `
+    <div class="lb-thumb ${i === lbIndex ? "active" : ""}" data-i="${i}">
+      <img src="${esc(im.url)}" alt="">
+    </div>
+  `).join("");
+
+  const renderActive = () => {
+    const item = images[lbIndex];
+    img.src = item.url;
+    img.classList.toggle("zoomed", zoomed);
+    title.textContent = item.label || "Photo";
+    counter.textContent = `${lbIndex + 1} / ${images.length}`;
+    [...thumbs.children].forEach((el, i) => el.classList.toggle("active", i === lbIndex));
+    const active = thumbs.querySelector(".lb-thumb.active");
+    if (active) active.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    $("lbPrev").disabled = lbIndex === 0;
+    $("lbNext").disabled = lbIndex === images.length - 1;
+  };
+
+  const close = () => {
+    lbElement.remove();
+    lbElement = null;
+    document.body.classList.remove("locked");
+    document.removeEventListener("keydown", onKey);
+  };
+
+  const onKey = (e) => {
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowRight" && lbIndex < images.length - 1) { lbIndex++; renderActive(); }
+    else if (e.key === "ArrowLeft" && lbIndex > 0) { lbIndex--; renderActive(); }
+  };
+
+  $("lbClose").onclick = close;
+  $("lbPrev").onclick = () => { if (lbIndex > 0) { lbIndex--; renderActive(); } };
+  $("lbNext").onclick = () => { if (lbIndex < images.length - 1) { lbIndex++; renderActive(); } };
+  $("lbZoom").onclick = () => { zoomed = !zoomed; img.classList.toggle("zoomed", zoomed); };
+
+  thumbs.onclick = (e) => {
+    const t = e.target.closest(".lb-thumb");
+    if (!t) return;
+    lbIndex = Number(t.dataset.i);
+    renderActive();
+  };
+
+  img.onclick = () => { zoomed = !zoomed; img.classList.toggle("zoomed", zoomed); };
+
+  stage.onclick = (e) => { if (e.target === stage) close(); };
+  document.addEventListener("keydown", onKey);
+
+  renderActive();
+}
+
+/* ---------------- DOWNLOAD AS FORM ---------------- */
+function buildPrintableHTML() {
+  const c = current;
+  const files = currentFiles || [];
+
+  const row = (label, val) =>
+    `<tr><th>${esc(label)}</th><td>${esc(dash(val))}</td></tr>`;
+
+  const photoGrid = files
+    .filter(isImageFile)
+    .map(f => `
+      <figure>
+        <img src="${esc(f._url || "")}" alt="">
+        <figcaption>${esc(f.photo_category === "extra" ? "Extra Photo" : CATS[f.photo_category] || f.photo_category || "Photo")}</figcaption>
+      </figure>
+    `).join("");
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Agent Submission — ${esc(c.make || "")} ${esc(c.model || "")}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Space Grotesk', Arial, sans-serif; color: #102b46; font-size: 11px; line-height: 1.4; margin: 0; padding: 0; }
+  header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 3px solid #f7941d; margin-bottom: 18px; }
+  header h1 { margin: 0; font-size: 18px; }
+  header span { font-size: 10px; color: #657b8c; }
+  h2 { font-size: 13px; margin: 18px 0 8px; border-left: 3px solid #f7941d; padding-left: 8px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #d9e2e8; vertical-align: top; }
+  th { width: 34%; background: #f5f8fa; font-weight: 700; color: #657b8c; text-transform: uppercase; font-size: 8.5px; letter-spacing: .04em; }
+  td { font-size: 10.5px; }
+  .badge { display: inline-block; padding: 3px 7px; background: #edf5f8; color: #075985; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+  .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; page-break-inside: avoid; }
+  .photos figure { margin: 0; border: 1px solid #d9e2e8; padding: 4px; }
+  .photos img { width: 100%; height: 130px; object-fit: cover; display: block; }
+  .photos figcaption { font-size: 8.5px; margin-top: 4px; color: #657b8c; text-transform: uppercase; font-weight: 700; }
+  .sign { margin-top: 26px; display: flex; justify-content: space-between; gap: 30px; }
+  .sign > div { flex: 1; }
+  .sign .line { border-top: 1px solid #102b46; padding-top: 4px; font-size: 9px; color: #657b8c; }
+  footer { margin-top: 24px; font-size: 8.5px; color: #94a6b0; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Agent Vehicle Submission</h1>
+    <span>Regional Autoselections Ltd — Admin Form</span>
+  </div>
+  <div style="text-align:right">
+    <div class="badge">${esc(c._car ? "In Inventory" : c.status || "pending")}</div>
+    <div style="font-size:9px;color:#657b8c;margin-top:4px">Ref: ${esc(c.listing_reference || c.id)}</div>
+    <div style="font-size:9px;color:#657b8c">${esc(date(c.created_at))}</div>
+  </div>
+</header>
+
+<h2>Agent</h2>
+<table>
+  ${row("Agent Name", c.agent_name)}
+  ${row("Agent Email", c.agent_email)}
+  ${row("Listing Reference", c.listing_reference || c.id)}
+  ${row("Submission ID", c.id)}
+  ${row("GPS Captured", c.gps_captured_at ? date(c.gps_captured_at) : "Not captured")}
+</table>
+
+<h2>Vehicle Identification</h2>
+<table>
+  ${row("Registration", c.registration_number)}
+  ${row("Make", c.make)}
+  ${row("Model", c.model)}
+  ${row("Year", c.year)}
+  ${row("Body Type", c.body_type)}
+  ${row("Engine (CC)", c.engine_cc)}
+  ${row("Fuel Type", c.fuel_type)}
+  ${row("Transmission", c.transmission)}
+  ${row("Drive Type", c.drive_type)}
+  ${row("Mileage (KM)", c.mileage != null ? Number(c.mileage).toLocaleString() : "—")}
+  ${row("Exterior Colour", c.exterior_color)}
+  ${row("Seats", c.seats)}
+  ${row("Condition", c.condition)}
+</table>
+
+<h2>Pricing & Location</h2>
+<table>
+  ${row("Asking Price", c.asking_price != null ? `KES ${money(c.asking_price)}` : "—")}
+  ${row("Showroom / Yard", c.showroom_name)}
+  ${row("Town / Area", c.town_area)}
+  ${row("County", c.county)}
+  ${row("GPS", (c.latitude != null && c.longitude != null) ? `${c.latitude}, ${c.longitude}` : "—")}
+</table>
+
+<h2>Description</h2>
+<table>${row("Description", c.description)}${row("Key Features", c.key_features)}</table>
+
+<h2>Photos (${files.filter(isImageFile).length})</h2>
+${photoGrid ? `<div class="photos">${photoGrid}</div>` : `<p>No photos submitted.</p>`}
+
+<div class="sign">
+  <div><div class="line">Admin Signature / Date</div></div>
+  <div><div class="line">Agent Signature / Date</div></div>
+</div>
+
+<footer>Generated ${date(new Date().toISOString())} — Regional Autoselections Ltd</footer>
+
+</body>
+</html>`;
+}
+
+function downloadAgentSubmission() {
+  if (!current) return;
+  const html = buildPrintableHTML();
+  const win = window.open("", "_blank");
+  if (!win) return alert("Please allow pop-ups to download the submission form.");
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  // Give the images a moment, then trigger print dialog
+  setTimeout(() => { try { win.focus(); win.print(); } catch(e) { /* user can print manually */ } }, 400);
+}
+
+window.downloadAgentSubmission = downloadAgentSubmission;
+window.openInventoryCar = () => {
+  if (current?._car?.id) location.href = `edit.html?id=${encodeURIComponent(current._car.id)}`;
+};
+
+/* ---------------- APPROVE ---------------- */
 function updateProfit() {
   const buy = Number($("negotiatedPrice")?.value || 0);
   const sell = Number($("inventoryPrice")?.value || 0);
@@ -622,43 +850,29 @@ function updateProfit() {
   el.className = profit < 0 ? "profit-negative" : "profit-positive";
 }
 
-/* ---------------- PHOTO TRANSFER ---------------- */
-
-function safeName(name) {
-  return String(name || "image.jpg")
-    .toLowerCase()
-    .replace(/[^a-z0-9.]+/g, "-");
-}
+function safeName(name) { return String(name || "image.jpg").toLowerCase().replace(/[^a-z0-9.]+/g, "-"); }
 
 async function copySubmissionPhoto(file, carId, index) {
   let blob = null;
-
-  if (file.storage_path) {
-    const { data, error } = await supabase.storage
-      .from(SUBMISSION_BUCKET)
-      .download(file.storage_path);
-
+  const url = file._url || (await getFileUrl(file));
+  if (url) {
+    try { const r = await fetch(url); if (r.ok) blob = await r.blob(); }
+    catch (e) { console.warn("Signed URL fetch failed, trying download:", e); }
+  }
+  if (!blob && file.storage_path) {
+    const { data, error } = await supabase.storage.from(SUBMISSION_BUCKET).download(file.storage_path);
     if (error) throw error;
     blob = data;
-  } else if (file.file_url) {
-    const response = await fetch(file.file_url);
-    if (!response.ok) throw new Error("Unable to download submitted photo.");
-    blob = await response.blob();
-  } else {
-    throw new Error("Submitted photo has no storage path or URL.");
   }
+  if (!blob) throw new Error("Unable to fetch submitted photo.");
 
   const name = safeName(file.file_name || `image-${index + 1}.jpg`);
   const target = `${carId}/gallery/${crypto.randomUUID()}-${name}`;
 
-  const { error } = await supabase.storage
-    .from(CAR_BUCKET)
-    .upload(target, blob, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.file_type || blob.type || "image/jpeg"
-    });
-
+  const { error } = await supabase.storage.from(CAR_BUCKET).upload(target, blob, {
+    cacheControl: "3600", upsert: false,
+    contentType: file.file_type || blob.type || "image/jpeg"
+  });
   if (error) throw error;
 
   return {
@@ -667,46 +881,28 @@ async function copySubmissionPhoto(file, carId, index) {
   };
 }
 
-/* ---------------- APPROVE TO INVENTORY ---------------- */
-
 async function updateSubmissionRow(id, payload) {
-  let { error } = await supabase
-    .from("agent_vehicle_submissions")
-    .update(payload)
-    .eq("id", id);
-
+  let { error } = await supabase.from("agent_vehicle_submissions").update(payload).eq("id", id);
   if (error && /column|schema cache/i.test(error.message || "")) {
-    /* Fallback for tables that do not yet have the approval columns */
     const fallback = { status: payload.status, updated_at: payload.updated_at };
-    const retry = await supabase
-      .from("agent_vehicle_submissions")
-      .update(fallback)
-      .eq("id", id);
-
+    const retry = await supabase.from("agent_vehicle_submissions").update(fallback).eq("id", id);
     if (retry.error) throw retry.error;
     return fallback;
   }
-
   if (error) throw error;
   return payload;
 }
 
 async function approveToInventory() {
-  if (!current || !isMainAdmin()) {
-    return alert("Only the main administrator can approve vehicles into inventory.");
-  }
-  if (current._car) {
-    return alert("This submission has already been added to inventory.");
-  }
+  if (!current || !isMainAdmin()) return alert("Only the main administrator can approve vehicles into inventory.");
+  if (current._car) return alert("This submission has already been added to inventory.");
 
   const buy = Number($("negotiatedPrice")?.value);
   const sell = Number($("inventoryPrice")?.value);
-
   if (!Number.isFinite(buy) || buy < 0) return alert("Enter a valid agreed vehicle value.");
   if (!Number.isFinite(sell) || sell <= 0) return alert("Enter a valid inventory selling price.");
 
   const name = `${current.make || ""} ${current.model || ""}`.trim() || "this vehicle";
-
   if (!confirm(`Approve ${name} and add it to inventory for KES ${money(sell)}?`)) return;
 
   const button = $("approveInventory");
@@ -719,27 +915,20 @@ async function approveToInventory() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Your session has expired. Please log in again.");
 
-    /* Re-check to avoid double approval */
     const existing = await supabase
-      .from("cars")
-      .select("id")
+      .from("cars").select("id")
       .eq("source_request_id", current.id)
       .eq("source_type", "agent")
       .maybeSingle();
-
     if (existing.error) throw existing.error;
 
     let car;
-
     if (existing.data) {
       car = existing.data;
     } else {
       const keyFeatures = current.key_features ? String(current.key_features).trim() : "";
       const baseDescription = current.description ? String(current.description).trim() : "";
-
-      const description = [baseDescription, keyFeatures ? `Key Features: ${keyFeatures}` : ""]
-        .filter(Boolean)
-        .join("\n\n");
+      const description = [baseDescription, keyFeatures ? `Key Features: ${keyFeatures}` : ""].filter(Boolean).join("\n\n");
 
       const carData = {
         make: current.make || null,
@@ -749,10 +938,8 @@ async function approveToInventory() {
         purchase_price: buy,
         condition: current.condition || null,
         body_type: current.body_type || null,
-        mileage:
-          current.mileage !== null && current.mileage !== undefined && current.mileage !== ""
-            ? Number(current.mileage)
-            : null,
+        mileage: current.mileage !== null && current.mileage !== undefined && current.mileage !== ""
+          ? Number(current.mileage) : null,
         fuel_type: current.fuel_type || null,
         transmission: current.transmission || null,
         drive_type: current.drive_type || null,
@@ -775,137 +962,89 @@ async function approveToInventory() {
       };
 
       const result = await supabase.from("cars").insert(carData).select().single();
-
       if (result.error) {
         if (result.error.code === "23505") {
-          const query = await supabase
-            .from("cars")
-            .select("*")
-            .eq("source_request_id", current.id)
-            .single();
+          const query = await supabase.from("cars").select("*").eq("source_request_id", current.id).single();
           if (query.error) throw query.error;
           car = query.data;
-        } else {
-          throw result.error;
-        }
-      } else {
-        car = result.data;
-      }
+        } else throw result.error;
+      } else car = result.data;
     }
 
-    /* Transfer photos into car-images */
     if (!existing.data) {
       const images = currentFiles.filter(isImageFile);
-
-      /* Prefer the front photo as the display image */
       const frontIndex = images.findIndex(f => f.photo_category === "front");
-      const ordered =
-        frontIndex > 0
-          ? [images[frontIndex], ...images.filter((_, i) => i !== frontIndex)]
-          : images;
+      const ordered = frontIndex > 0 ? [images[frontIndex], ...images.filter((_, i) => i !== frontIndex)] : images;
 
       for (let i = 0; i < ordered.length; i++) {
         const copied = await copySubmissionPhoto(ordered[i], car.id, i);
         uploaded.push(copied.storage_path);
-
         const { error: imageError } = await supabase.from("car_images").insert({
-          car_id: car.id,
-          image_url: copied.image_url,
-          storage_path: copied.storage_path,
-          image_type: "gallery",
-          display_order: i
+          car_id: car.id, image_url: copied.image_url, storage_path: copied.storage_path,
+          image_type: "gallery", display_order: i
         });
-
         if (imageError) throw imageError;
 
         if (i === 0) {
-          const { error: displayError } = await supabase
-            .from("cars")
-            .update({
-              display_image_url: copied.image_url,
-              display_image_path: copied.storage_path
-            })
-            .eq("id", car.id);
-
+          const { error: displayError } = await supabase.from("cars").update({
+            display_image_url: copied.image_url, display_image_path: copied.storage_path
+          }).eq("id", car.id);
           if (displayError) throw displayError;
         }
       }
     }
 
-    /* Update the submission record */
     const now = new Date().toISOString();
-
     const saved = await updateSubmissionRow(current.id, {
-      status: "approved",
-      negotiated_price: buy,
-      inventory_price: sell,
-      approved_car_id: car.id,
-      approved_at: now,
-      approved_by: session.user.id,
-      updated_at: now
+      status: "approved", negotiated_price: buy, inventory_price: sell,
+      approved_car_id: car.id, approved_at: now, approved_by: session.user.id, updated_at: now
     });
 
     current = { ...current, ...saved, _car: { id: car.id, status: "available", source_request_id: current.id, source_type: "agent" } };
     submissions = submissions.map(x => (x.id === current.id ? current : x));
 
-    alert(
-      `Vehicle approved and successfully added to inventory.${
-        uploaded.length ? ` ${uploaded.length} photo(s) were transferred.` : ""
-      }`
-    );
+    // Mark any open correction actions for this submission as completed
+    await supabase.from("agent_vehicle_actions")
+      .update({ completed: true, completed_at: now, updated_at: now })
+      .eq("submission_id", current.id)
+      .eq("completed", false);
 
+    alert(`Vehicle approved and successfully added to inventory.${uploaded.length ? ` ${uploaded.length} photo(s) were transferred.` : ""}`);
     closeDetail();
     load();
   } catch (e) {
     console.error(e);
-
-    if (uploaded.length) {
-      await supabase.storage.from(CAR_BUCKET).remove(uploaded);
-    }
-
+    if (uploaded.length) await supabase.storage.from(CAR_BUCKET).remove(uploaded);
     alert(e.message || "Unable to add vehicle to inventory.");
-
-    if (button) {
-      button.disabled = false;
-      button.innerHTML = `<i class="fa-solid fa-car-side"></i> Approve & Add to Inventory`;
-    }
+    if (button) { button.disabled = false; button.innerHTML = `<i class="fa-solid fa-car-side"></i> Approve & Add to Inventory`; }
   }
 }
 
-/* ---------------- VIEW REQUEST ---------------- */
-
+/* ---------------- VIEW ---------------- */
 async function viewRequest(id) {
   current = submissions.find(x => String(x.id) === String(id));
   if (!current) return;
 
   try {
-    currentFiles = await getFiles(id);
+    const rawFiles = await getFiles(id);
+    currentFiles = await Promise.all(rawFiles.map(async f => ({ ...f, _url: await getFileUrl(f) })));
 
     const status = current._car ? "approved" : current.status || "pending";
-
-    $("detailTitle").textContent =
-      `${current.agent_name || current.agent_email || "Agent"} — ${
-        current.make || ""
-      } ${current.model || ""}`.trim();
-
+    $("detailTitle").textContent = `${current.agent_name || current.agent_email || "Agent"} — ${current.make || ""} ${current.model || ""}`.trim();
     $("detailDate").textContent = date(current.created_at);
     $("detailStatus").value = current.status || "pending";
     updateDetailStatus(status);
 
-    /* Agent banner */
     $("agentBanner").innerHTML = `
       <div class="agent-banner">
         <i class="fa-solid fa-user-tie"></i>
         <div>
           <strong>AGENT SUBMISSION</strong>
-          <span>${esc(current.agent_name || "Unknown agent")} · ${esc(
-      current.agent_email || "No email"
-    )}</span>
+          <span>${esc(current.agent_name || "Unknown agent")} · ${esc(current.agent_email || "No email")}</span>
         </div>
       </div>
     `;
 
-    /* Agent card */
     $("agentDetails").innerHTML = [
       field("Agent Name", current.agent_name),
       field("Agent Email", current.agent_email),
@@ -917,42 +1056,51 @@ async function viewRequest(id) {
       field("Photo Count", current.photo_count ?? currentFiles.length)
     ].join("");
 
-    /* Editable vehicle form */
     buildEditForm();
-
-    /* Contact */
     renderContact();
+    $("approvalContent").innerHTML = approvalPanel() + returnPanel();
 
-    /* Approval panel */
-    $("approvalContent").innerHTML = approvalPanel();
-
-    /* Right panel header */
-    $("vehicleTitle").textContent =
-      `${current.make || "Vehicle"} ${current.model || ""}`.trim();
-
-    $("vehicleMeta").textContent =
-      [current.year, current.registration_number].filter(Boolean).join(" • ") ||
-      "Agent submitted vehicle";
-
-    /* Right panel summary */
+    $("vehicleTitle").textContent = `${current.make || "Vehicle"} ${current.model || ""}`.trim();
+    $("vehicleMeta").textContent = [current.year, current.registration_number].filter(Boolean).join(" • ") || "Agent submitted vehicle";
     renderSummary();
 
-    /* Photos */
     $("filesContent").innerHTML = currentFiles.length
-      ? `<div class="files-grid">${currentFiles.map(fileCard).join("")}</div>`
+      ? `<div class="files-grid">${currentFiles.map((f, i) => fileCard(f, i)).join("")}</div>`
       : `<div class="notes"><p>No photos were submitted with this vehicle.</p></div>`;
 
-    /* Open modal */
+    // Status card also gets a "Download" quick action
+    const statusCard = document.querySelector(".status-card .status-controls");
+    if (statusCard && !statusCard.querySelector(".download-btn")) {
+      const dl = document.createElement("button");
+      dl.type = "button";
+      dl.className = "download-btn";
+      dl.innerHTML = `<i class="fa-solid fa-file-arrow-down"></i> Download`;
+      dl.onclick = downloadAgentSubmission;
+      statusCard.appendChild(dl);
+    }
+
     $("agentDetail").classList.add("show");
     document.body.classList.add("locked");
 
-    /* Wire approval controls */
     if (!current._car && isMainAdmin()) {
       $("negotiatedPrice")?.addEventListener("input", updateProfit);
       $("inventoryPrice")?.addEventListener("input", updateProfit);
       $("approveInventory")?.addEventListener("click", approveToInventory);
       updateProfit();
     }
+
+    wireReturnPanel();
+
+    // Lightbox wiring for photos
+    $("filesContent").onclick = (e) => {
+      const card = e.target.closest("[data-lightbox-index]");
+      if (!card) return;
+      const images = currentFiles.filter(isImageFile).map(f => ({
+        url: f._url, label: f.photo_category === "extra" ? "Extra Photo" : CATS[f.photo_category] || f.photo_category || "Photo"
+      }));
+      const idx = Number(card.dataset.lightboxIndex);
+      openLightbox(images, isNaN(idx) ? 0 : idx);
+    };
   } catch (e) {
     console.error(e);
     $("error").textContent = e.message || "Unable to load submission.";
@@ -961,47 +1109,30 @@ async function viewRequest(id) {
 }
 
 /* ---------------- DELETE ---------------- */
-
 async function deleteRequest() {
   if (!current) return;
-
-  if (
-    !confirm(
-      `Delete submission from ${current.agent_name || current.agent_email || "this agent"}? This cannot be undone.`
-    )
-  ) {
-    return;
-  }
+  if (!confirm(`Delete submission from ${current.agent_name || current.agent_email || "this agent"}? This cannot be undone.`)) return;
 
   const id = current.id;
-
   try {
     const files = currentFiles.length ? currentFiles : await getFiles(id);
     const paths = files.map(f => f.storage_path).filter(Boolean);
 
     if (paths.length) {
-      const { error: storageError } = await supabase.storage
-        .from(SUBMISSION_BUCKET)
-        .remove(paths);
-
+      const { error: storageError } = await supabase.storage.from(SUBMISSION_BUCKET).remove(paths);
       if (storageError) console.warn("Storage cleanup warning:", storageError);
     }
 
     await supabase.from("agent_vehicle_files").delete().eq("submission_id", id);
+    await supabase.from("agent_vehicle_actions").delete().eq("submission_id", id);
 
-    const { error } = await supabase
-      .from("agent_vehicle_submissions")
-      .delete()
-      .eq("id", id);
-
+    const { error } = await supabase.from("agent_vehicle_submissions").delete().eq("id", id);
     if (error) throw error;
 
     submissions = submissions.filter(x => x.id !== id);
-
     closeDetail();
     stats();
     render();
-
     alert("Agent submission deleted successfully.");
   } catch (e) {
     console.error(e);
@@ -1010,7 +1141,6 @@ async function deleteRequest() {
 }
 
 /* ---------------- CLOSE ---------------- */
-
 function closeDetail() {
   $("agentDetail").classList.remove("show");
   document.body.classList.remove("locked");
@@ -1018,14 +1148,7 @@ function closeDetail() {
   currentFiles = [];
 }
 
-window.openInventoryCar = () => {
-  if (current?._car?.id) {
-    location.href = `edit.html?id=${encodeURIComponent(current._car.id)}`;
-  }
-};
-
 /* ---------------- EVENTS ---------------- */
-
 grid.addEventListener("click", e => {
   const card = e.target.closest(".request-card");
   if (card) viewRequest(card.dataset.id);
@@ -1044,30 +1167,16 @@ $("closeDetail").onclick = closeDetail;
 $("detailBg").onclick = closeDetail;
 
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && current) closeDetail();
+  if (e.key === "Escape" && current && !document.querySelector(".agents-lightbox")) closeDetail();
 });
 
-$("menu").onclick = () => {
-  $("sidebar").classList.add("open");
-  $("overlay").classList.add("show");
-};
+$("menu").onclick = () => { $("sidebar").classList.add("open"); $("overlay").classList.add("show"); };
+$("closeMenu").onclick = $("overlay").onclick = () => { $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); };
+$("logoutBtn").onclick = async () => { await supabase.auth.signOut(); location.replace("auth.html"); };
 
-$("closeMenu").onclick = $("overlay").onclick = () => {
-  $("sidebar").classList.remove("open");
-  $("overlay").classList.remove("show");
-};
-
-$("logoutBtn").onclick = async () => {
-  await supabase.auth.signOut();
-  location.replace("auth.html");
-};
-
-window.addEventListener("load", () =>
-  setTimeout(() => $("loader")?.classList.add("hide"), 450)
-);
+window.addEventListener("load", () => setTimeout(() => $("loader")?.classList.add("hide"), 450));
 
 /* ---------------- BOOT ---------------- */
-
 requireAdmin("agent_submissions").then(async allowed => {
   if (!allowed) return;
   await auth();

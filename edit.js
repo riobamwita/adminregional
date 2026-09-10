@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 import { initVehicleCatalogue } from "./vehicle-catalog.js";
-import{recordAgentSale}from"./agent-payments.js";
+import { recordAgentSale } from "./agent-payments.js";
 
 const BUCKET = "car-images";
 
@@ -16,69 +16,85 @@ const galleryInput = $("galleryInput");
 const displayPreview = $("displayPreview");
 const galleryPreview = $("galleryPreview");
 
-let car=null,gallery=[],newDisplay=null,removeDisplay=false,catalog=null,manualEngine=false,manualDescription=false;
+let car = null,
+    gallery = [],
+    newDisplay = null,
+    removeDisplay = false,
+    catalog = null,
+    manualEngine = false,
+    manualDescription = false;
 
 const fields = [
-    "make",
-    "model",
-    "trim",
-    "year",
-    "price",
-    "condition",
-    "body_type",
-    "status",
-    "engine_size",
-    "engine_description",
-    "horsepower",
-    "mileage",
-    "fuel_type",
-    "transmission",
-    "drive_type",
-    "exterior_color",
-    "interior_color",
-    "seats",
-    "doors",
-    "vin",
-    "chassis_number",
-    "registration_number",
-    "stock_number",
-    "country_of_origin",
-    "import_year",
-    "registration_year",
-    "auction_grade",
-    "previous_owners",
-    "accident_history",
-    "service_history",
-    "number_of_keys",
-    "inspection_status",
-    "inspection_notes",
-    "location",
-    "city",
-    "county",
-    "description"
+    "make","model","trim","year","price","condition","body_type","status",
+    "engine_size","engine_description","horsepower","mileage","fuel_type",
+    "transmission","drive_type","exterior_color","interior_color","seats",
+    "doors","vin","chassis_number","registration_number","stock_number",
+    "country_of_origin","import_year","registration_year","auction_grade",
+    "previous_owners","accident_history","service_history","number_of_keys",
+    "inspection_status","inspection_notes","location","city","county","description"
 ];
 
 const numericFields = new Set([
-    "year",
-    "price",
-    "engine_size",
-    "horsepower",
-    "mileage",
-    "seats",
-    "doors",
-    "import_year",
-    "registration_year"
+    "year","price","engine_size","horsepower","mileage","seats","doors",
+    "import_year","registration_year"
 ]);
 
-function generateVehicleText(){const v=id=>$(id)?.value?.trim()||"",make=v("make"),model=v("model"),trim=v("trim"),year=v("year"),body=v("body_type"),size=v("engine_size"),hp=v("horsepower"),fuel=v("fuel_type"),trans=v("transmission"),drive=v("drive_type"),mileage=v("mileage"),condition=v("condition"),ext=v("exterior_color"),int=v("interior_color"),seats=v("seats"),doors=v("doors"),origin=v("country_of_origin"),reg=v("registration_year"),service=v("service_history"),accident=v("accident_history"),engine=[size?`${size}L`:"",hp?`${hp} hp`:"",fuel,trans,drive].filter(Boolean).join(" • "),name=[year,make,model,trim].filter(Boolean).join(" ");if(!manualEngine&&$("engine_description"))$("engine_description").value=engine;if(!manualDescription&&$("description"))$("description").value=`${name||"This vehicle"}${body?` is a ${body.toLowerCase()}`:""}${engine?`, powered by ${engine}`:""}. ${mileage?`It has covered ${Number(mileage).toLocaleString("en-KE")} km. `:""}${condition?`The vehicle is in ${condition.toLowerCase()} condition. `:""}${ext?`The exterior is finished in ${ext}. `:""}${int?`The interior is ${int}. `:""}${seats?`It has ${seats} seats${doors?` and ${doors} doors`:""}. `:""}${origin?`Country of origin: ${origin}. `:""}${reg?`Registered in ${reg}. `:""}${service?`Service history: ${service}. `:""}${accident?`Accident history: ${accident}. `:""}`.trim()}
-$("engine_description")?.addEventListener("input",()=>manualEngine=true);
-$("description")?.addEventListener("input",()=>manualDescription=true);
-["make","model","trim","year","body_type","engine_size","horsepower","fuel_type","transmission","drive_type","mileage","condition","exterior_color","interior_color","seats","doors","country_of_origin","registration_year","service_history","accident_history"].forEach(id=>$(id)?.addEventListener("change",()=>{manualEngine=false;manualDescription=false;generateVehicleText()}));
-function showMessage(id, text) {
-    const element = $(id);
+/* ---------------- AUTO DESCRIPTION ---------------- */
 
-    element.textContent = text;
-    element.classList.add("active");
+function generateVehicleText() {
+    const v = id => $(id)?.value?.trim() || "";
+    const make = v("make"), model = v("model"), trim = v("trim"), year = v("year"),
+          body = v("body_type"), size = v("engine_size"), hp = v("horsepower"),
+          fuel = v("fuel_type"), trans = v("transmission"), drive = v("drive_type"),
+          mileage = v("mileage"), condition = v("condition"),
+          ext = v("exterior_color"), int = v("interior_color"),
+          seats = v("seats"), doors = v("doors"), origin = v("country_of_origin"),
+          reg = v("registration_year"), service = v("service_history"),
+          accident = v("accident_history"),
+          engine = [size ? `${size}L` : "", hp ? `${hp} hp` : "", fuel, trans, drive]
+                     .filter(Boolean).join(" • "),
+          name = [year, make, model, trim].filter(Boolean).join(" ");
+
+    if (!manualEngine && $("engine_description")) $("engine_description").value = engine;
+
+    if (!manualDescription && $("description")) {
+        $("description").value =
+            `${name || "This vehicle"}${body ? ` is a ${body.toLowerCase()}` : ""}` +
+            `${engine ? `, powered by ${engine}` : ""}. ` +
+            `${mileage ? `It has covered ${Number(mileage).toLocaleString("en-KE")} km. ` : ""}` +
+            `${condition ? `The vehicle is in ${condition.toLowerCase()} condition. ` : ""}` +
+            `${ext ? `The exterior is finished in ${ext}. ` : ""}` +
+            `${int ? `The interior is ${int}. ` : ""}` +
+            `${seats ? `It has ${seats} seats${doors ? ` and ${doors} doors` : ""}. ` : ""}` +
+            `${origin ? `Country of origin: ${origin}. ` : ""}` +
+            `${reg ? `Registered in ${reg}. ` : ""}` +
+            `${service ? `Service history: ${service}. ` : ""}` +
+            `${accident ? `Accident history: ${accident}. ` : ""}`.trim();
+    }
+}
+
+$("engine_description")?.addEventListener("input", () => (manualEngine = true));
+$("description")?.addEventListener("input", () => (manualDescription = true));
+
+[
+    "make","model","trim","year","body_type","engine_size","horsepower","fuel_type",
+    "transmission","drive_type","mileage","condition","exterior_color",
+    "interior_color","seats","doors","country_of_origin","registration_year",
+    "service_history","accident_history"
+].forEach(id =>
+    $(id)?.addEventListener("change", () => {
+        manualEngine = false;
+        manualDescription = false;
+        generateVehicleText();
+    })
+);
+
+/* ---------------- MESSAGES ---------------- */
+
+function showMessage(id, text) {
+    const el = $(id);
+    el.textContent = text;
+    el.classList.add("active");
 }
 
 function clearMessages() {
@@ -86,44 +102,99 @@ function clearMessages() {
     $("success").classList.remove("active");
 }
 
+/* ---------------- UTIL ---------------- */
+
 function publicUrl(path) {
-    return supabase.storage
-        .from(BUCKET)
-        .getPublicUrl(path)
-        .data.publicUrl;
+    return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 function safeFileName(name) {
-    return String(name)
-        .toLowerCase()
-        .replace(/[^a-z0-9.]+/g, "-");
+    return String(name).toLowerCase().replace(/[^a-z0-9.]+/g, "-");
 }
 
+/* ---------------- YEAR FALLBACK ---------------- */
+
+/**
+ * Populate a year <select> with a sensible fallback range.
+ * Used ONLY for import_year / registration_year (fields that are NOT
+ * managed by the vehicle catalogue cascade).
+ */
 function populateYears(id) {
     const select = $(id);
+    if (!select) return;
+
     const currentYear = new Date().getFullYear();
+    const minYear = 1990;
+    const maxYear = currentYear + 1;
+    const prev = select.value;
 
     select.innerHTML = '<option value="">Select</option>';
 
-    for (let year = currentYear; year >= 2016; year--) {
+    for (let year = maxYear; year >= minYear; year--) {
         const option = document.createElement("option");
-
-        option.value = year;
-        option.textContent = year;
-
+        option.value = String(year);
+        option.textContent = String(year);
         select.appendChild(option);
     }
+
+    if (prev && !select.querySelector(`option[value="${prev}"]`)) {
+        const extra = document.createElement("option");
+        extra.value = String(prev);
+        extra.textContent = String(prev);
+        select.insertBefore(extra, select.children[1] || null);
+    }
+
+    if (prev) select.value = prev;
 }
 
-populateYears("year");
 populateYears("import_year");
 populateYears("registration_year");
 
-function showDisplay(url) {
-    displayPreview.innerHTML = `
-        <img src="${url}" alt="Display image">
-    `;
+/* ---------------- YEAR SAFETY NET ---------------- */
+/**
+ * Guarantees the year <select> is editable and contains the car's stored
+ * year even when vehicle_catalog has no years for this make/model.
+ * Runs AFTER setVehicleValues() so it never fights the cascade.
+ */
+function ensureYearSelectable() {
+    const sel = $("year");
+    if (!sel) return;
 
+    const stored = car && car.year != null && car.year !== "" ? String(car.year) : "";
+
+    /* Count real (non-placeholder) options currently in the list */
+    const real = [...sel.options].filter(o => o.value !== "");
+
+    /* If the catalog gave us nothing, fill a full range */
+    if (real.length === 0) {
+        const currentYear = new Date().getFullYear();
+        const minYear = 1990;
+        const maxYear = currentYear + 1;
+        sel.innerHTML = '<option value="">Select year</option>';
+        for (let y = maxYear; y >= minYear; y--) {
+            const opt = document.createElement("option");
+            opt.value = String(y);
+            opt.textContent = String(y);
+            sel.appendChild(opt);
+        }
+    }
+
+    /* Always make sure the stored year exists */
+    if (stored && ![...sel.options].some(o => o.value === stored)) {
+        const opt = document.createElement("option");
+        opt.value = stored;
+        opt.textContent = stored;
+        sel.appendChild(opt);
+    }
+
+    if (stored) sel.value = stored;
+    sel.disabled = false;
+}
+
+/* ---------------- DISPLAY IMAGE ---------------- */
+
+function showDisplay(url) {
+    displayPreview.innerHTML = `<img src="${url}" alt="Display image">`;
     displayPreview.classList.add("active");
     $("removeDisplay").classList.add("active");
 }
@@ -134,47 +205,29 @@ function clearDisplay() {
     $("removeDisplay").classList.remove("active");
 }
 
+/* ---------------- GALLERY ---------------- */
+
 function renderGallery() {
     galleryPreview.innerHTML = "";
 
     gallery.forEach(image => {
         const item = document.createElement("div");
-
         item.className = "gallery-item";
-
         item.innerHTML = `
-            <img
-                src="${image.image_url}"
-                alt="Vehicle gallery image"
-            >
-
-            <button
-                type="button"
-                class="delete-image"
-                title="Delete image"
-            >
+            <img src="${image.image_url}" alt="Vehicle gallery image">
+            <button type="button" class="delete-image" title="Delete image">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-
-            <button
-                type="button"
-                class="make-main"
-            >
-                Make Display
-            </button>
+            <button type="button" class="make-main">Make Display</button>
         `;
 
-        item.querySelector(".delete-image").onclick = () => {
-            deleteGalleryImage(image);
-        };
-
-        item.querySelector(".make-main").onclick = () => {
-            makeDisplayFromGallery(image);
-        };
-
+        item.querySelector(".delete-image").onclick = () => deleteGalleryImage(image);
+        item.querySelector(".make-main").onclick = () => makeDisplayFromGallery(image);
         galleryPreview.appendChild(item);
     });
 }
+
+/* ---------------- LOAD VEHICLE ---------------- */
 
 async function loadVehicle() {
     if (!carId) {
@@ -189,67 +242,44 @@ async function loadVehicle() {
             .eq("id", carId)
             .maybeSingle();
 
-        if (result.error) {
-            throw result.error;
-        }
-
-        if (!result.data) {
-            throw new Error(
-                "Vehicle could not be found in the database."
-            );
-        }
+        if (result.error) throw result.error;
+        if (!result.data) throw new Error("Vehicle could not be found in the database.");
 
         car = result.data;
 
-        /*
-         * Load the catalogue separately.
-         *
-         * A missing/empty catalogue must NOT prevent an
-         * existing vehicle from being edited.
-         */
+        /* -------- Vehicle catalogue (best-effort) -------- */
         try {
-         
-catalog = await initVehicleCatalogue({
-    makeId: "make",
-    modelId: "model",
-    yearId: "year",
-    bodyId: "body_type",
-    fuelId: "fuel_type",
-    transId: "transmission",
-    driveId: "drive_type"
-});
+            catalog = await initVehicleCatalogue({
+                makeId: "make",
+                modelId: "model",
+                yearId: "year",
+                bodyId: "body_type",
+                fuelId: "fuel_type",
+                transId: "transmission",
+                driveId: "drive_type"
+            });
 
             catalog.setVehicleValues({
-    make: car.make,
-    model: car.model,
-    body_type: car.body_type,
-    fuel_type: car.fuel_type,
-    transmission: car.transmission,
-    drive_type: car.drive_type
-});
-
-$("year").value = car.year != null ? String(car.year) : "";
-
+                make: car.make,
+                model: car.model,
+                year: car.year,               // ← the missing bit from before
+                body_type: car.body_type,
+                fuel_type: car.fuel_type,
+                transmission: car.transmission,
+                drive_type: car.drive_type
+            });
         } catch (catalogError) {
-            /*
-             * Catalogue failure is not allowed to block
-             * existing vehicle editing.
-             */
-            console.warn(
-                "Vehicle catalogue unavailable:",
-                catalogError
-            );
-
+            console.warn("Vehicle catalogue unavailable:", catalogError);
             showMessage(
                 "error",
                 "Vehicle catalogue is unavailable. Existing vehicle information can still be edited."
             );
         }
 
-        /*
-         * Populate all ordinary fields after the catalogue
-         * has handled the dependent dropdowns.
-         */
+        /* -------- Year safety net (always runs) -------- */
+        ensureYearSelectable();
+
+        /* -------- Populate ordinary fields -------- */
         fields.forEach(field => {
             if (
                 field === "make" ||
@@ -259,116 +289,77 @@ $("year").value = car.year != null ? String(car.year) : "";
                 field === "fuel_type" ||
                 field === "transmission" ||
                 field === "drive_type"
-            ) {
-                return;
-            }
+            ) return;
 
             const element = $(field);
-
-            if (!element) {
-                return;
-            }
+            if (!element) return;
 
             element.value =
-                car[field] !== null &&
-                car[field] !== undefined
+                car[field] !== null && car[field] !== undefined
                     ? String(car[field])
                     : "";
         });
 
-        manualEngine=!!car.engine_description;
-manualDescription=!!car.description;
+        manualEngine = !!car.engine_description;
+        manualDescription = !!car.description;
 
         $("negotiable").checked = !!car.negotiable;
-
-        $("financing_available").checked =
-            !!car.financing_available;
-
-        $("test_drive_available").checked =
-            car.test_drive_available !== false;
-
+        $("financing_available").checked = !!car.financing_available;
+        $("test_drive_available").checked = car.test_drive_available !== false;
         $("featured").checked = !!car.featured;
 
-        if (car.display_image_url) {
-            showDisplay(car.display_image_url);
-        }
+        if (car.display_image_url) showDisplay(car.display_image_url);
 
         const galleryResult = await supabase
             .from("car_images")
             .select("*")
             .eq("car_id", carId)
-            .order("display_order", {
-                ascending: true
-            });
+            .order("display_order", { ascending: true });
 
-        if (galleryResult.error) {
-            throw galleryResult.error;
-        }
+        if (galleryResult.error) throw galleryResult.error;
 
         gallery = galleryResult.data || [];
-
         renderGallery();
 
         form.style.display = "block";
 
     } catch (error) {
-        showMessage(
-            "error",
-            error?.message || "Unable to load vehicle."
-        );
-
+        showMessage("error", error?.message || "Unable to load vehicle.");
     } finally {
         loading.style.display = "none";
     }
 }
 
+/* ---------------- DISPLAY IMAGE HANDLERS ---------------- */
+
 displayInput.onchange = event => {
     newDisplay = event.target.files[0] || null;
-
     removeDisplay = false;
-
-    if (newDisplay) {
-        showDisplay(
-            URL.createObjectURL(newDisplay)
-        );
-    }
+    if (newDisplay) showDisplay(URL.createObjectURL(newDisplay));
 };
 
 $("removeDisplay").onclick = () => {
     newDisplay = null;
     removeDisplay = true;
-
     displayInput.value = "";
-
     clearDisplay();
 };
 
 galleryInput.onchange = event => {
     const files = [...event.target.files];
-
-    files.forEach(file => {
-        uploadGallery(file);
-    });
-
+    files.forEach(file => uploadGallery(file));
     galleryInput.value = "";
 };
 
 async function uploadGallery(file) {
     try {
-        const path =
-            `${carId}/gallery/` +
-            `${crypto.randomUUID()}-${safeFileName(file.name)}`;
+        const path = `${carId}/gallery/${crypto.randomUUID()}-${safeFileName(file.name)}`;
 
         const uploadResult = await supabase.storage
             .from(BUCKET)
-            .upload(path, file, {
-                cacheControl: "3600",
-                upsert: false
-            });
+            .upload(path, file, { cacheControl: "3600", upsert: false });
 
-        if (uploadResult.error) {
-            throw uploadResult.error;
-        }
+        if (uploadResult.error) throw uploadResult.error;
 
         const imageUrl = publicUrl(path);
 
@@ -385,43 +376,26 @@ async function uploadGallery(file) {
             .single();
 
         if (insertResult.error) {
-            await supabase.storage
-                .from(BUCKET)
-                .remove([path]);
-
+            await supabase.storage.from(BUCKET).remove([path]);
             throw insertResult.error;
         }
 
         gallery.push(insertResult.data);
-
         renderGallery();
-
     } catch (error) {
-        showMessage(
-            "error",
-            error?.message || "Unable to upload gallery image."
-        );
+        showMessage("error", error?.message || "Unable to upload gallery image.");
     }
 }
 
 async function deleteGalleryImage(image) {
-    if (
-        !confirm(
-            "Delete this gallery image?"
-        )
-    ) {
-        return;
-    }
+    if (!confirm("Delete this gallery image?")) return;
 
     try {
         if (image.storage_path) {
             const storageResult = await supabase.storage
                 .from(BUCKET)
                 .remove([image.storage_path]);
-
-            if (storageResult.error) {
-                throw storageResult.error;
-            }
+            if (storageResult.error) throw storageResult.error;
         }
 
         const result = await supabase
@@ -429,26 +403,13 @@ async function deleteGalleryImage(image) {
             .delete()
             .eq("id", image.id);
 
-        if (result.error) {
-            throw result.error;
-        }
+        if (result.error) throw result.error;
 
-        gallery = gallery.filter(
-            item => item.id !== image.id
-        );
-
+        gallery = gallery.filter(item => item.id !== image.id);
         renderGallery();
-
-        showMessage(
-            "success",
-            "Gallery image deleted."
-        );
-
+        showMessage("success", "Gallery image deleted.");
     } catch (error) {
-        showMessage(
-            "error",
-            error?.message || "Unable to delete image."
-        );
+        showMessage("error", error?.message || "Unable to delete image.");
     }
 }
 
@@ -461,9 +422,7 @@ async function setDisplayImage(imageUrl, imagePath) {
         })
         .eq("id", carId);
 
-    if (result.error) {
-        throw result.error;
-    }
+    if (result.error) throw result.error;
 
     car.display_image_url = imageUrl;
     car.display_image_path = imagePath;
@@ -471,92 +430,52 @@ async function setDisplayImage(imageUrl, imagePath) {
 
 async function makeDisplayFromGallery(image) {
     try {
-        await setDisplayImage(
-            image.image_url,
-            image.storage_path
-        );
-
+        await setDisplayImage(image.image_url, image.storage_path);
         removeDisplay = false;
         newDisplay = null;
-
         showDisplay(image.image_url);
-
-        showMessage(
-            "success",
-            "Gallery image is now the display image."
-        );
-
+        showMessage("success", "Gallery image is now the display image.");
     } catch (error) {
-        showMessage(
-            "error",
-            error?.message || "Unable to set display image."
-        );
+        showMessage("error", error?.message || "Unable to set display image.");
     }
 }
 
 async function uploadNewDisplay() {
-    if (!newDisplay) {
-        return;
-    }
+    if (!newDisplay) return;
 
     const oldPath = car.display_image_path;
-
-    const path =
-        `${carId}/display/` +
-        `${crypto.randomUUID()}-${safeFileName(newDisplay.name)}`;
+    const path = `${carId}/display/${crypto.randomUUID()}-${safeFileName(newDisplay.name)}`;
 
     const result = await supabase.storage
         .from(BUCKET)
-        .upload(path, newDisplay, {
-            cacheControl: "3600",
-            upsert: false
-        });
+        .upload(path, newDisplay, { cacheControl: "3600", upsert: false });
 
-    if (result.error) {
-        throw result.error;
-    }
+    if (result.error) throw result.error;
 
     const imageUrl = publicUrl(path);
+    await setDisplayImage(imageUrl, path);
 
-    await setDisplayImage(
-        imageUrl,
-        path
-    );
-
-    if (
-        oldPath &&
-        oldPath !== path
-    ) {
-        await supabase.storage
-            .from(BUCKET)
-            .remove([oldPath]);
+    if (oldPath && oldPath !== path) {
+        await supabase.storage.from(BUCKET).remove([oldPath]);
     }
 }
 
+/* ---------------- SAVE ---------------- */
+
 form.onsubmit = async event => {
     event.preventDefault();
-
     clearMessages();
 
-    /*
-     * Catalogue validation is only applied when the
-     * catalogue is available.
-     *
-     * This prevents old vehicles from becoming
-     * impossible to edit.
-     */
+    /* Catalogue validation only if the catalogue actually loaded */
     if (catalog && catalog.rows.length) {
         const invalid = catalog.validate();
-
         if (invalid) {
             showMessage("error", invalid);
             return;
         }
     }
 
-    const saveButtons =
-        document.querySelectorAll(".save");
-
+    const saveButtons = document.querySelectorAll(".save");
     saveButtons.forEach(button => {
         button.disabled = true;
         button.textContent = "Saving...";
@@ -567,10 +486,7 @@ form.onsubmit = async event => {
 
         fields.forEach(field => {
             const element = $(field);
-
-            if (!element) {
-                return;
-            }
+            if (!element) return;
 
             const value = element.value.trim();
 
@@ -583,38 +499,20 @@ form.onsubmit = async event => {
             }
         });
 
-        updates.negotiable =
-            $("negotiable").checked;
+        updates.negotiable = $("negotiable").checked;
+        updates.financing_available = $("financing_available").checked;
+        updates.test_drive_available = $("test_drive_available").checked;
+        updates.featured = $("featured").checked;
 
-        updates.financing_available =
-            $("financing_available").checked;
-
-        updates.test_drive_available =
-            $("test_drive_available").checked;
-
-        updates.featured =
-            $("featured").checked;
-
-        /*
-         * Upload a new display image first.
-         */
         if (newDisplay) {
             await uploadNewDisplay();
-
             newDisplay = null;
             displayInput.value = "";
         }
 
-        /*
-         * Remove the display image if requested.
-         */
         if (removeDisplay) {
             if (car.display_image_path) {
-                await supabase.storage
-                    .from(BUCKET)
-                    .remove([
-                        car.display_image_path
-                    ]);
+                await supabase.storage.from(BUCKET).remove([car.display_image_path]);
             }
 
             updates.display_image_url = null;
@@ -622,108 +520,68 @@ form.onsubmit = async event => {
 
             car.display_image_url = null;
             car.display_image_path = null;
-
             removeDisplay = false;
         }
 
-        updates.updated_at =
-            new Date().toISOString();
+        updates.updated_at = new Date().toISOString();
 
         const result = await supabase
             .from("cars")
             .update(updates)
             .eq("id", carId);
 
-        if (result.error) {
-            throw result.error;
+        if (result.error) throw result.error;
+
+        car = { ...car, ...updates };
+
+        if (updates.status === "sold") {
+            await recordAgentSale({ ...car, ...updates });
         }
 
-        car = {
-            ...car,
-            ...updates
-        };
-        if(updates.status==="sold")await recordAgentSale({...car,...updates});
+        showMessage("success", "Vehicle saved successfully. Returning to listings...");
+        saveButtons.forEach(button => (button.textContent = "Saved"));
 
-        showMessage(
-    "success",
-    "Vehicle saved successfully. Returning to listings..."
-);
-
-saveButtons.forEach(button => {
-    button.textContent = "Saved";
-});
-
-/* Automatically close the edit form and return to listings */
-setTimeout(() => {
-    window.location.href = "index.html";
-}, 700);
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 700);
 
     } catch (error) {
-        showMessage(
-            "error",
-            error?.message || "Unable to save vehicle."
-        );
-
-        saveButtons.forEach(button => {
-            button.textContent = "Save Changes";
-        });
-
+        showMessage("error", error?.message || "Unable to save vehicle.");
+        saveButtons.forEach(button => (button.textContent = "Save Changes"));
     } finally {
-        saveButtons.forEach(button => {
-            button.disabled = false;
-        });
+        saveButtons.forEach(button => (button.disabled = false));
     }
 };
 
+/* ---------------- DELETE ---------------- */
+
 $("deleteBtn").onclick = async () => {
-    if (
-        !confirm(
-            "Delete this vehicle and all its images?"
-        )
-    ) {
-        return;
-    }
+    if (!confirm("Delete this vehicle and all its images?")) return;
 
     try {
         $("deleteBtn").disabled = true;
 
         const paths = [
             car?.display_image_path,
-            ...gallery.map(
-                image => image.storage_path
-            )
+            ...gallery.map(image => image.storage_path)
         ].filter(Boolean);
 
         if (paths.length) {
-            const result = await supabase.storage
-                .from(BUCKET)
-                .remove(paths);
-
-            if (result.error) {
-                throw result.error;
-            }
+            const result = await supabase.storage.from(BUCKET).remove(paths);
+            if (result.error) throw result.error;
         }
 
-        const result = await supabase
-            .from("cars")
-            .delete()
-            .eq("id", carId);
-
-        if (result.error) {
-            throw result.error;
-        }
+        const result = await supabase.from("cars").delete().eq("id", carId);
+        if (result.error) throw result.error;
 
         location.href = "index.html";
-
     } catch (error) {
-        showMessage(
-            "error",
-            error?.message || "Unable to delete vehicle."
-        );
-
+        showMessage("error", error?.message || "Unable to delete vehicle.");
         $("deleteBtn").disabled = false;
     }
 };
+
+/* ---------------- NAV ---------------- */
 
 function goBack() {
     window.location.href = "index.html";
@@ -732,5 +590,6 @@ function goBack() {
 $("backBtn").onclick = goBack;
 $("bottomCancel").onclick = goBack;
 
-/* Load the vehicle when the page opens */
+/* ---------------- BOOT ---------------- */
+
 loadVehicle();
