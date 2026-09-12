@@ -1,1 +1,201 @@
-.manage-section{background:#fff;border:1px solid var(--line);padding:20px;margin-bottom:16px}.section-heading{margin-bottom:18px}.section-heading h2{font-size:20px;margin:5px 0}.section-heading p{font-size:11px;color:var(--muted)}.contacts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.contact-page{border:1px solid var(--line);padding:15px;background:#fff;display:flex;flex-direction:column;gap:10px}.contact-head{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}.contact-icon{width:38px;height:38px;display:grid;place-items:center;background:#f5f8fa;color:var(--gold);font-size:17px}.contact-head h3{font-size:14px}.contact-head span{font-size:9px;color:var(--muted)}.contact-page label,.formula-fields label{font-size:10px;font-weight:700;color:var(--ink);display:flex;flex-direction:column;gap:5px}.contact-page input,.formula-fields input{width:100%;height:37px;border:1px solid var(--line);padding:0 9px;background:#f8fbfd;color:var(--ink);outline:none;font:inherit}.contact-page input:focus,.formula-fields input:focus{border-color:var(--gold)}.save-contact{height:36px;border:0;background:var(--green);color:#fff;font-size:10px;font-weight:800;cursor:pointer;margin-top:2px}.save-contact:disabled,.save-formula:disabled,.reset-formula:disabled{opacity:.6}.message{display:none;padding:10px 13px;margin-bottom:12px;font-size:11px;font-weight:700}.message.active{display:block}.message.error{background:#fff1f2;color:#dc2626;border:1px solid #fecaca}.message.success{background:#ecfdf3;color:#15803d;border:1px solid #bbf7d0}.formula-section{border-top:3px solid var(--gold)}.formula-panel{display:block}.formula-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.formula-fields label span{font-size:9px;font-weight:400;color:var(--muted);line-height:1.4}.formula-preview{border:1px solid var(--line);background:#f8fbfd;padding:18px}.preview-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:13px;margin-bottom:14px}.preview-head h3{font-size:15px;margin:4px 0 0}.preview-head i{font-size:22px;color:var(--gold)}.preview-kicker{font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.8px}.formula-lines{display:grid;gap:7px;font-size:11px;color:var(--ink)}.formula-lines p{margin:0}.formula-main{font-weight:800;padding-top:4px}.example-title{font-size:10px;font-weight:800;margin:18px 0 9px;text-transform:uppercase}.example-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.example-grid div{background:#fff;border:1px solid var(--line);padding:10px}.example-grid span{display:block;font-size:9px;color:var(--muted);margin-bottom:4px}.example-grid strong{font-size:11px;color:var(--ink)}.example-result{display:flex;justify-content:space-between;align-items:center;background:var(--green);color:#fff;padding:13px;margin-top:8px}.example-result span{font-size:10px;font-weight:700}.example-result strong{font-size:15px}.formula-actions{display:flex;gap:9px;margin-top:13px}.save-formula,.reset-formula{height:38px;border:0;padding:0 15px;font-size:10px;font-weight:800;cursor:pointer}.save-formula{background:var(--green);color:#fff}.reset-formula{background:#eef2f5;color:var(--ink);border:1px solid var(--line)}.formula-denied{display:none;align-items:center;gap:12px;background:#fff7ed;border:1px solid #fed7aa;padding:14px;color:#9a3412}.formula-denied i{font-size:18px}.formula-denied strong,.formula-denied span{display:block}.formula-denied strong{font-size:11px}.formula-denied span{font-size:9px;margin-top:3px}@media(max-width:1100px){.contacts-grid{grid-template-columns:repeat(2,1fr)}.formula-fields{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.contacts-grid,.formula-fields,.example-grid{grid-template-columns:1fr}.manage-section{padding:13px}.formula-actions{flex-direction:column}.save-formula,.reset-formula{width:100%}}@media(max-width:430px){.manage-section{padding:11px}.formula-preview{padding:13px}}
+/* ============================================================
+   REGIONAL AUTOSELECTIONS LTD — MANAGE WEBSITE
+   Page stylesheet. Loads after style.css and uses its tokens.
+   ------------------------------------------------------------
+   1  Page overrides & messages
+   2  Sections
+   3  Page contact cards
+   4  Shared field styling
+   5  Calculator settings cards
+   6  Formula preview
+   7  Calculator actions
+   8  Responsive
+   9  Motion & print
+   ============================================================ */
+
+/* ---------- 1. PAGE OVERRIDES & MESSAGES ---------- */
+.page-heading h1{text-transform:none}
+
+.message{
+  display:none;width:min(1180px,100%);margin:0 auto 14px;
+  padding:12px 14px;border-radius:var(--radius);
+  font-size:12.5px;font-weight:600;
+}
+.message.active{display:block}
+.message.error{background:#fff1f2;color:var(--red);border:1px solid #fecaca}
+.message.success{background:#ecfdf3;color:#15803d;border:1px solid #bbf7d0}
+
+/* ---------- 2. SECTIONS ---------- */
+.manage-section{
+  width:min(1180px,100%);margin:0 auto 16px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow-sm);
+}
+.calculator-section{border-top:3px solid var(--gold)}
+
+.section-heading{margin-bottom:18px}
+.section-heading h2{font-size:20px;margin:6px 0 4px}
+.section-heading p{font-size:12.5px;color:var(--muted);max-width:68ch}
+
+/* ---------- 3. PAGE CONTACT CARDS ---------- */
+.contacts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+
+.contact-page{
+  display:flex;flex-direction:column;gap:11px;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--card);padding:16px;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.contact-page:focus-within{border-color:var(--gold);box-shadow:var(--shadow-sm)}
+
+.contact-head{display:flex;align-items:center;gap:11px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.contact-icon{
+  width:42px;height:42px;flex-shrink:0;display:grid;place-items:center;
+  border-radius:var(--radius);background:var(--gold-soft);color:var(--gold);font-size:17px;
+}
+.contact-head h3{font-size:15px;line-height:1.2}
+.contact-head span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+
+.save-contact{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:var(--tap);margin-top:3px;
+  border-radius:var(--radius);background:var(--green);color:#fff;
+  font-size:11.5px;font-weight:700;
+  transition:filter .15s ease;
+}
+.save-contact:hover{filter:brightness(1.08)}
+.save-contact:disabled,.save-formula:disabled,.reset-formula:disabled{opacity:.6;cursor:wait}
+
+/* ---------- 4. SHARED FIELD STYLING ---------- */
+.contact-page label,.formula-fields label{
+  display:flex;flex-direction:column;gap:6px;
+  font-size:11.5px;font-weight:700;color:var(--ink);
+}
+.formula-fields label span{font-size:10.5px;font-weight:400;color:var(--muted);line-height:1.45}
+
+.contact-page input,.formula-fields input{
+  width:100%;min-height:var(--tap);
+  padding:0 12px;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--tint);color:var(--ink);
+  font:inherit;font-size:16px;outline:0;
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+.contact-page input:focus,.formula-fields input:focus{
+  border-color:var(--gold);background:var(--card);box-shadow:0 0 0 3px #f7941d24;
+}
+.contact-page input::placeholder,.formula-fields input::placeholder{color:#93a7b4}
+
+.formula-fields input[type="number"]{-moz-appearance:textfield}
+.formula-fields input::-webkit-outer-spin-button,
+.formula-fields input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* ---------- 5. CALCULATOR SETTINGS CARDS ---------- */
+.exchange-rate-card,.settings-card{
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--tint);padding:18px;
+}
+.exchange-rate-card{margin-bottom:14px}
+
+.settings-card-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.settings-card-head h3{font-size:15px;line-height:1.2}
+.settings-card-head span{display:block;font-size:10.5px;color:var(--muted);margin-top:3px}
+
+.calculator-admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:start}
+
+.formula-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.exchange-fields{grid-template-columns:minmax(0,320px)}
+.hp-fields{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+
+/* ---------- 6. FORMULA PREVIEW ---------- */
+.formula-preview{
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--tint);padding:18px;
+}
+.preview-head{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding-bottom:13px;margin-bottom:15px;border-bottom:1px solid var(--line);
+}
+.preview-head h3{font-size:16px;margin-top:5px}
+.preview-head i{font-size:24px;color:var(--gold);flex-shrink:0}
+.preview-kicker{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em}
+
+.formula-lines{display:grid;gap:8px;font-size:12.5px;color:var(--ink)}
+.formula-lines p{margin:0}
+.formula-lines strong{color:var(--ink)}
+.formula-main{font-weight:700;padding-top:5px;border-top:1px dashed var(--line)}
+
+.example-title{font-size:10.5px;font-weight:700;letter-spacing:.08em;margin:20px 0 10px;text-transform:uppercase;color:var(--muted)}
+.example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.example-grid div{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;min-width:0}
+.example-grid span{display:block;font-size:10px;color:var(--muted);margin-bottom:4px}
+.example-grid strong{font-size:12.5px;color:var(--ink);word-break:break-word}
+
+.example-result{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:9px;padding:15px;border-radius:var(--radius);
+  background:var(--green);color:#fff;
+}
+.example-result span{font-size:11.5px;font-weight:600}
+.example-result strong{font-size:17px;letter-spacing:-.02em}
+
+/* ---------- 7. CALCULATOR ACTIONS ---------- */
+.formula-actions,.global-formula-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.save-formula,.reset-formula{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:var(--tap);padding:0 17px;
+  border-radius:var(--radius);font-size:11.5px;font-weight:700;white-space:nowrap;
+  transition:filter .15s ease,border-color .15s ease;
+}
+.save-formula{background:var(--green);color:#fff;border:1px solid var(--green)}
+.save-formula:hover{filter:brightness(1.08)}
+.reset-formula{background:#eef2f5;color:var(--ink);border:1px solid var(--line)}
+.reset-formula:hover{border-color:var(--gold)}
+
+.formula-denied{
+  display:none;align-items:center;gap:13px;
+  background:#fff7ed;border:1px solid #fed7aa;border-radius:var(--radius);
+  padding:15px;color:#9a3412;
+}
+.formula-denied i{font-size:19px;flex-shrink:0}
+.formula-denied strong{display:block;font-size:12.5px}
+.formula-denied span{display:block;font-size:11px;margin-top:4px}
+
+/* ---------- 8. RESPONSIVE ---------- */
+@media (max-width:900px){
+  .manage-section{padding:16px}
+  .calculator-admin-grid{grid-template-columns:1fr}
+  .exchange-fields{grid-template-columns:1fr}
+}
+
+@media (max-width:600px){
+  .manage-section{padding:14px;margin-bottom:12px}
+  .section-heading{margin-bottom:15px}
+  .section-heading h2{font-size:18px}
+
+  .contacts-grid{grid-template-columns:1fr;gap:10px}
+  .contact-page{padding:14px}
+
+  .exchange-rate-card,.settings-card,.formula-preview{padding:14px}
+  .formula-fields,.hp-fields{grid-template-columns:1fr}
+  .example-grid{grid-template-columns:1fr 1fr}
+
+  .formula-actions,.global-formula-actions{flex-direction:column}
+  .save-formula,.reset-formula{width:100%}
+}
+
+@media (max-width:400px){
+  .manage-section{padding:12px}
+  .example-grid{grid-template-columns:1fr}
+  .example-result{flex-direction:column;align-items:flex-start;gap:4px}
+}
+
+/* ---------- 9. MOTION & PRINT ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important}
+}
+
+@media print{
+  .save-contact,.global-formula-actions,.formula-actions{display:none!important}
+  .manage-section{border-color:#ccc;box-shadow:none;break-inside:avoid}
+}

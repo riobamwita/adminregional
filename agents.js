@@ -1,15 +1,7 @@
-/* ============================================================
-   agents.js — Admin Agent Submissions
-   - Signed URLs for photos (private bucket safe)
-   - Scrollable lightbox with thumbnails & zoom
-   - Download submission as printable form
-   - Send submission back to agent for corrections
-   - Mirrors year / vehicle edits into linked inventory car
-   ============================================================ */
 
 import { supabase } from "./supabase.js";
 import { requireAdmin } from "./admin-guard.js";
-
+import{markSectionSeen}from"./badges.js";import{attachBadges}from"./admin-nav.js";
 const $ = id => document.getElementById(id);
 const grid = $("requestsGrid");
 
@@ -1230,5 +1222,5 @@ window.addEventListener("load", () => setTimeout(() => $("loader")?.classList.ad
 requireAdmin("agent_submissions").then(async allowed => {
   if (!allowed) return;
   await auth();
-  load();
+  load();markSectionSeen("agent_submissions");attachBadges();
 });

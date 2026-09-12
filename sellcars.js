@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAdmin } from "./admin-guard.js";
-
+import { markSectionSeen } from "./badges.js";import{attachBadges}from"./admin-nav.js";
 const $ = id => document.getElementById(id);
 const grid = $("requestsGrid");
 const BUCKET = "car-images";
@@ -836,4 +836,4 @@ $("logoutBtn").onclick = async () => { await supabase.auth.signOut(); location.r
 window.addEventListener("load", () => setTimeout(() => $("loader")?.classList.add("hide"), 450));
 
 /* ---------------- boot ---------------- */
-requireAdmin("sellcars").then(async allowed => { if (!allowed) return; await auth(); load(); });
+requireAdmin("sellcars").then(async allowed => { if (!allowed) return; await auth(); load();markSectionSeen("sellcars");attachBadges(); });

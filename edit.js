@@ -112,7 +112,7 @@ function safeFileName(name) {
     return String(name).toLowerCase().replace(/[^a-z0-9.]+/g, "-");
 }
 
-function optimizedUrl(url, width = 400, quality = 70) {
+function optimizedUrl(url, width = 800, quality = 85) {
     if (!url || !url.includes("/storage/v1/object/public/")) return url;
     return url.replace("/object/public/", "/render/image/public/") + `?width=${width}&quality=${quality}`;
 }
@@ -224,7 +224,7 @@ function hookYearOverride() {
 /* ---------------- DISPLAY IMAGE ---------------- */
 
 function showDisplay(url) {
-    displayPreview.innerHTML = `<img src="${optimizedUrl(url, 500, 75)}" alt="Display image">`;
+    displayPreview.innerHTML = `<img src="${optimizedUrl(url, 800, 85)}" alt="Display image">`;
     displayPreview.classList.add("active");
     $("removeDisplay").classList.add("active");
 }
@@ -244,7 +244,7 @@ function renderGallery() {
         const item = document.createElement("div");
         item.className = "gallery-item";
         item.innerHTML = `
-            <img src="${optimizedUrl(image.image_url, 300, 70)}" alt="Vehicle gallery image" loading="lazy" decoding="async">
+            <img src="${optimizedUrl(image.image_url, 500, 80)}" alt="Vehicle gallery image" loading="lazy" decoding="async">
             <button type="button" class="delete-image" title="Delete image">
                 <i class="fa-solid fa-xmark"></i>
             </button>

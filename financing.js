@@ -1,6 +1,6 @@
 import{supabase}from"./supabase.js";
-import{requireAdmin}from"./admin-guard.js";
-
+import{requireAdmin}from"./admin-guard.js";import{markSectionSeen}from"./badges.js";
+import{attachBadges}from"./admin-nav.js";
 const $=id=>document.getElementById(id),grid=$("requestsGrid"),esc=v=>String(v??"—").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),money=v=>Number(v||0).toLocaleString("en-KE"),date=v=>v?new Date(v).toLocaleString("en-KE",{dateStyle:"medium",timeStyle:"short"}):"—",phone=v=>String(v||"").replace(/\D/g,"").replace(/^0/,"254");
 
 let requests=[],cars=[],sellRequests=[],tradeRequests=[],current=null,currentSource=null,currentSourceImages=[];
@@ -192,4 +192,4 @@ $("closeMenu").onclick=$("overlay").onclick=()=>{$("sidebar").classList.remove("
 $("logoutBtn").onclick=async()=>{await supabase.auth.signOut();location.replace("auth.html")};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&current)closeRequest()});
 window.addEventListener("load",()=>setTimeout(()=>$("loader")?.classList.add("hide"),450));
-requireAdmin("financing").then(x=>x&&load());
+requireAdmin("financing").then(x=>{if(x){load();markSectionSeen("financing");attachBadges()}});

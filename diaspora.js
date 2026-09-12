@@ -1,5 +1,5 @@
 import{supabase}from"./supabase.js";
-import{requireAdmin}from"./admin-guard.js";
+import{requireAdmin}from"./admin-guard.js";import{markSectionSeen}from"./badges.js";import{attachBadges}from"./admin-nav.js";
 
 const $=id=>document.getElementById(id);
 const grid=$("grid"),modal=$("modal");
@@ -225,4 +225,4 @@ document.addEventListener("keydown",e=>{
 
 window.addEventListener("load",()=>setTimeout(()=>$("loader")?.classList.add("hide"),450));
 
-requireAdmin("diaspora").then(ok=>ok&&load());
+requireAdmin("diaspora").then(ok=>{if(ok){load();markSectionSeen("diaspora");attachBadges()}});
