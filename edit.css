@@ -177,12 +177,9 @@ input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0
 .upload i{color:var(--gold);font-size:15px}
 .upload input{display:none}
 
-.display-preview{
-  display:none;width:100%;max-width:460px;margin:14px 0 0;
-  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#e8f1f5;
-}
+.display-preview{display:none;width:100%;max-width:none;margin:14px 0 0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#e8f1f5}
 .display-preview.active{display:block}
-.display-preview img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.display-preview img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover}
 
 .remove{
   display:none;align-items:center;justify-content:center;gap:7px;

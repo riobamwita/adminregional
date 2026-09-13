@@ -7,7 +7,7 @@ syncFilters();
 render();}catch(e){$("error").textContent=e.message;$("error").classList.add("active")}finally{$("loading").style.display="none"}}
 function stats(){$("totalCars").textContent=cars.length;$("availableCars").textContent=cars.filter(x=>x.status==="available").length;$("reservedCars").textContent=cars.filter(x=>x.status==="reserved").length;$("soldCars").textContent=cars.filter(x=>x.status==="sold").length;$("featuredCars").textContent=cars.filter(x=>x.featured).length}
 const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-function optimizedUrl(url,width=400,quality=70){if(!url||!url.includes('/storage/v1/object/public/'))return url;return url.replace('/object/public/','/render/image/public/')+`?width=${width}&quality=${quality}`}
+function optimizedUrl(url,width=800,quality=70){if(!url||!url.includes('/storage/v1/object/public/'))return url;return url.replace('/object/public/','/render/image/public/')+`?width=${width}&quality=${quality}`}
 const N=v=>String(v??"").trim().toLowerCase(),M=v=>Number(v||0).toLocaleString("en-KE"),CC=v=>{let n=Number(v||0);return n>0&&n<20?n*1000:n},conditionType=c=>{let v=N(c.condition);return v.includes("local")&&v.includes("used")?"local used":(v.includes("foreign")||v.includes("import"))&&v.includes("used")?"foreign used":v};
 
 function textMatch(c,q){return!q||Object.entries(c).filter(([,v])=>v!==null&&typeof v!=="object").map(([k,v])=>`${k} ${v}`).join(" ").toLowerCase().includes(q)}
