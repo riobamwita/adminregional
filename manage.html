@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="assets/logo.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -165,6 +166,11 @@ Manage page contacts and Super Admin financing calculator settings.
 
 <!-- =========================
      PAGE CONTACTS
+
+     data-page     = the page_key the public page reads
+     data-aliases  = legacy page_key values kept in sync on save,
+                     so older front-end code keeps resolving
+     data-label    = wording used on the save button and toast
 ========================= -->
 
 <section class="manage-section">
@@ -178,7 +184,7 @@ Manage page contacts and Super Admin financing calculator settings.
 <h2>Contact Management</h2>
 
 <p>
-Manage the WhatsApp contacts used across the website.
+WhatsApp, phone and email used by each public page. WhatsApp is required; phone and email are optional.
 </p>
 
 </div>
@@ -189,7 +195,11 @@ Manage the WhatsApp contacts used across the website.
 
 <!-- HOME -->
 
-<article class="contact-page" data-page="home">
+<article
+class="contact-page"
+data-page="home"
+data-label="Home"
+>
 
 <div class="contact-head">
 
@@ -199,7 +209,7 @@ Manage the WhatsApp contacts used across the website.
 
 <div>
 <h3>Home</h3>
-<span>Homepage contacts</span>
+<span>Homepage header, hero and footer contacts</span>
 </div>
 
 </div>
@@ -207,31 +217,17 @@ Manage the WhatsApp contacts used across the website.
 
 <label>
 WhatsApp
-<input
-data-field="whatsapp"
-type="text"
-placeholder="254768888999"
->
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
 </label>
-
 
 <label>
 Phone
-<input
-data-field="phone"
-type="text"
-placeholder="+254768888999"
->
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
 </label>
-
 
 <label>
 Email
-<input
-data-field="email"
-type="email"
-placeholder="info@example.com"
->
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
@@ -245,44 +241,46 @@ Save Home
 
 <!-- IMPORT -->
 
-<article class="contact-page" data-page="import">
+<article
+class="contact-page"
+data-page="import"
+data-aliases="imports,import_hero"
+data-label="Import"
+>
 
 <div class="contact-head">
 
 <div class="contact-icon">
-<i class="fa-brands fa-whatsapp"></i>
+<i class="fa-solid fa-ship"></i>
 </div>
 
 <div>
-<h3>Import Hero Contact</h3>
-
-<span>
-WhatsApp number used by the “Talk to an Advisor” hero button
-</span>
-
+<h3>Import</h3>
+<span>Used by the “Talk to an Advisor” hero button</span>
 </div>
 
 </div>
 
 
 <label>
-Hero WhatsApp Number
+WhatsApp
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
+</label>
 
-<input
-data-field="whatsapp"
-type="text"
-inputmode="numeric"
-placeholder="254768888999"
->
+<label>
+Phone
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
+</label>
 
+<label>
+Email
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
 <button class="save-contact" type="button">
-
 <i class="fa-solid fa-floppy-disk"></i>
-Save Hero Number
-
+Save Import
 </button>
 
 </article>
@@ -290,7 +288,12 @@ Save Hero Number
 
 <!-- TRADE-IN -->
 
-<article class="contact-page" data-page="tradein">
+<article
+class="contact-page"
+data-page="tradein"
+data-aliases="trade_in,tradeins"
+data-label="Trade-In"
+>
 
 <div class="contact-head">
 
@@ -299,35 +302,32 @@ Save Hero Number
 </div>
 
 <div>
-<h3>Trade-In Hero Contact</h3>
-
-<span>
-WhatsApp number used by Trade-In valuation buttons
-</span>
-
+<h3>Trade-In</h3>
+<span>Used by the Trade-In valuation buttons</span>
 </div>
 
 </div>
 
 
 <label>
-Hero WhatsApp Number
+WhatsApp
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
+</label>
 
-<input
-data-field="whatsapp"
-type="text"
-inputmode="numeric"
-placeholder="254768888999"
->
+<label>
+Phone
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
+</label>
 
+<label>
+Email
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
 <button class="save-contact" type="button">
-
 <i class="fa-solid fa-floppy-disk"></i>
 Save Trade-In
-
 </button>
 
 </article>
@@ -335,7 +335,12 @@ Save Trade-In
 
 <!-- FINANCING -->
 
-<article class="contact-page" data-page="financing">
+<article
+class="contact-page"
+data-page="financing"
+data-aliases="finance"
+data-label="Financing"
+>
 
 <div class="contact-head">
 
@@ -344,35 +349,32 @@ Save Trade-In
 </div>
 
 <div>
-<h3>Financing Hero Contact</h3>
-
-<span>
-WhatsApp number used by Finance Team and Advisor buttons
-</span>
-
+<h3>Financing</h3>
+<span>Used by the Finance Team and Advisor buttons</span>
 </div>
 
 </div>
 
 
 <label>
-Hero WhatsApp Number
+WhatsApp
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
+</label>
 
-<input
-data-field="whatsapp"
-type="text"
-inputmode="numeric"
-placeholder="254768888999"
->
+<label>
+Phone
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
+</label>
 
+<label>
+Email
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
 <button class="save-contact" type="button">
-
 <i class="fa-solid fa-floppy-disk"></i>
 Save Financing
-
 </button>
 
 </article>
@@ -380,7 +382,11 @@ Save Financing
 
 <!-- DIASPORA -->
 
-<article class="contact-page" data-page="diaspora">
+<article
+class="contact-page"
+data-page="diaspora"
+data-label="Diaspora"
+>
 
 <div class="contact-head">
 
@@ -398,21 +404,23 @@ Save Financing
 
 <label>
 WhatsApp
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
+</label>
 
-<input
-data-field="whatsapp"
-type="text"
-placeholder="254768888999"
->
+<label>
+Phone
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
+</label>
 
+<label>
+Email
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
 <button class="save-contact" type="button">
-
 <i class="fa-solid fa-floppy-disk"></i>
 Save Diaspora
-
 </button>
 
 </article>
@@ -420,7 +428,12 @@ Save Diaspora
 
 <!-- SELL A CAR -->
 
-<article class="contact-page" data-page="sellacar">
+<article
+class="contact-page"
+data-page="sellacar"
+data-aliases="sell_a_car,sellcars"
+data-label="Sell A Car"
+>
 
 <div class="contact-head">
 
@@ -430,7 +443,7 @@ Save Diaspora
 
 <div>
 <h3>Sell A Car</h3>
-<span>Sell A Car page contacts</span>
+<span>Used by the “Talk to an Advisor” hero button</span>
 </div>
 
 </div>
@@ -438,21 +451,23 @@ Save Diaspora
 
 <label>
 WhatsApp
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
+</label>
 
-<input
-data-field="whatsapp"
-type="text"
-placeholder="254768888999"
->
+<label>
+Phone
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
+</label>
 
+<label>
+Email
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
 <button class="save-contact" type="button">
-
 <i class="fa-solid fa-floppy-disk"></i>
 Save Sell A Car
-
 </button>
 
 </article>
@@ -460,7 +475,11 @@ Save Sell A Car
 
 <!-- INSURANCE -->
 
-<article class="contact-page" data-page="insurance">
+<article
+class="contact-page"
+data-page="insurance"
+data-label="Insurance"
+>
 
 <div class="contact-head">
 
@@ -470,7 +489,7 @@ Save Sell A Car
 
 <div>
 <h3>Insurance</h3>
-<span>Insurance page contacts</span>
+<span>Used by the “Speak to Us” hero button</span>
 </div>
 
 </div>
@@ -478,21 +497,23 @@ Save Sell A Car
 
 <label>
 WhatsApp
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
+</label>
 
-<input
-data-field="whatsapp"
-type="text"
-placeholder="254768888999"
->
+<label>
+Phone
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
+</label>
 
+<label>
+Email
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
 <button class="save-contact" type="button">
-
 <i class="fa-solid fa-floppy-disk"></i>
 Save Insurance
-
 </button>
 
 </article>
@@ -500,7 +521,12 @@ Save Insurance
 
 <!-- ACCESSIBLE CARS -->
 
-<article class="contact-page" data-page="accessible_cars">
+<article
+class="contact-page"
+data-page="accessiblecars"
+data-aliases="accessible_cars,accessible-cars"
+data-label="Accessible Cars"
+>
 
 <div class="contact-head">
 
@@ -518,27 +544,45 @@ Save Insurance
 
 <label>
 WhatsApp
+<input data-field="whatsapp" type="text" inputmode="numeric" placeholder="254768888999">
+</label>
 
-<input
-data-field="whatsapp"
-type="text"
-placeholder="254768888999"
->
+<label>
+Phone
+<input data-field="phone" type="text" inputmode="tel" placeholder="+254768888999">
+</label>
 
+<label>
+Email
+<input data-field="email" type="email" placeholder="info@regionalautoselections.com">
 </label>
 
 
 <button class="save-contact" type="button">
-
 <i class="fa-solid fa-floppy-disk"></i>
 Save Accessible Cars
-
 </button>
 
 </article>
 
 
 </div>
+
+
+<div class="global-formula-actions contacts-footer">
+
+<button id="saveAllContacts" class="save-formula" type="button">
+<i class="fa-solid fa-cloud-arrow-up"></i>
+Save All Page Contacts
+</button>
+
+<button id="reloadContacts" class="reset-formula" type="button">
+<i class="fa-solid fa-rotate"></i>
+Reload From Database
+</button>
+
+</div>
+
 </section>
 
 
@@ -760,7 +804,7 @@ KES 10,000
 
 <p class="formula-main">
 
-Monthly Installment =
+Monthly Installment = Monthly Principal +
 <strong id="previewFee2">
 KES 10,000
 </strong>
@@ -798,7 +842,9 @@ KES 600,000
 
 <div>
 <span>Period</span>
-<strong>6 months</strong>
+<strong id="previewPeriod">
+6 months
+</strong>
 </div>
 
 <div>
