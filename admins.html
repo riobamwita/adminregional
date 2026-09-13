@@ -66,7 +66,10 @@ Vehicle Listings
 Trade-In Requests
 </a>
 
-<a class="side-link" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a>
+<a class="side-link" data-permission="agent_submissions" href="agents.html">
+<i class="fa-solid fa-file-circle-check"></i>
+Agent Submissions
+</a>
 
 <a class="side-link" data-permission="imports" href="imports.html">
 <i class="fa-solid fa-ship"></i>
@@ -113,7 +116,10 @@ Insurance Requests
 Statistics
 </a>
 
-<a class="side-link" data-permission="statistics" href="summary.html"><i class="fa-solid fa-chart-pie"></i> Summary</a>
+<a class="side-link" data-permission="statistics" href="summary.html">
+<i class="fa-solid fa-chart-pie"></i>
+Summary
+</a>
 
 </nav>
 
@@ -145,295 +151,207 @@ Logout
 <main class="main">
 
 <section class="page-heading">
-
-<div>
 <span class="eyebrow"><b></b> ADMINISTRATION</span>
 <h1>Manage <strong>Agents</strong></h1>
-<p>Control administrator access and manage agents' performance payments.</p>
-</div>
-
+<p>Accounts, page access and performance payments in one place. Open an agent to manage everything about them.</p>
 </section>
 
 <div id="error" class="error"></div>
 <div id="success" class="success"></div>
 
-<section class="admin-summary">
+<section class="stat-strip">
 
+<div class="stat">
+<div class="stat-icon"><i class="fa-solid fa-user-shield"></i></div>
 <div>
-<div class="summary-icon">
-<i class="fa-solid fa-user-shield"></i>
-</div>
-
-<div>
-<span>All Agents</span>
+<span>Agents</span>
 <strong id="adminCount">0</strong>
+<small id="agentBreakdown">0 active</small>
 </div>
 </div>
 
+<div class="stat">
+<div class="stat-icon approvals"><i class="fa-solid fa-circle-check"></i></div>
 <div>
-<div class="summary-icon">
-<i class="fa-solid fa-lock"></i>
+<span>Approvals</span>
+<strong id="totalApprovals">0</strong>
+<small id="totalPaidApprovals">0 paid · 0 unpaid</small>
+</div>
 </div>
 
+<div class="stat">
+<div class="stat-icon sales"><i class="fa-solid fa-handshake"></i></div>
 <div>
-<span>Permission Control</span>
-<strong>Main Admin Only</strong>
+<span>Sales</span>
+<strong id="totalSales">0</strong>
+<small id="totalPaidSales">0 paid · 0 unpaid</small>
+</div>
+</div>
+
+<div class="stat">
+<div class="stat-icon money"><i class="fa-solid fa-money-bill-wave"></i></div>
+<div>
+<span>Outstanding</span>
+<strong id="totalOutstanding">KES 0</strong>
+<small id="totalPaidAmount">KES 0 paid</small>
 </div>
 </div>
 
 </section>
 
-<section class="add-admin-panel">
+<section class="action-bar">
 
-<div>
-<span class="eyebrow dark"><b></b> NEW AGENT</span>
-<h2>Add New Agent</h2>
-<p>Create a new dashboard login account.</p>
-</div>
-
-<div class="add-admin-form">
-
-<input id="newAdminName" type="text" placeholder="Full name">
-
-<input id="newAdminIdNumber" type="text" placeholder="ID number">
-
-<input id="newAdminEmail" type="email" placeholder="Agent email">
-
-<input id="newAdminPassword" type="password" placeholder="Password">
-
-<input id="confirmAdminPassword" type="password" placeholder="Confirm password">
-
-<button id="addAdminBtn" class="add-admin-btn" type="button">
+<button id="openAddAgent" class="action-btn primary" type="button">
 <i class="fa-solid fa-user-plus"></i>
-Create Agent
+<span>Add agent<small>Create a dashboard login</small></span>
 </button>
 
-</div>
+<button id="openRates" class="action-btn" type="button">
+<i class="fa-solid fa-sliders"></i>
+<span>Payment rates<small id="rateSummary">Set what an agent earns</small></span>
+</button>
+
+<button id="openHistory" class="action-btn" type="button">
+<i class="fa-solid fa-receipt"></i>
+<span>Payment history<small id="historySummary">Approvals and sales activity</small></span>
+</button>
+
+<button id="refreshBtn" class="action-btn ghost" type="button">
+<i class="fa-solid fa-arrows-rotate"></i>
+<span>Refresh</span>
+</button>
 
 </section>
 
-<section class="admins-panel">
+<section class="agents-panel">
 
 <div class="panel-head">
-
-<div>
-<span class="eyebrow dark"><b></b> ACCOUNTS</span>
-<h2>Access</h2>
-</div>
-
-<button id="refreshAdmins" class="outline-btn" type="button">
-<i class="fa-solid fa-arrows-rotate"></i>
-Refresh
-</button>
-
+<h2>Agent accounts</h2>
+<input id="agentSearch" type="search" placeholder="Search name, email or ID">
 </div>
 
 <div id="loading" class="loading">
 <i class="fa-solid fa-spinner fa-spin"></i>
-Loading ...
+Loading agents...
 </div>
 
-<div id="adminsGrid" class="admins-grid"></div>
+<div id="adminsList" class="agents-list"></div>
 
 </section>
 
-<section class="payments-panel" id="adminPayments">
+</main>
 
-<div class="panel-head payments-panel-head">
+</div>
 
+<!-- ADD AGENT -->
+<div class="modal" id="addAgentModal">
+<div class="modal-bg" data-close></div>
+<section class="modal-box narrow">
+
+<button class="modal-close" data-close type="button"><i class="fa-solid fa-xmark"></i></button>
+
+<div class="modal-head">
+<span>NEW AGENT</span>
+<h2>Add an agent</h2>
+<p>Creates a login for the dashboard. Page access is set after the account exists.</p>
+</div>
+
+<div class="modal-body">
+<div class="form-grid">
+<label>Full name<input id="newAdminName" type="text" autocomplete="name" placeholder="Jane Wanjiru"></label>
+<label>Agent ID number<input id="newAdminIdNumber" type="text" autocomplete="off" placeholder="12345678"></label>
+<label class="span-2">Email<input id="newAdminEmail" type="email" autocomplete="email" placeholder="agent@regional.co.ke"></label>
+<label>Password<input id="newAdminPassword" type="password" autocomplete="new-password" placeholder="At least 8 characters"></label>
+<label>Confirm password<input id="confirmAdminPassword" type="password" autocomplete="new-password" placeholder="Repeat password"></label>
+</div>
+</div>
+
+<div class="modal-actions">
+<button class="cancel-btn" data-close type="button">Cancel</button>
+<button id="addAdminBtn" class="save-btn" type="button"><i class="fa-solid fa-user-plus"></i> Create agent</button>
+</div>
+
+</section>
+</div>
+
+<!-- PAYMENT RATES -->
+<div class="modal" id="ratesModal">
+<div class="modal-bg" data-close></div>
+<section class="modal-box narrow">
+
+<button class="modal-close" data-close type="button"><i class="fa-solid fa-xmark"></i></button>
+
+<div class="modal-head">
+<span>PAYMENT RATES</span>
+<h2>Set payment rates</h2>
+<p>What an agent earns for each vehicle they get approved and each vehicle they sell.</p>
+</div>
+
+<div class="modal-body">
+
+<div class="rate-card">
+<div class="rate-icon"><i class="fa-solid fa-circle-check"></i></div>
 <div>
-<span class="eyebrow dark"><b></b> AGENT PAYMENTS</span>
-<h2>Agent <strong>Payments</strong></h2>
-<p>Track earnings for approved and sold vehicles. Main administrators with full roles are excluded.</p>
-</div>
-
-<button id="refreshPayments" class="outline-btn" type="button">
-<i class="fa-solid fa-arrows-rotate"></i>
-Refresh Payments
-</button>
-
-</div>
-
-<div class="payment-settings">
-
-<div class="payment-settings-head">
-
-<div>
-<span class="eyebrow dark"><b></b> PAYMENT SETTINGS</span>
-<h3>Set Payment Rates</h3>
-<p>Define how much an agent earns per approved vehicle and per completed sale.</p>
-</div>
-
-<div class="payment-settings-actions">
-
-<button id="savePaymentSettings" class="save-payment-settings" type="button">
-<i class="fa-solid fa-floppy-disk"></i>
-Save Payment Rates
-</button>
-
-</div>
-
-</div>
-
-<div class="payment-rate-grid">
-
-<div class="payment-rate-card">
-
-<div class="payment-rate-icon approval-rate-icon">
-<i class="fa-solid fa-circle-check"></i>
-</div>
-
-<div class="payment-rate-content">
-
-<span>Per Approved Vehicle</span>
-
-<div class="payment-input-wrap">
+<span>Per approved vehicle</span>
+<div class="money-input">
 <span>KES</span>
 <input id="approvalPaymentAmount" type="number" min="0" step="1" value="0" placeholder="0">
 </div>
-
-<small>Amount earned for each vehicle approval.</small>
-
+</div>
 </div>
 
-</div>
-
-<div class="payment-rate-card">
-
-<div class="payment-rate-icon sale-rate-icon">
-<i class="fa-solid fa-handshake"></i>
-</div>
-
-<div class="payment-rate-content">
-
-<span>Per Sold Vehicle</span>
-
-<div class="payment-input-wrap">
+<div class="rate-card">
+<div class="rate-icon sale"><i class="fa-solid fa-handshake"></i></div>
+<div>
+<span>Per sold vehicle</span>
+<div class="money-input">
 <span>KES</span>
 <input id="salePaymentAmount" type="number" min="0" step="1" value="0" placeholder="0">
 </div>
-
-<small>Amount earned for each completed vehicle sale.</small>
-
+</div>
 </div>
 
 </div>
 
+<div class="modal-actions">
+<button class="cancel-btn" data-close type="button">Cancel</button>
+<button id="savePaymentSettings" class="save-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save rates</button>
 </div>
-
-</div>
-
-<div class="payment-overview">
-
-<div class="payment-overview-card">
-
-<div class="payment-overview-icon">
-<i class="fa-solid fa-circle-check"></i>
-</div>
-
-<div>
-<span>Total Approvals</span>
-<strong id="totalApprovals">0</strong>
-<small id="totalPaidApprovals">0 paid · 0 unpaid</small>
-</div>
-
-</div>
-
-<div class="payment-overview-card">
-
-<div class="payment-overview-icon">
-<i class="fa-solid fa-car-side"></i>
-</div>
-
-<div>
-<span>Total Sales</span>
-<strong id="totalSales">0</strong>
-<small id="totalPaidSales">0 paid · 0 unpaid</small>
-</div>
-
-</div>
-
-<div class="payment-overview-card total-earnings-card">
-
-<div class="payment-overview-icon">
-<i class="fa-solid fa-money-bill-wave"></i>
-</div>
-
-<div>
-<span>Total Outstanding</span>
-<strong id="totalOutstanding">KES 0</strong>
-<small id="totalPaidAmount">KES 0 paid</small>
-</div>
-
-</div>
-
-</div>
-
-<div id="paymentsLoading" class="loading">
-<i class="fa-solid fa-spinner fa-spin"></i>
-Loading administrator payment records...
-</div>
-
-<div id="adminPaymentsGrid" class="admin-payments-grid"></div>
 
 </section>
-
-<section class="payment-history-panel">
-
-<div class="panel-head">
-
-<div>
-<span class="eyebrow dark"><b></b> PAYMENT HISTORY</span>
-<h2>Recent Payment <strong>Activity</strong></h2>
-<p>Review approvals and sales that have been marked as paid or remain unpaid.</p>
 </div>
 
-<button id="refreshPaymentHistory" class="outline-btn" type="button">
-<i class="fa-solid fa-arrows-rotate"></i>
-Refresh
-</button>
+<!-- PAYMENT HISTORY -->
+<div class="modal" id="historyModal">
+<div class="modal-bg" data-close></div>
+<section class="modal-box wide">
 
+<button class="modal-close" data-close type="button"><i class="fa-solid fa-xmark"></i></button>
+
+<div class="modal-head">
+<span>PAYMENT HISTORY</span>
+<h2>Payment activity</h2>
+<p>Every approval and sale, paid or still owing.</p>
 </div>
 
-<div class="payment-history-filters">
-
-<button class="payment-filter active" data-payment-filter="all" type="button">
-All Activity
-</button>
-
-<button class="payment-filter" data-payment-filter="approval" type="button">
-<i class="fa-solid fa-circle-check"></i>
-Approvals
-</button>
-
-<button class="payment-filter" data-payment-filter="sale" type="button">
-<i class="fa-solid fa-handshake"></i>
-Sales
-</button>
-
-<button class="payment-filter" data-payment-filter="unpaid" type="button">
-<i class="fa-solid fa-clock"></i>
-Unpaid
-</button>
-
-<button class="payment-filter" data-payment-filter="paid" type="button">
-<i class="fa-solid fa-check-double"></i>
-Paid
-</button>
-
+<div class="filter-row">
+<button class="filter active" data-payment-filter="all" type="button">All</button>
+<button class="filter" data-payment-filter="approval" type="button">Approvals</button>
+<button class="filter" data-payment-filter="sale" type="button">Sales</button>
+<button class="filter" data-payment-filter="unpaid" type="button">Unpaid</button>
+<button class="filter" data-payment-filter="paid" type="button">Paid</button>
 </div>
+
+<div class="modal-body">
 
 <div id="paymentHistoryLoading" class="loading">
 <i class="fa-solid fa-spinner fa-spin"></i>
 Loading payment history...
 </div>
 
-<div class="payment-history-table-wrap">
-
-<table class="payment-history-table">
-
+<div class="table-wrap">
+<table class="history-table">
 <thead>
-
 <tr>
 <th>Agent</th>
 <th>Vehicle</th>
@@ -443,178 +361,134 @@ Loading payment history...
 <th>Date</th>
 <th>Action</th>
 </tr>
-
 </thead>
-
 <tbody id="paymentHistoryBody"></tbody>
-
 </table>
-
 </div>
 
-<div id="paymentHistoryEmpty" class="payment-history-empty">
-
+<div id="paymentHistoryEmpty" class="empty-block">
 <i class="fa-solid fa-receipt"></i>
-
-<h3>No Payment Records</h3>
-
-<p>Agent approvals and vehicle sales will appear here.</p>
-
+<h3>Nothing here yet</h3>
+<p>Approvals and sales appear as soon as agents record them.</p>
 </div>
 
-</section>
-
-</main>
-
 </div>
-
-<div class="permission-modal" id="permissionModal">
-
-<div class="modal-bg" id="modalBg"></div>
-
-<section class="modal-box">
-
-<button id="closeModal" class="modal-close" type="button">
-<i class="fa-solid fa-xmark"></i>
-</button>
-
-<div class="modal-head">
-
-<span>ACCESS CONTROL</span>
-
-<h2>Manage <strong id="modalAdminName">Admin</strong></h2>
-
-<p>Select the dashboard pages this administrator can access.</p>
-
-</div>
-
-<div class="page-permissions" id="pagePermissions"></div>
 
 <div class="modal-actions">
-
-<button id="cancelPermissions" class="cancel-btn" type="button">
-Cancel
-</button>
-
-<button id="savePermissions" class="save-btn" type="button">
-<i class="fa-solid fa-floppy-disk"></i>
-Save Permissions
-</button>
-
+<button class="cancel-btn" data-close type="button">Close</button>
 </div>
 
 </section>
-
 </div>
 
-<div class="payment-modal" id="paymentModal">
+<!-- AGENT WORKSPACE -->
+<div class="modal" id="agentModal">
+<div class="modal-bg" data-close></div>
+<section class="modal-box wide">
 
-<div class="modal-bg" id="paymentModalBg"></div>
-
-<section class="payment-modal-box">
-
-<button id="closePaymentModal" class="modal-close" type="button">
-<i class="fa-solid fa-xmark"></i>
-</button>
+<button class="modal-close" data-close type="button"><i class="fa-solid fa-xmark"></i></button>
 
 <div class="modal-head">
-
-<span>AGENT PAYMENT</span>
-
-<h2>Manage Payment for <strong id="paymentAdminName">Agent</strong></h2>
-
-<p>Review and update approval and sales payment records.</p>
-
+<span>AGENT</span>
+<h2 id="agentModalName">Agent</h2>
+<p id="agentModalEmail">—</p>
 </div>
 
-<div class="payment-admin-summary">
-
-<div>
-
-<span>Agent</span>
-
-<strong id="paymentAdminEmail">—</strong>
-
+<div class="tabs">
+<button class="tab active" data-tab="details" type="button"><i class="fa-solid fa-id-card"></i> Details</button>
+<button class="tab" data-tab="access" type="button"><i class="fa-solid fa-lock"></i> Page access</button>
+<button class="tab" data-tab="payments" type="button"><i class="fa-solid fa-money-check-dollar"></i> Payments</button>
 </div>
 
-<div>
+<!-- DETAILS -->
+<div class="pane" data-pane="details">
 
-<span>Total Unpaid</span>
+<div class="modal-body">
+<div class="form-grid">
+<label>Agent ID number<input id="editAdminIdNumber" type="text" autocomplete="off"></label>
+<label>Full name<input id="editAdminName" type="text" autocomplete="name"></label>
+<label class="span-2">Email<input id="editAdminEmail" type="email" autocomplete="email"></label>
 
-<strong id="paymentAdminOutstanding">KES 0</strong>
-
-</div>
-
-</div>
-
-<div class="payment-modal-tabs">
-
-<button class="payment-tab active" data-payment-tab="approvals" type="button">
-<i class="fa-solid fa-circle-check"></i>
-Approvals
-<span id="modalApprovalCount">0</span>
-</button>
-
-<button class="payment-tab" data-payment-tab="sales" type="button">
-<i class="fa-solid fa-handshake"></i>
-Sales
-<span id="modalSalesCount">0</span>
-</button>
-
-</div>
-
-<div class="payment-records" id="paymentApprovalRecords"></div>
-
-<div class="payment-records hidden" id="paymentSaleRecords"></div>
-
-<div class="payment-modal-actions">
-
-<button id="markAllApprovalsPaid" class="mark-all-btn" type="button">
-<i class="fa-solid fa-check-double"></i>
-Mark All Approvals Paid
-</button>
-
-<button id="markAllSalesPaid" class="mark-all-btn hidden" type="button">
-<i class="fa-solid fa-check-double"></i>
-Mark All Sales Paid
-</button>
-
-</div>
-
-</section>
-
-</div>
-
-<div class="agent-modal" id="agentModal">
-<div class="modal-bg" id="agentModalBg"></div>
-<section class="agent-modal-box">
-<button id="closeAgentModal" class="modal-close" type="button"><i class="fa-solid fa-xmark"></i></button>
-<div class="modal-head">
-<span>AGENT ACCOUNT</span>
-<h2>Edit <strong>Agent</strong></h2>
-<p>Update the agent's account information.</p>
-</div>
-<div class="agent-form">
-<label>Agent ID Number<input id="editAdminIdNumber" type="text" autocomplete="off"></label>
-<label>Full Name<input id="editAdminName" type="text" autocomplete="name"></label>
-<label>Email<input id="editAdminEmail" type="email" autocomplete="email"></label>
-<label>New Password
-<div class="password-edit-wrap">
-<input id="editAdminPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep current password">
+<label>New password
+<div class="password-wrap">
+<input id="editAdminPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep current">
 <button id="toggleEditPassword" type="button"><i class="fa-solid fa-eye"></i></button>
 </div>
 </label>
-<label>Confirm New Password
-<div class="password-edit-wrap">
+
+<label>Confirm new password
+<div class="password-wrap">
 <input id="editAdminPasswordConfirm" type="password" autocomplete="new-password" placeholder="Repeat new password">
 <button id="toggleEditPasswordConfirm" type="button"><i class="fa-solid fa-eye"></i></button>
 </div>
 </label>
 </div>
-<div class="agent-modal-actions">
-<button id="cancelAgentEdit" class="cancel-btn" type="button">Cancel</button>
-<button id="saveAgentEdit" class="save-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+
+<div class="danger-zone">
+<div>
+<strong>Delete this agent</strong>
+<small>Removes the account and its login permanently.</small>
 </div>
+<button id="deleteAgentBtn" class="danger-btn" type="button"><i class="fa-solid fa-trash"></i> Delete agent</button>
+</div>
+
+</div>
+
+<div class="modal-actions">
+<button class="cancel-btn" data-close type="button">Cancel</button>
+<button id="saveAgentEdit" class="save-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save changes</button>
+</div>
+
+</div>
+
+<!-- ACCESS -->
+<div class="pane hidden" data-pane="access">
+
+<div class="pane-bar">
+<span id="permissionCount">0 of 0 pages allowed</span>
+<div>
+<button id="allowAllPerms" class="mini-btn" type="button">Allow all</button>
+<button id="clearAllPerms" class="mini-btn" type="button">Clear all</button>
+</div>
+</div>
+
+<div class="modal-body">
+<div class="permissions" id="pagePermissions"></div>
+</div>
+
+<div class="modal-actions">
+<button class="cancel-btn" data-close type="button">Cancel</button>
+<button id="savePermissions" class="save-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save access</button>
+</div>
+
+</div>
+
+<!-- PAYMENTS -->
+<div class="pane hidden" data-pane="payments">
+
+<div class="agent-money">
+<div><span>Unpaid</span><strong id="agentOutstanding">KES 0</strong></div>
+<div><span>Paid to date</span><strong id="agentEarned">KES 0</strong></div>
+</div>
+
+<div class="tabs sub">
+<button class="tab active" data-record-tab="approval" type="button">Approvals <span id="modalApprovalCount">0</span></button>
+<button class="tab" data-record-tab="sale" type="button">Sales <span id="modalSalesCount">0</span></button>
+</div>
+
+<div class="modal-body">
+<div class="records" id="paymentApprovalRecords"></div>
+<div class="records hidden" id="paymentSaleRecords"></div>
+</div>
+
+<div class="modal-actions">
+<button class="cancel-btn" data-close type="button">Close</button>
+<button id="markAllApprovalsPaid" class="save-btn" type="button"><i class="fa-solid fa-check-double"></i> Mark all approvals paid</button>
+<button id="markAllSalesPaid" class="save-btn hidden" type="button"><i class="fa-solid fa-check-double"></i> Mark all sales paid</button>
+</div>
+
+</div>
+
 </section>
 </div>
 

@@ -669,7 +669,6 @@ function approvalPanel() {
     </div>
     <button id="approveInventory" type="button" class="approve-btn"><i class="fa-solid fa-car-side"></i> Approve & Add to Inventory</button>
     <div style="margin-top:12px">
-      <button type="button" class="download-btn" onclick="window.downloadTradeInForm()"><i class="fa-solid fa-file-arrow-down"></i> Download Form</button>
     </div>
   </section>`;
 }
