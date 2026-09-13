@@ -6,6 +6,7 @@ const SECTIONS = [
   { key: "agent_submissions", table: "agent_vehicle_submissions" },
   { key: "diaspora",          table: "returning_resident_requests" },
   { key: "enquiries",         table: "vehicle_enquiries" },
+  { key: "general_enquiries", table: "enquiries" },
   { key: "financing",         table: "financing_requests" },
   { key: "imports",           table: "import_requests" },
   { key: "insurance",         table: "insurance_requests" },

@@ -13,6 +13,7 @@ const SECTION_BY_HREF={
 "agents.html":"agent_submissions",
 "diaspora.html":"diaspora",
 "enquiries.html":"enquiries",
+"general-enquiries.html":"general_enquiries",
 "financing.html":"financing",
 "imports.html":"imports",
 "insurance.html":"insurance",

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7941d">
+<link rel="icon" href="assets/logo.jpg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="general-enquiries.css">
+<title>Admin | General Enquiries</title>
+</head>
+<body>
+
+<header class="header">
+  <div class="nav wrap">
+    <a class="brand" href="index.html"><img src="assets/logo.jpg" alt=""><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a>
+    <div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div>
+    <button id="menu" class="menu" type="button"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</header>
+
+<div class="admin-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional</strong></div><button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button></div>
+    <nav>
+      <a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a>
+      <a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a>
+      <a class="side-link active" href="general-enquiries.html"><i class="fa-solid fa-comment-dots"></i> General Enquiries</a>
+      <a class="side-link" data-permission="tradeins" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
+      <a class="side-link" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a>
+      <a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
+      <a class="side-link" data-permission="financing" href="financing.html"><i class="fa-solid fa-coins"></i> Financing Requests</a>
+      <a class="side-link" data-permission="diaspora" href="diaspora.html"><i class="fa-solid fa-earth-africa"></i> Diaspora Requests</a>
+      <a class="side-link" data-permission="sellcars" href="sellcars.html"><i class="fa-solid fa-car-side"></i> Sell Your Car Requests</a>
+      <a class="side-link" data-permission="accessiblecars" href="accessiblecars.html"><i class="fa-solid fa-wheelchair"></i> Accessible Car Requests</a>
+      <a class="side-link" data-permission="reservations" href="reservations.html"><i class="fa-solid fa-calendar-check"></i> Reservation Requests</a>
+      <a class="side-link" data-permission="testdrives" href="testdrives.html"><i class="fa-solid fa-road"></i> Test Drives</a>
+      <a class="side-link" data-permission="insurance" href="insurance.html"><i class="fa-solid fa-shield-halved"></i> Insurance Requests</a>
+      <a class="side-link" data-permission="statistics" href="statistics.html"><i class="fa-solid fa-chart-column"></i> Income Statistics</a>
+      <a class="side-link" data-permission="statistics" href="summary.html"><i class="fa-solid fa-chart-pie"></i> Summary</a>
+    </nav>
+    <div class="side-bottom">
+      <span class="side-title">ACCOUNT</span>
+      <a class="side-link" data-permission="admins" href="admins.html"><i class="fa-solid fa-user-shield"></i> Manage Agents</a>
+      <a class="side-link" data-permission="webpage" href="manage.html"><i class="fa-solid fa-globe"></i> Manage Webpage</a>
+      <button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+
+    <div class="page-heading">
+      <div>
+        <span class="eyebrow"><b></b> WEBSITE ENQUIRY INBOX</span>
+        <h1>GENERAL <strong>ENQUIRIES</strong></h1>
+        <p>Everything sent through the site enquiry form. Reply on the customer's preferred channel and the thread is kept here.</p>
+      </div>
+      <button id="refreshBtn" class="primary-btn" type="button"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-inbox"></i></div><div><span>Total Enquiries</span><strong id="totalRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-reply"></i></div><div><span>Awaiting Reply</span><strong id="awaitingRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-star"></i></div><div><span>New</span><strong id="newRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-phone"></i></div><div><span>Contacted</span><strong id="contactedRequests">0</strong></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-handshake"></i></div><div><span>Converted</span><strong id="convertedRequests">0</strong></div></div>
+    </div>
+
+    <section class="listing-panel">
+      <div class="panel-head">
+        <div><span class="eyebrow dark"><b></b> ENQUIRY QUEUE</span><h2>Customer Enquiries</h2></div>
+        <span id="liveDot" class="live-dot" title="Live updates"><b></b> LIVE</span>
+      </div>
+
+      <div id="error" class="error"></div>
+
+      <div class="toolbar">
+        <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search name, phone, email, reference or message..."></div>
+        <select id="statusFilter">
+          <option value="all">All Statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="qualified">Qualified</option>
+          <option value="converted">Converted</option>
+          <option value="closed">Closed</option>
+          <option value="spam">Spam</option>
+        </select>
+        <select id="categoryFilter"><option value="all">All Categories</option></select>
+        <select id="sortFilter">
+          <option value="awaiting">Awaiting Reply First</option>
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+        </select>
+      </div>
+
+      <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading enquiries...</div>
+      <div id="empty" class="empty"><div><i class="fa-solid fa-envelope-open"></i></div><h3>No enquiries here</h3><p>Nothing matches these filters yet. Clear the search or change the status.</p></div>
+      <div id="requestsGrid" class="requests-grid"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ ENQUIRY DETAIL ============ -->
+<div id="requestModal" class="request-modal" aria-hidden="true">
+  <div id="closeRequestBg" class="request-bg"></div>
+  <section class="request-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+    <header class="request-head">
+      <div>
+        <span id="modalRef">ENQ-—</span>
+        <h2 id="modalTitle">Customer enquiry</h2>
+        <p id="modalSubtitle">Review, reply, and set where this lead stands.</p>
+      </div>
+      <button id="closeRequest" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+
+    <div id="modalBody">
+
+      <section class="card status-card">
+        <div class="card-head">
+          <div><span class="kicker">Pipeline</span><h3>Status and owner</h3></div>
+          <span id="detailStatusBadge" class="big-status new">NEW</span>
+        </div>
+        <div class="status-row">
+          <select id="modalStatus" aria-label="Enquiry status">
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="qualified">Qualified</option>
+            <option value="converted">Converted</option>
+            <option value="closed">Closed</option>
+            <option value="spam">Spam</option>
+          </select>
+          <button id="saveStatus" class="primary-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save status</button>
+          <button id="assignMe" class="ghost-btn" type="button"><i class="fa-solid fa-user-check"></i> Assign to me</button>
+        </div>
+        <p id="ownerLine" class="owner-line">Unassigned</p>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div><span class="kicker">Customer</span><h3>Who got in touch</h3></div><i class="fa-solid fa-user head-icon"></i></div>
+        <div id="customerDetails" class="detail-grid"></div>
+        <div id="contactActions" class="contact-actions"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div><span class="kicker">Enquiry</span><h3>What they asked for</h3></div><i class="fa-solid fa-message head-icon"></i></div>
+        <div id="enquiryDetails" class="detail-grid"></div>
+        <div class="notes"><span>Customer message</span><p id="enquiryMessage">—</p></div>
+      </section>
+
+      <section class="card reply-card">
+        <div class="card-head"><div><span class="kicker">Reply</span><h3>Respond to this customer</h3></div><i class="fa-solid fa-paper-plane head-icon"></i></div>
+
+        <div class="reply-channels" id="replyChannels">
+          <label><input type="radio" name="replyChannel" value="whatsapp" checked><i class="fa-brands fa-whatsapp"></i> WhatsApp</label>
+          <label><input type="radio" name="replyChannel" value="email"><i class="fa-solid fa-envelope"></i> Email</label>
+          <label><input type="radio" name="replyChannel" value="phone"><i class="fa-solid fa-phone"></i> Phone call</label>
+          <label><input type="radio" name="replyChannel" value="internal"><i class="fa-solid fa-lock"></i> Internal note</label>
+        </div>
+
+        <div class="quick-replies" id="quickReplies"></div>
+
+        <textarea id="replyBody" rows="5" placeholder="Type the reply you are sending the customer."></textarea>
+
+        <div class="reply-actions">
+          <button id="sendReply" class="primary-btn" type="button"><i class="fa-solid fa-paper-plane"></i> Send and log reply</button>
+          <button id="logReply" class="ghost-btn" type="button"><i class="fa-solid fa-pen-to-square"></i> Log without opening</button>
+        </div>
+        <p class="reply-hint" id="replyHint">WhatsApp opens with this message ready to send, then the reply is saved to the thread.</p>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div><span class="kicker">Thread</span><h3>Reply history</h3></div><i class="fa-solid fa-clock-rotate-left head-icon"></i></div>
+        <div id="thread" class="thread"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div><span class="kicker">Internal</span><h3>Private notes</h3></div><i class="fa-solid fa-note-sticky head-icon"></i></div>
+        <textarea id="internalNotes" rows="3" placeholder="Notes for the team. The customer never sees this."></textarea>
+        <div class="reply-actions"><button id="saveNotes" class="ghost-btn" type="button"><i class="fa-solid fa-floppy-disk"></i> Save notes</button></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div><span class="kicker">Source</span><h3>Where it came from</h3></div><i class="fa-solid fa-diagram-project head-icon"></i></div>
+        <div id="sourceDetails" class="detail-grid"></div>
+      </section>
+
+      <section class="card danger-card">
+        <div><span class="kicker danger-kicker">Danger zone</span><h3>Delete this enquiry</h3><p>The enquiry and its whole reply thread are removed for good.</p></div>
+        <button id="deleteRequest" class="delete-btn" type="button"><i class="fa-solid fa-trash"></i> Delete enquiry</button>
+      </section>
+
+    </div>
+  </section>
+</div>
+
+<div class="enq-toast" id="toast"><i class="fa-solid fa-circle-info"></i><span></span></div>
+
+<div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS</p></div>
+
+<script type="module" src="general-enquiries.js"></script>
+</body>
+</html>
