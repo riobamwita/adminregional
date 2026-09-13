@@ -71,7 +71,7 @@ const cardFields = card => ({
 async function loadContacts() {
   const { data, error } = await supabase
     .from("page_contacts")
-    .select("page_key,whatsapp,phone,email");
+    .select("page_key,whatsapp,phone,email,address,hours");
 
   if (error) {
     msg("error", error.message);
