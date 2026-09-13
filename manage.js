@@ -1,5 +1,5 @@
 import{supabase}from"./supabase.js";import{requireAdmin}from"./admin-guard.js";
-
+import{attachBadges}from"./admin-nav.js";
 const $=id=>document.getElementById(id),fmt=n=>new Intl.NumberFormat("en-KE").format(Math.round(n)),msg=(id,t)=>{$(id).textContent=t;$(id).classList.add("active");setTimeout(()=>$(id).classList.remove("active"),3500)},defaults={facility_fee:10000,min_deposit_pct:40,min_repayment_months:3,max_repayment_months:36,usd_kes_rate:130};
 
 async function loadContacts(){let{data,error}=await supabase.from("page_contacts").select("page_key,whatsapp,phone,email");if(error)return msg("error",error.message);(data||[]).forEach(c=>{let card=document.querySelector(`.contact-page[data-page="${c.page_key}"]`);if(!card)return;card.querySelector('[data-field="whatsapp"]').value=c.whatsapp||"";card.querySelector('[data-field="phone"]').value=c.phone||"";card.querySelector('[data-field="email"]').value=c.email||""})}
@@ -26,4 +26,4 @@ $("menu").onclick=()=>{$("sidebar").classList.add("open");$("overlay").classList
 $("closeMenu").onclick=$("overlay").onclick=()=>{$("sidebar").classList.remove("open");$("overlay").classList.remove("show")};
 $("logoutBtn").onclick=async()=>{await supabase.auth.signOut();location.replace("auth.html")};
 window.addEventListener("load",()=>setTimeout(()=>$("loader")?.classList.add("hide"),400));
-requireAdmin("webpage").then(async ok=>{if(!ok)return;await loadContacts();await loadSettings()});
+requireAdmin("webpage").then(async ok=>{if(!ok)return;attachBadges?.().catch(e=>console.error("badges",e));await loadContacts();await loadSettings()});

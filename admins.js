@@ -1,5 +1,5 @@
 import{supabase}from"./supabase.js";
-
+import{attachBadges}from"./admin-nav.js";
 const $=id=>document.getElementById(id);
 
 const pages=[
@@ -549,9 +549,10 @@ const init=async()=>{
  const hideLoader=()=>setTimeout(()=>$("loader")?.classList.add("hide"),400);
  document.readyState==="complete"?hideLoader():window.addEventListener("load",hideLoader);
 
- try{
+  try{
   me=await auth();
   if(!me)return;
+  attachBadges?.().catch(e=>console.error("badges",e));
   await refreshAll()
  }catch(e){
   console.error(e);

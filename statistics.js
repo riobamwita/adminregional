@@ -1,6 +1,6 @@
 import{supabase}from"./supabase.js";
 import{requireAdmin}from"./admin-guard.js";
-
+import{attachBadges}from"./admin-nav.js";
 const $=id=>document.getElementById(id);
 
 let cars=[],ground=[],deductions=[],sales=[],currentAdmin=null,dedFilter="all";
@@ -162,7 +162,7 @@ async function load(){
  $("salesTable").innerHTML="";
  try{
   currentAdmin=await requireAdmin("statistics");
-  if(!currentAdmin)return;
+  if(!currentAdmin)return;attachBadges?.().catch(e=>console.error("badges",e));
   const[{data:c,error:ce},{data:g,error:ge},{data:d,error:de}]=await Promise.all([
    supabase.from("cars").select("*").order("created_at",{ascending:false}),
    supabase.from("ground_sales").select("*").order("sale_date",{ascending:false}),
