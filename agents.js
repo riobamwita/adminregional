@@ -1,4 +1,3 @@
-
 import { supabase } from "./supabase.js";
 import { requireAdmin } from "./admin-guard.js";
 import{markSectionSeen}from"./badges.js";import{attachBadges}from"./admin-nav.js";
@@ -233,18 +232,40 @@ const EDIT_FIELDS = [
   { k: "registration_number", l: "Registration Number", t: "text" },
   { k: "make", l: "Make", t: "text" },
   { k: "model", l: "Model", t: "text" },
+  { k: "trim", l: "Trim / Grade", t: "text" },
   { k: "year", l: "Year", t: "number", min: "1900", max: "2100" },
   { k: "body_type", l: "Body Type", t: "text" },
   { k: "engine_cc", l: "Engine (CC)", t: "number" },
+  { k: "engine_description", l: "Engine Description", t: "text", full: true },
+  { k: "horsepower", l: "Horsepower", t: "number" },
   { k: "fuel_type", l: "Fuel Type", t: "text" },
   { k: "transmission", l: "Transmission", t: "text" },
   { k: "drive_type", l: "Drive Type", t: "text" },
   { k: "mileage", l: "Mileage (KM)", t: "number" },
   { k: "exterior_color", l: "Exterior Colour", t: "text" },
+  { k: "interior_color", l: "Interior Colour", t: "text" },
   { k: "seats", l: "Seats", t: "number" },
+  { k: "doors", l: "Doors", t: "number" },
   { k: "condition", l: "Condition", t: "text" },
+  { k: "vin", l: "VIN", t: "text" },
+  { k: "chassis_number", l: "Chassis Number", t: "text" },
+  { k: "stock_number", l: "Stock Number", t: "text" },
+  { k: "country_of_origin", l: "Country Of Origin", t: "text" },
+  { k: "import_year", l: "Import Year", t: "number", min: "1900", max: "2100" },
+  { k: "registration_year", l: "Registration Year", t: "number", min: "1900", max: "2100" },
+  { k: "auction_grade", l: "Auction Grade", t: "text" },
+  { k: "previous_owners", l: "Previous Owners", t: "number" },
+  { k: "number_of_keys", l: "Number Of Keys", t: "number" },
+  { k: "accident_history", l: "Accident History", t: "text", full: true },
+  { k: "service_history", l: "Service History", t: "text", full: true },
+  { k: "inspection_status", l: "Inspection Status", t: "text" },
+  { k: "inspection_notes", l: "Inspection Notes", t: "textarea", full: true },
   { k: "asking_price", l: "Asking Price (KES)", t: "number" },
+  { k: "purchase_price", l: "Purchase Price (KES)", t: "number" },
+  { k: "inventory_price", l: "Inventory Price (KES)", t: "number" },
   { k: "showroom_name", l: "Showroom / Yard", t: "text" },
+  { k: "location", l: "Location", t: "text" },
+  { k: "city", l: "City", t: "text" },
   { k: "town_area", l: "Town / Area", t: "text" },
   { k: "county", l: "County", t: "text" },
   { k: "latitude", l: "Latitude", t: "number", step: "any" },
@@ -304,6 +325,7 @@ async function saveVehicleEdits() {
     const def = EDIT_FIELDS.find(f => f.k === key);
     const raw = el.value.trim();
 
+    if (!def) return;
     if (def.t === "number") {
       updates[key] = raw === "" ? null : (Number.isFinite(Number(raw)) ? Number(raw) : null);
     } else {

@@ -187,7 +187,10 @@ function buildEditForm() {
   const container = $("vehicleEditForm");
   if (!container || !current) return;
 
-  const locked = !!current.approved_car_id;
+  /* Editing stays open after approval. Changes are written to the
+     trade-in request AND mirrored onto the linked inventory vehicle. */
+  const locked = false;
+  const inInventory = !!current.approved_car_id;
 
   container.innerHTML = `
     <div class="edit-grid">
@@ -223,11 +226,19 @@ function buildEditForm() {
         </button>
       </div>
     `}
-    <p class="edit-note ${locked ? "warn" : ""}">
-      ${locked
-        ? "This request is already in inventory. Vehicle details can no longer be edited from here — open the inventory vehicle to make changes."
+    <p class="edit-note">
+      ${inInventory
+        ? "This request is in inventory. Saved changes update the trade-in record and the linked vehicle listing."
         : "Saved changes update the trade-in request. When approved, these values are written into the new inventory vehicle."}
     </p>
+    ${inInventory ? `
+      <div class="edit-actions">
+        <a class="edit-save" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"
+           href="edit.html?id=${encodeURIComponent(current.approved_car_id)}">
+          <i class="fa-solid fa-up-right-from-square"></i> Open Full Inventory Page
+        </a>
+      </div>
+    ` : ""}
   `;
 
   if (!locked) {
@@ -238,9 +249,6 @@ function buildEditForm() {
 
 async function saveVehicleEdits() {
   if (!current) return;
-  if (current.approved_car_id) {
-    return alert("This request is already in inventory. Open the inventory vehicle to make changes.");
-  }
 
   const button = $("saveVehicle");
   const updates = {};

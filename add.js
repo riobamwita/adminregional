@@ -1,5 +1,28 @@
+/* =====================================================================
+   add.js  —  FULL REPLACEMENT
+
+   Changes:
+   - Field list now comes from car-schema.js, so every editable column on
+     `cars` is picked up automatically if the input exists in add.html.
+     Missing inputs are skipped silently, so this file is safe to drop in
+     without touching your HTML.
+   - The year dropdown is owned by the vehicle catalogue and always runs
+     from 1980 to next year. The old hard-coded 1990 floor is gone.
+   - An empty or unmatched catalogue no longer blocks saving. Only a
+     missing make or model stops the form.
+   - After a successful save the make/model combination is registered in
+     the catalogue so it appears on every page from then on.
+   ===================================================================== */
+
 import { supabase } from "./supabase.js";
-import { initVehicleCatalogue } from "./vehicle-catalog.js";
+import { initVehicleCatalogue, registerCombo } from "./vehicle-catalog.js";
+import {
+    CAR_FIELDS,
+    NUMERIC_FIELDS,
+    BOOLEAN_FIELDS,
+    MIN_VEHICLE_YEAR,
+    MAX_VEHICLE_YEAR
+} from "./car-schema.js";
 
 const BUCKET = "car-images";
 
@@ -11,301 +34,304 @@ const galleryInput = $("galleryInput");
 const displayPreview = $("displayPreview");
 const galleryPreview = $("galleryPreview");
 
-let newDisplay=null,gallery=[],catalog=null,manualEngine=false,manualDescription=false;
+let newDisplay = null,
+    gallery = [],
+    catalog = null,
+    manualEngine = false,
+    manualDescription = false;
 
-const fields = [
-    "make",
-    "model",
-    "trim",
-    "year",
-    "price",
-    "condition",
-    "body_type",
-    "status",
-    "engine_size",
-    "engine_description",
-    "horsepower",
-    "mileage",
-    "fuel_type",
-    "transmission",
-    "drive_type",
-    "exterior_color",
-    "interior_color",
-    "seats",
-    "doors",
-    "vin",
-    "chassis_number",
-    "registration_number",
-    "stock_number",
-    "country_of_origin",
-    "import_year",
-    "registration_year",
-    "auction_grade",
-    "previous_owners",
-    "accident_history",
-    "service_history",
-    "number_of_keys",
-    "inspection_status",
-    "inspection_notes",
-    "location",
-    "city",
-    "county",
-    "description"
-];
+/* Fields the catalogue cascade owns — never year-populated here. */
+const CATALOG_SELECTS = new Set(["make", "model", "year", "body_type", "fuel_type", "transmission", "drive_type"]);
 
-const numericFields = new Set([
-    "year",
-    "price",
-    "engine_size",
-    "horsepower",
-    "mileage",
-    "seats",
-    "doors",
-    "import_year",
-    "registration_year"
-]);
+/* ---------------- auto description ---------------- */
 
-function generateVehicleText(){const v=id=>$(id)?.value?.trim()||"",make=v("make"),model=v("model"),trim=v("trim"),year=v("year"),body=v("body_type"),size=v("engine_size"),hp=v("horsepower"),fuel=v("fuel_type"),trans=v("transmission"),drive=v("drive_type"),mileage=v("mileage"),condition=v("condition"),ext=v("exterior_color"),int=v("interior_color"),seats=v("seats"),doors=v("doors"),origin=v("country_of_origin"),reg=v("registration_year"),service=v("service_history"),accident=v("accident_history"),engine=[size?`${size}L`:"",hp?`${hp} hp`:"",fuel,trans,drive].filter(Boolean).join(" • "),name=[year,make,model,trim].filter(Boolean).join(" ");if(!manualEngine&&$("engine_description"))$("engine_description").value=engine;if(!manualDescription&&$("description"))$("description").value=`${name||"This vehicle"}${body?` is a ${body.toLowerCase()}`:""}${engine?`, powered by ${engine}`:""}. ${mileage?`It has covered ${Number(mileage).toLocaleString("en-KE")} km. `:""}${condition?`The vehicle is in ${condition.toLowerCase()} condition. `:""}${ext?`The exterior is finished in ${ext}. `:""}${int?`The interior is ${int}. `:""}${seats?`It has ${seats} seats${doors?` and ${doors} doors`:""}. `:""}${origin?`Country of origin: ${origin}. `:""}${reg?`Registered in ${reg}. `:""}${service?`Service history: ${service}. `:""}${accident?`Accident history: ${accident}. `:""}`.trim()}
-$("engine_description")?.addEventListener("input",()=>manualEngine=true);
-$("description")?.addEventListener("input",()=>manualDescription=true);
-["make","model","trim","year","body_type","engine_size","horsepower","fuel_type","transmission","drive_type","mileage","condition","exterior_color","interior_color","seats","doors","country_of_origin","registration_year","service_history","accident_history"].forEach(id=>$(id)?.addEventListener("change",()=>{manualEngine=false;manualDescription=false;generateVehicleText()}));
+function generateVehicleText() {
+    const v = id => $(id)?.value?.trim() || "";
+
+    const make = v("make"), model = v("model"), trim = v("trim"), year = v("year"),
+          body = v("body_type"), size = v("engine_size"), hp = v("horsepower"),
+          fuel = v("fuel_type"), trans = v("transmission"), drive = v("drive_type"),
+          mileage = v("mileage"), condition = v("condition"),
+          ext = v("exterior_color"), int = v("interior_color"),
+          seats = v("seats"), doors = v("doors"), origin = v("country_of_origin"),
+          reg = v("registration_year"), service = v("service_history"),
+          accident = v("accident_history");
+
+    const engine = [size ? `${size}L` : "", hp ? `${hp} hp` : "", fuel, trans, drive]
+        .filter(Boolean).join(" \u2022 ");
+
+    const name = [year, make, model, trim].filter(Boolean).join(" ");
+
+    if (!manualEngine && $("engine_description")) {
+        $("engine_description").value = engine;
+    }
+
+    if (!manualDescription && $("description")) {
+        $("description").value = (
+            `${name || "This vehicle"}${body ? ` is a ${body.toLowerCase()}` : ""}` +
+            `${engine ? `, powered by ${engine}` : ""}. ` +
+            `${mileage ? `It has covered ${Number(mileage).toLocaleString("en-KE")} km. ` : ""}` +
+            `${condition ? `The vehicle is in ${condition.toLowerCase()} condition. ` : ""}` +
+            `${ext ? `The exterior is finished in ${ext}. ` : ""}` +
+            `${int ? `The interior is ${int}. ` : ""}` +
+            `${seats ? `It has ${seats} seats${doors ? ` and ${doors} doors` : ""}. ` : ""}` +
+            `${origin ? `Country of origin: ${origin}. ` : ""}` +
+            `${reg ? `Registered in ${reg}. ` : ""}` +
+            `${service ? `Service history: ${service}. ` : ""}` +
+            `${accident ? `Accident history: ${accident}. ` : ""}`
+        ).trim();
+    }
+}
+
+$("engine_description")?.addEventListener("input", () => (manualEngine = true));
+$("description")?.addEventListener("input", () => (manualDescription = true));
+
+[
+    "make", "model", "trim", "year", "body_type", "engine_size", "horsepower",
+    "fuel_type", "transmission", "drive_type", "mileage", "condition",
+    "exterior_color", "interior_color", "seats", "doors", "country_of_origin",
+    "registration_year", "service_history", "accident_history"
+].forEach(id =>
+    $(id)?.addEventListener("change", () => {
+        manualEngine = false;
+        manualDescription = false;
+        generateVehicleText();
+    })
+);
+
+/* ---------------- messages ---------------- */
 
 function showMessage(id, text) {
     const element = $(id);
-
+    if (!element) return;
     element.textContent = text;
     element.classList.add("active");
 }
 
 function clearMessages() {
-    $("error").classList.remove("active");
-    $("success").classList.remove("active");
+    $("error")?.classList.remove("active");
+    $("success")?.classList.remove("active");
 }
 
+/* ---------------- utils ---------------- */
+
 function publicUrl(path) {
-    return supabase.storage
-        .from(BUCKET)
-        .getPublicUrl(path)
-        .data.publicUrl;
+    return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 function safeFileName(name) {
-    return String(name)
-        .toLowerCase()
-        .replace(/[^a-z0-9.]+/g, "-");
+    return String(name).toLowerCase().replace(/[^a-z0-9.]+/g, "-");
 }
 
+/* Static year ranges for the non-catalogue year fields. 1980 floor. */
 function populateYears(id) {
     const select = $(id);
-    const currentYear = new Date().getFullYear();
+    if (!select || select.tagName !== "SELECT") return;
+
+    const previous = select.value;
     select.innerHTML = '<option value="">Select</option>';
-    for (let year = currentYear; year >= 1990; year--) {
+
+    for (let year = MAX_VEHICLE_YEAR; year >= MIN_VEHICLE_YEAR; year--) {
         const option = document.createElement("option");
-        option.value = year;
-        option.textContent = year;
+        option.value = String(year);
+        option.textContent = String(year);
         select.appendChild(option);
     }
+
+    if (previous) select.value = previous;
 }
-populateYears("year");
+
 populateYears("import_year");
 populateYears("registration_year");
 
-function showDisplayPreview(url) {
-    displayPreview.innerHTML = `
-        <img src="${url}" alt="Display image">
-    `;
+/* ---------------- display image ---------------- */
 
+function showDisplayPreview(url) {
+    displayPreview.innerHTML = `<img src="${url}" alt="Display image">`;
     displayPreview.classList.add("active");
-    $("removeDisplay").classList.add("active");
+    $("removeDisplay")?.classList.add("active");
 }
 
-displayInput.onchange = event => {
-    newDisplay = event.target.files[0] || null;
+if (displayInput) {
+    displayInput.onchange = event => {
+        newDisplay = event.target.files[0] || null;
+        if (newDisplay) showDisplayPreview(URL.createObjectURL(newDisplay));
+    };
+}
 
-    if (newDisplay) {
-        showDisplayPreview(URL.createObjectURL(newDisplay));
-    }
-};
+if ($("removeDisplay")) {
+    $("removeDisplay").onclick = () => {
+        newDisplay = null;
+        displayInput.value = "";
+        displayPreview.innerHTML = "";
+        displayPreview.classList.remove("active");
+        $("removeDisplay").classList.remove("active");
+    };
+}
 
-$("removeDisplay").onclick = () => {
-    newDisplay = null;
-    displayInput.value = "";
+/* ---------------- gallery ---------------- */
 
-    displayPreview.innerHTML = "";
-    displayPreview.classList.remove("active");
+if (galleryInput) {
+    galleryInput.onchange = event => {
+        const files = [...event.target.files];
 
-    $("removeDisplay").classList.remove("active");
-};
+        files.forEach(file => {
+            const url = URL.createObjectURL(file);
 
-galleryInput.onchange = event => {
-    const files = [...event.target.files];
+            const item = document.createElement("div");
+            item.className = "gallery-item";
+            item.innerHTML = `
+                <img src="${url}" alt="Gallery image">
+                <button type="button" class="delete-image">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
 
-    files.forEach(file => {
-        const url = URL.createObjectURL(file);
+            item.querySelector(".delete-image").onclick = () => {
+                URL.revokeObjectURL(url);
+                item.remove();
+                gallery = gallery.filter(existingFile => existingFile !== file);
+            };
 
-        const item = document.createElement("div");
+            galleryPreview.appendChild(item);
+            gallery.push(file);
+        });
 
-        item.className = "gallery-item";
-
-        item.innerHTML = `
-            <img src="${url}" alt="Gallery image">
-            <button type="button" class="delete-image">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        `;
-
-        item.querySelector(".delete-image").onclick = () => {
-            URL.revokeObjectURL(url);
-
-            item.remove();
-
-            gallery = gallery.filter(
-                existingFile => existingFile !== file
-            );
-        };
-
-        galleryPreview.appendChild(item);
-
-        gallery.push(file);
-    });
-
-    galleryInput.value = "";
-};
+        galleryInput.value = "";
+    };
+}
 
 async function uploadImage(path, file) {
     const { error } = await supabase.storage
         .from(BUCKET)
-        .upload(path, file, {
-            cacheControl: "3600",
-            upsert: false
-        });
+        .upload(path, file, { cacheControl: "3600", upsert: false });
 
-    if (error) {
-        throw error;
-    }
+    if (error) throw error;
 
     return publicUrl(path);
 }
 
+/* ---------------- save ---------------- */
+
 form.onsubmit = async event => {
     event.preventDefault();
-
     clearMessages();
 
-    if (!catalog) {
-        showMessage(
-            "error",
-            "Vehicle catalogue is not ready. Please refresh the page."
-        );
-
-        return;
+    /* Catalogue validation is advisory: only make and model are required. */
+    if (catalog) {
+        const invalid = catalog.validate();
+        if (invalid) {
+            showMessage("error", invalid);
+            return;
+        }
+    } else {
+        if (!$("make")?.value || !$("model")?.value) {
+            showMessage("error", "Make and model are required.");
+            return;
+        }
     }
 
-    const invalid = catalog.validate();
-
-    if (invalid) {
-        showMessage("error", invalid);
+    const price = Number($("price")?.value);
+    if (!Number.isFinite(price) || price <= 0) {
+        showMessage("error", "Enter a valid selling price.");
         return;
     }
 
     const saveButtons = document.querySelectorAll(".save");
-
     saveButtons.forEach(button => {
         button.disabled = true;
         button.textContent = "Saving...";
     });
 
     const id = crypto.randomUUID();
-
     const uploadedPaths = [];
 
     try {
-        const data = {
-            id
-        };
+        const data = { id };
 
-        fields.forEach(field => {
-            const element = $(field);
-            const value = element.value.trim();
+        CAR_FIELDS.forEach(field => {
+            const element = $(field.k);
+            if (!element) return;
+
+            if (BOOLEAN_FIELDS.has(field.k)) {
+                data[field.k] = !!element.checked;
+                return;
+            }
+
+            const value = String(element.value ?? "").trim();
 
             if (value === "") {
-                data[field] = null;
-            } else if (numericFields.has(field)) {
-                data[field] = Number(value);
+                data[field.k] = null;
+            } else if (NUMERIC_FIELDS.has(field.k)) {
+                const n = Number(value);
+                data[field.k] = Number.isFinite(n) ? n : null;
             } else {
-                data[field] = value;
+                data[field.k] = value;
             }
         });
 
-        data.negotiable = $("negotiable").checked;
-        data.financing_available = $("financing_available").checked;
-        data.test_drive_available = $("test_drive_available").checked;
-        data.featured = $("featured").checked;
+        /* Checkboxes that may live outside the schema grid. */
+        ["negotiable", "financing_available", "test_drive_available", "featured"].forEach(key => {
+            const el = $(key);
+            if (el && typeof el.checked === "boolean") data[key] = el.checked;
+        });
 
-        let result = await supabase
-            .from("cars")
-            .insert(data);
+        data.created_at = new Date().toISOString();
+        data.updated_at = data.created_at;
 
-        if (result.error) {
-            throw result.error;
-        }
+        let result = await supabase.from("cars").insert(data);
+        if (result.error) throw result.error;
 
         if (newDisplay) {
-            const path =
-                `${id}/display/` +
-                `${crypto.randomUUID()}-${safeFileName(newDisplay.name)}`;
-
+            const path = `${id}/display/${crypto.randomUUID()}-${safeFileName(newDisplay.name)}`;
             const imageUrl = await uploadImage(path, newDisplay);
-
             uploadedPaths.push(path);
 
             result = await supabase
                 .from("cars")
-                .update({
-                    display_image_url: imageUrl,
-                    display_image_path: path
-                })
+                .update({ display_image_url: imageUrl, display_image_path: path })
                 .eq("id", id);
 
-            if (result.error) {
-                throw result.error;
-            }
+            if (result.error) throw result.error;
         }
 
         for (let index = 0; index < gallery.length; index++) {
             const file = gallery[index];
-
-            const path =
-                `${id}/gallery/` +
-                `${crypto.randomUUID()}-${safeFileName(file.name)}`;
-
+            const path = `${id}/gallery/${crypto.randomUUID()}-${safeFileName(file.name)}`;
             const imageUrl = await uploadImage(path, file);
-
             uploadedPaths.push(path);
 
-            result = await supabase
-                .from("car_images")
-                .insert({
-                    car_id: id,
-                    image_url: imageUrl,
-                    storage_path: path,
-                    image_type: "gallery",
-                    display_order: index
-                });
+            result = await supabase.from("car_images").insert({
+                car_id: id,
+                image_url: imageUrl,
+                storage_path: path,
+                image_type: "gallery",
+                display_order: index
+            });
 
-            if (result.error) {
-                throw result.error;
+            if (result.error) throw result.error;
+
+            if (!newDisplay && index === 0) {
+                await supabase
+                    .from("cars")
+                    .update({ display_image_url: imageUrl, display_image_path: path })
+                    .eq("id", id);
             }
         }
 
-        showMessage(
-            "success",
-            "Vehicle added successfully."
-        );
-
-        saveButtons.forEach(button => {
-            button.textContent = "Added";
+        /* Register the combination so it is selectable everywhere. */
+        await registerCombo({
+            make: data.make,
+            model: data.model,
+            year: data.year,
+            body_type: data.body_type,
+            fuel_type: data.fuel_type,
+            transmission: data.transmission,
+            drive_type: data.drive_type
         });
+
+        showMessage("success", "Vehicle added successfully.");
+        saveButtons.forEach(button => (button.textContent = "Added"));
 
         setTimeout(() => {
             location.href = `edit.html?id=${encodeURIComponent(id)}`;
@@ -313,20 +339,12 @@ form.onsubmit = async event => {
 
     } catch (error) {
         if (uploadedPaths.length) {
-            await supabase.storage
-                .from(BUCKET)
-                .remove(uploadedPaths);
+            await supabase.storage.from(BUCKET).remove(uploadedPaths);
         }
 
-        await supabase
-            .from("cars")
-            .delete()
-            .eq("id", id);
+        await supabase.from("cars").delete().eq("id", id);
 
-        showMessage(
-            "error",
-            error?.message || "Unable to save vehicle."
-        );
+        showMessage("error", error?.message || "Unable to save vehicle.");
 
         saveButtons.forEach(button => {
             button.disabled = false;
@@ -335,24 +353,29 @@ form.onsubmit = async event => {
     }
 };
 
+/* ---------------- boot ---------------- */
+
 async function initialise() {
     try {
+        catalog = await initVehicleCatalogue({
+            makeId: "make",
+            modelId: "model",
+            yearId: "year",
+            bodyId: "body_type",
+            fuelId: "fuel_type",
+            transId: "transmission",
+            driveId: "drive_type"
+        });
 
-
-catalog=await initVehicleCatalogue({makeId:"make",modelId:"model",yearId:"year",bodyId:"body_type",fuelId:"fuel_type",transId:"transmission",driveId:"drive_type"});generateVehicleText();
-
-
-        if (!catalog.rows.length) {
-            showMessage(
-                "error",
-                "The vehicle catalogue is currently empty. Add catalogue makes and models in Supabase before creating new vehicles."
-            );
-        }
+        generateVehicleText();
 
     } catch (error) {
+        /* A catalogue failure must never stop a vehicle being added. */
+        console.warn("Vehicle catalogue unavailable:", error);
+        populateYears("year");
         showMessage(
             "error",
-            `Vehicle catalogue could not load: ${error?.message || "Unknown error"}`
+            "Vehicle catalogue is unavailable. You can still add the vehicle by typing the details manually."
         );
     }
 }

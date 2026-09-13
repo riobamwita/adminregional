@@ -27,19 +27,23 @@ let lightboxIndex = 0;
 
 /* ---------------- editable fields ---------------- */
 /* Each tuple: [key, label, type, full?] */
+/* Full `cars` column set — every field on this page is editable. */
 const carFields = [
   ["condition","Condition","text",true],
   ["make","Make","text"],
   ["model","Model","text"],
-  ["trim","Trim","text"],
+  ["trim","Trim / Grade","text"],
   ["year","Year","number"],
   ["price","Selling Price","number"],
+  ["purchase_price","Purchase Price","number"],
+  ["currency","Currency","text"],
   ["status","Status","select"],
   ["body_type","Body Type","text"],
-  ["engine_size","Engine Size","number"],
-  ["engine_description","Engine Description","text"],
+  ["engine_size","Engine Size (L)","number"],
+  ["engine_description","Engine Description","text",true],
   ["horsepower","Horsepower","number"],
   ["mileage","Mileage","number"],
+  ["mileage_unit","Mileage Unit","text"],
   ["fuel_type","Fuel Type","text"],
   ["transmission","Transmission","text"],
   ["drive_type","Drive Type","text"],
@@ -56,17 +60,24 @@ const carFields = [
   ["registration_year","Registration Year","number"],
   ["auction_grade","Auction Grade","text"],
   ["previous_owners","Previous Owners","number"],
-  ["accident_history","Accident History","text"],
-  ["service_history","Service History","text"],
   ["number_of_keys","Number Of Keys","number"],
+  ["accident_history","Accident History","text",true],
+  ["service_history","Service History","text",true],
   ["inspection_status","Inspection Status","text"],
-  ["inspection_notes","Inspection Notes","textarea"],
+  ["inspection_notes","Inspection Notes","textarea",true],
   ["location","Location","text"],
   ["city","City","text"],
   ["county","County","text"],
-  ["description","Description","textarea"]
+  ["showroom_name","Showroom / Yard","text"],
+  ["latitude","Latitude","number"],
+  ["longitude","Longitude","number"],
+  ["agent_name","Agent Name","text"],
+  ["agent_email","Agent Email","text"],
+  ["key_features","Key Features","textarea",true],
+  ["description","Description","textarea",true],
+  ["model_3d_url","3D Model URL","text",true]
 ];
-const numeric = new Set(["year","price","engine_size","horsepower","mileage","seats","doors","import_year","registration_year","previous_owners","number_of_keys"]);
+const numeric = new Set(carFields.filter(f => f[2] === "number").map(f => f[0]));
 const statusOptions = ["available","reserved","sold"];
 
 /* sell_car_requests column map — cars column → sell_car_requests column */
@@ -344,7 +355,7 @@ function approvalPanel() {
         <div><span>Estimated Gross Profit</span><strong class="${p >= 0 ? "profit-positive" : "profit-negative"}">KES ${money(p)}</strong></div>
       </div>
       <div style="margin-top:12px">
-        <button type="button" class="inventory-btn" id="openInventoryBtn"><i class="fa-solid fa-pen-to-square"></i> Open Vehicle Editor</button>
+        <button type="button" class="inventory-btn" id="openInventoryBtn"><i class="fa-solid fa-pen-to-square"></i> Open Vehicle Editor</button>\r\n        <a class="inventory-btn" style="margin-left:8px;display:inline-block;text-decoration:none" href="edit.html?id=${encodeURIComponent(current.approved_car_id)}"><i class="fa-solid fa-up-right-from-square"></i> Open Full Inventory Page</a>
       </div>
     </section>`;
   }
