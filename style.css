@@ -370,13 +370,7 @@ h1,h2,h3{letter-spacing:-.02em;font-weight:700}
   border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
   transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
 }
-.car-card::before{
-  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;z-index:3;
-  background:var(--green);
-}
-.car-card.reserved::before{background:var(--gold)}
-.car-card.sold::before{background:var(--red)}
-.car-card.inactive::before{background:#94a3b8}
+
 .car-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#102b4633}
 
 .car-image{position:relative;aspect-ratio:16/10;background:#e8f1f5;overflow:hidden}
