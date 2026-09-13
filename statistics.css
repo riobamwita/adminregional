@@ -15,9 +15,10 @@
    9  Records panel & toolbar
    10 Ledger table
    11 States
-   12 Add-entry modal
-   13 Responsive
-   14 Motion & print
+   12 Modal shell & forms
+   13 Deductions window
+   14 Responsive
+   15 Motion & print
    ============================================================ */
 
 /* ---------- 1. TOKENS ---------- */
@@ -71,6 +72,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0}
 h1,h2,h3{letter-spacing:-.02em;font-weight:700}
 table{border-collapse:collapse}
+.hidden{display:none!important}
 
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 ::selection{background:var(--gold);color:var(--ink)}
@@ -183,7 +185,7 @@ table{border-collapse:collapse}
 .page-heading h1 strong,.modal-head h2 strong{color:var(--gold)}
 .page-heading p{color:var(--muted);font-size:12.5px;max-width:62ch}
 
-.heading-actions{display:flex;gap:8px;flex-shrink:0}
+.heading-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
 
 .primary-btn,.save-btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -194,6 +196,16 @@ table{border-collapse:collapse}
 }
 .primary-btn:hover,.save-btn:hover{background:var(--gold-2)}
 .primary-btn:disabled,.save-btn:disabled{opacity:.6;cursor:wait}
+
+.deduct-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:var(--tap);padding:0 16px;
+  background:var(--ink-2);color:#fff;border:1px solid var(--ink-2);
+  border-radius:var(--radius);font-size:12px;font-weight:700;white-space:nowrap;
+  transition:background .15s ease;
+}
+.deduct-btn i{color:var(--gold)}
+.deduct-btn:hover{background:#0d4066}
 
 .outline-btn{
   display:inline-flex;align-items:center;justify-content:center;gap:7px;
@@ -209,12 +221,13 @@ table{border-collapse:collapse}
 .success.active{display:block;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
 
 /* ---------- 7. STAT CARDS ---------- */
-.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px;margin-bottom:18px}
 .stat-card{
   display:flex;align-items:center;gap:11px;
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:13px;box-shadow:var(--shadow-sm);
 }
+.stat-card.net{border-color:#138a3d40;background:#f6fdf8}
 .stat-icon{
   width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;
   border-radius:var(--radius);background:var(--gold-soft);color:var(--gold);font-size:14px;
@@ -225,6 +238,7 @@ table{border-collapse:collapse}
 .stat-icon.purple{background:#7c3aed19;color:var(--purple)}
 .stat-card span{display:block;color:var(--muted);font-size:10.5px}
 .stat-card strong{display:block;font-size:18px;line-height:1.15;margin-top:2px;letter-spacing:-.02em;word-break:break-word}
+.stat-card strong.negative,strong.negative{color:var(--red)}
 
 /* ---------- 8. INSIGHT CARDS ---------- */
 .insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-bottom:16px}
@@ -269,14 +283,14 @@ table{border-collapse:collapse}
 .search input{width:100%;border:0;outline:0;background:transparent;font-size:16px}
 .search input::placeholder{color:#93a7b4}
 
-.toolbar select{
+.toolbar select,.field select{
   min-height:var(--tap);padding:0 34px 0 12px;
   border:1px solid var(--line);border-radius:var(--radius);
   background:var(--tint) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23657b8c' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center;
   appearance:none;-webkit-appearance:none;
-  color:var(--ink);font-size:16px;outline:0;cursor:pointer;
+  color:var(--ink);font-size:16px;outline:0;cursor:pointer;width:100%;
 }
-.toolbar select:focus{border-color:var(--gold);background-color:var(--card)}
+.toolbar select:focus,.field select:focus{border-color:var(--gold);background-color:var(--card)}
 
 /* ---------- 10. LEDGER TABLE ---------- */
 .table-wrap{
@@ -306,13 +320,13 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
 .source.ground{background:#7c3aed18;color:var(--purple)}
 .auto{font-size:10px;color:var(--muted);white-space:nowrap}
 
-.delete-sale{
-  width:36px;height:36px;display:grid;place-items:center;
+.delete-sale,.delete-ded{
+  width:36px;height:36px;flex-shrink:0;display:grid;place-items:center;
   border:1px solid #dc262640;border-radius:var(--radius);
   background:#fff5f5;color:var(--red);font-size:12px;
   transition:background .15s ease;
 }
-.delete-sale:hover{background:#fee2e2}
+.delete-sale:hover,.delete-ded:hover{background:#fee2e2}
 
 /* ---------- 11. STATES ---------- */
 .loading{text-align:center;padding:44px 16px;color:var(--muted);font-size:12.5px}
@@ -326,7 +340,7 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
 .empty h3{font-size:16px;color:var(--ink)}
 .empty p{font-size:11.5px;margin:5px 0 16px}
 
-/* ---------- 12. ADD-ENTRY MODAL ---------- */
+/* ---------- 12. MODAL SHELL & FORMS ---------- */
 .sale-modal{
   position:fixed;inset:0;z-index:300;
   display:none;align-items:center;justify-content:center;padding:18px;
@@ -342,6 +356,8 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
   background:var(--card);border-radius:var(--radius);
   padding:24px;box-shadow:0 28px 80px #00000059;
 }
+.modal-box.wide{width:min(760px,100%)}
+
 .modal-close{
   position:absolute;right:14px;top:14px;z-index:3;
   width:38px;height:38px;display:grid;place-items:center;
@@ -356,7 +372,7 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
 .modal-head h2{font-size:clamp(20px,2.8vw,26px);margin:7px 0 4px}
 .modal-head p{font-size:11.5px;color:var(--muted);margin-bottom:18px}
 
-#groundSaleForm{display:flex;flex-direction:column;min-height:0;flex:1}
+#groundSaleForm,.ded-pane{display:flex;flex-direction:column;min-height:0;flex:1}
 
 .form-grid{
   flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
@@ -392,11 +408,67 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
 }
 .cancel-btn:hover{border-color:var(--green);color:var(--green)}
 
-/* ---------- 13. RESPONSIVE ---------- */
-@media (max-width:1180px){
-  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+/* ---------- 13. DEDUCTIONS WINDOW ---------- */
+.ded-summary{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  flex-shrink:0;padding-bottom:14px;border-bottom:1px solid var(--line);
 }
+.ded-summary>div{padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--tint)}
+.ded-summary span{display:block;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--muted)}
+.ded-summary strong{display:block;font-size:15px;margin-top:4px;letter-spacing:-.02em;word-break:break-word}
+.ded-summary>div:nth-child(3){background:#f6fdf8;border-color:#138a3d40}
 
+.ded-tabs{display:flex;gap:6px;padding:14px 0;flex-shrink:0}
+.ded-tab{
+  flex:1;min-height:42px;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--card);color:var(--muted);font-size:11.5px;font-weight:700;
+  transition:background .15s ease,border-color .15s ease,color .15s ease;
+}
+.ded-tab:hover{border-color:var(--gold);color:var(--ink)}
+.ded-tab.active{background:var(--ink-2);border-color:var(--ink-2);color:#fff}
+.ded-tab span{
+  display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;
+  border-radius:var(--radius);background:#edf5f8;font-size:9.5px;color:var(--ink);
+}
+.ded-tab.active span{background:#ffffff2b;color:#fff}
+
+.ded-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;flex-shrink:0}
+.ded-filter{
+  min-height:34px;padding:0 12px;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--card);color:var(--muted);font-size:10.5px;font-weight:700;
+  transition:border-color .15s ease,background .15s ease,color .15s ease;
+}
+.ded-filter:hover{border-color:var(--gold);color:var(--ink)}
+.ded-filter.active{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+
+.ded-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;gap:7px;align-content:start}
+
+.ded-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+}
+.ded-icon{
+  width:36px;height:36px;flex-shrink:0;display:grid;place-items:center;
+  border-radius:var(--radius);background:#dc262614;color:var(--red);font-size:13px;
+}
+.ded-info{flex:1;min-width:0}
+.ded-info strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ded-info span{display:block;font-size:9.5px;color:var(--muted);margin-top:3px}
+.ded-info small{display:block;font-size:10px;color:var(--muted);margin-top:4px}
+.ded-amount{flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--red);white-space:nowrap}
+
+.ded-empty{
+  text-align:center;padding:36px 16px;color:var(--muted);
+  border:1px dashed var(--line);border-radius:var(--radius);
+}
+.ded-empty i{display:block;font-size:22px;color:var(--gold);margin-bottom:9px}
+.ded-empty h3{font-size:14px;color:var(--ink);margin-bottom:4px}
+.ded-empty p{font-size:11.5px}
+
+/* ---------- 14. RESPONSIVE ---------- */
 @media (max-width:1024px){
   :root{--side-w:212px;--gutter:20px}
 }
@@ -436,7 +508,6 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
   .page-heading h1{font-size:26px}
 
   .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-  .stat-card:last-child{grid-column:1/-1}
   .stat-card{padding:11px;gap:9px}
   .stat-icon{width:34px;height:34px;font-size:13px}
   .stat-card strong{font-size:16px}
@@ -447,7 +518,7 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
   .toolbar{grid-template-columns:1fr}
 
   .sale-modal{padding:0}
-  .modal-box{
+  .modal-box,.modal-box.wide{
     width:100%;max-height:100dvh;height:100dvh;border-radius:0;
     padding:16px 14px calc(16px + env(safe-area-inset-bottom));
     padding-top:calc(16px + env(safe-area-inset-top));
@@ -457,18 +528,27 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
   .field.full{grid-column:auto}
   .modal-actions{flex-direction:column-reverse}
   .modal-actions button{width:100%}
+
+  .ded-summary{grid-template-columns:1fr}
+  .ded-tabs{flex-direction:column}
+  .ded-filter{flex:1 1 auto}
+  .ded-item{flex-wrap:wrap}
+  .ded-info{width:calc(100% - 46px)}
+  .ded-amount{margin-left:46px}
+  .delete-ded{margin-left:auto}
 }
 
 @media (max-width:400px){
   .main{padding:13px 9px}
   .page-heading h1{font-size:23px}
   .heading-actions{flex-direction:column}
+  .stats{grid-template-columns:1fr}
   .breakdown{grid-template-columns:1fr}
   .performance-list>div{flex-direction:column;align-items:flex-start;gap:4px}
   .performance-list strong{text-align:left}
 }
 
-/* ---------- 14. MOTION & PRINT ---------- */
+/* ---------- 15. MOTION & PRINT ---------- */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .sidebar{transition:none}

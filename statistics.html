@@ -1,11 +1,29 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="statistics.css"><title>Statistics | Regional Autoselections Ltd</title></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7941d">
+<link rel="icon" href="assets/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="statistics.css">
+<title>Statistics | Regional Autoselections Ltd</title>
+</head>
+<body>
+
 <div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div>
+
 <header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-chart-column"></i> STATISTICS</div><button class="menu" id="menu"><i class="fa-solid fa-bars"></i></button></div></header>
+
 <div class="admin-layout">
+
 <aside class="sidebar" id="sidebar">
 <div class="side-head"><div><span>ADMIN PANEL</span><strong>Regional</strong></div><button id="closeMenu" type="button"><i class="fa-solid fa-xmark"></i></button></div>
 <nav>
-<a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a><a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a>
+<a class="side-link" href="index.html"><i class="fa-solid fa-car"></i> Vehicle Listings</a>
+<a class="side-link" href="enquiries.html"><i class="fa-solid fa-envelope"></i> Enquiries</a>
 <a class="side-link" data-permission="tradeins" href="tradeins.html"><i class="fa-solid fa-right-left"></i> Trade-In Requests</a>
 <a class="side-link" data-permission="agent_submissions" href="agents.html"><i class="fa-solid fa-file-circle-check"></i> Agent Submissions</a>
 <a class="side-link" data-permission="imports" href="imports.html"><i class="fa-solid fa-ship"></i> Import Requests</a>
@@ -26,12 +44,18 @@
 <button class="side-link" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
 </div>
 </aside>
+
 <div class="overlay" id="overlay"></div>
 
 <main class="main">
+
 <section class="page-heading">
-<div><span class="eyebrow"><b></b> BUSINESS PERFORMANCE</span><h1>Income <strong>Statistics</strong></h1><p>Track inventory sales, revenue records and manually recorded income entries.</p></div>
-<div class="heading-actions"><button id="refreshStats" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button><button id="openSaleModal" class="primary-btn"><i class="fa-solid fa-plus"></i> Add New Entry</button></div>
+<div><span class="eyebrow"><b></b> BUSINESS PERFORMANCE</span><h1>Income <strong>Statistics</strong></h1><p>Track inventory sales, revenue records, manual income entries and business deductions.</p></div>
+<div class="heading-actions">
+<button id="refreshStats" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+<button id="openDeductionModal" class="deduct-btn"><i class="fa-solid fa-money-bill-transfer"></i> Deductions</button>
+<button id="openSaleModal" class="primary-btn"><i class="fa-solid fa-plus"></i> Add New Entry</button>
+</div>
 </section>
 
 <div id="error" class="error"></div>
@@ -39,6 +63,8 @@
 
 <section class="stats">
 <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div><span>Total Recorded Revenue</span><strong id="totalRevenue">KES 0</strong></div></div>
+<div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-money-bill-transfer"></i></div><div><span>Total Deductions</span><strong id="totalDeductions">KES 0</strong></div></div>
+<div class="stat-card net"><div class="stat-icon green"><i class="fa-solid fa-scale-balanced"></i></div><div><span>Net Income</span><strong id="netIncome">KES 0</strong></div></div>
 <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-car-side"></i></div><div><span>Total</span><strong id="totalSales">0</strong></div></div>
 <div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-car"></i></div><div><span>Inventory Sales</span><strong id="inventorySales">0</strong></div></div>
 <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-handshake"></i></div><div><span>Other Entries</span><strong id="groundSales">0</strong></div></div>
@@ -57,12 +83,14 @@
 <div><span>Highest Recorded Sale</span><strong id="highestSale">KES 0</strong></div>
 <div><span>Lowest Recorded Sale</span><strong id="lowestSale">KES 0</strong></div>
 <div><span>Latest Sale</span><strong id="latestSale">No sales yet</strong></div>
+<div><span>Deductions Recorded</span><strong id="deductionCount">0</strong></div>
+<div><span>Largest Deduction</span><strong id="largestDeduction">KES 0</strong></div>
 </div></div>
 </section>
 
 <section class="records-panel">
 <div class="panel-head">
-<div><span class="eyebrow dark"><b></b> SALES LEDGER</span><h2>All Income Records</h2><p>Sold inventory is automatically included. Ground deals are manually recorded.</p></div>
+<div><span class="eyebrow dark"><b></b> SALES LEDGER</span><h2>All Income Records</h2><p>Sold inventory is automatically included. Ground deals are manually recorded. Deductions are managed in their own window.</p></div>
 </div>
 
 <div class="toolbar">
@@ -85,6 +113,7 @@
 </main>
 </div>
 
+<!-- ADD INCOME ENTRY -->
 <div class="sale-modal" id="saleModal">
 <div class="modal-bg" id="saleModalBg"></div>
 <section class="modal-box">
@@ -106,5 +135,62 @@
 </section>
 </div>
 
+<!-- DEDUCTIONS -->
+<div class="sale-modal" id="deductionModal">
+<div class="modal-bg" id="deductionModalBg"></div>
+<section class="modal-box wide">
+<button id="closeDeductionModal" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+
+<div class="modal-head"><span>EXPENSES &amp; DEDUCTIONS</span><h2>Business <strong>Deductions</strong></h2><p>Every cost recorded here is subtracted from recorded revenue to give net income.</p></div>
+
+<div class="ded-summary">
+<div><span>Total deductions</span><strong id="dedTotal">KES 0</strong></div>
+<div><span>Entries</span><strong id="dedCount">0</strong></div>
+<div><span>Net income</span><strong id="dedNet">KES 0</strong></div>
+</div>
+
+<div class="ded-tabs">
+<button class="ded-tab active" data-ded-tab="add" type="button"><i class="fa-solid fa-plus"></i> Record deduction</button>
+<button class="ded-tab" data-ded-tab="list" type="button"><i class="fa-solid fa-list"></i> All deductions <span id="dedTabCount">0</span></button>
+</div>
+
+<form id="deductionForm" class="ded-pane" data-ded-pane="add">
+<div class="form-grid">
+<div class="field full"><label>Description *</label><input id="dedTitle" name="title" required placeholder="e.g. Yard rent — September"></div>
+<div class="field"><label>Amount (KES) *</label><input id="dedAmount" name="amount" type="number" min="0" step="0.01" required placeholder="0"></div>
+<div class="field"><label>Date *</label><input id="dedDate" name="deduction_date" type="date" required></div>
+<div class="field"><label>Category</label>
+<select id="dedCategory" name="category">
+<option value="Operations">Operations</option>
+<option value="Salaries &amp; Wages">Salaries &amp; Wages</option>
+<option value="Agent Commission">Agent Commission</option>
+<option value="Transport &amp; Logistics">Transport &amp; Logistics</option>
+<option value="Repairs &amp; Reconditioning">Repairs &amp; Reconditioning</option>
+<option value="Marketing">Marketing</option>
+<option value="Taxes &amp; Levies">Taxes &amp; Levies</option>
+<option value="Vehicle Purchase">Vehicle Purchase</option>
+<option value="Other">Other</option>
+</select>
+</div>
+<div class="field"><label>Reference / Receipt</label><input id="dedReference" name="reference" placeholder="Optional reference"></div>
+<div class="field full"><label>Notes</label><textarea id="dedNotes" name="notes" placeholder="Optional details..."></textarea></div>
+</div>
+<div class="modal-actions"><button type="button" id="cancelDeduction" class="cancel-btn">Cancel</button><button type="submit" id="saveDeduction" class="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Deduction</button></div>
+</form>
+
+<div class="ded-pane hidden" data-ded-pane="list">
+<div class="ded-filters">
+<button class="ded-filter active" data-ded-filter="all" type="button">All time</button>
+<button class="ded-filter" data-ded-filter="month" type="button">This month</button>
+<button class="ded-filter" data-ded-filter="year" type="button">This year</button>
+</div>
+<div class="ded-list" id="deductionList"></div>
+<div class="modal-actions"><button type="button" class="cancel-btn" id="closeDeductionList">Close</button></div>
+</div>
+
+</section>
+</div>
+
 <script type="module" src="statistics.js"></script>
-</body></html>
+</body>
+</html>
