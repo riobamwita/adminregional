@@ -452,7 +452,7 @@ h1,h2,h3{letter-spacing:-.02em;font-weight:700}
 }
 .edit{padding:0 13px;border:1px solid var(--ink);background:var(--ink);color:#fff}
 .edit:hover{background:var(--gold);border-color:var(--gold);color:var(--ink)}
-.delete{width:36px;border:1px solid var(--line);background:var(--card);color:#8ba0ac;font-size:11px}
+.delete{width:36px;border:1px solid var(--line);background:var(--card);color:#ac8f8b;font-size:11px}
 .delete:hover{border-color:#dc262640;background:#fff5f5;color:var(--red)}
 
 /* ---------- 12. RESPONSIVE ---------- */
