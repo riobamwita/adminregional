@@ -39,10 +39,13 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
      data-aliases  legacy keys kept in sync on every save
      data-label    wording for the button and toast
 
-   Saving writes the same values to the canonical key and every alias
-   in one upsert, so a public page still querying an older key
-   resolves the current contact instead of silently falling back to a
-   hard-coded number.
+   Home carries the full contact set. Every other page stores a
+   WhatsApp number only.
+
+   A card only ever writes the columns it actually renders. Columns
+   it does not render are omitted from the upsert, so ON CONFLICT
+   leaves the stored value untouched instead of overwriting it with
+   NULL. This is what previously wiped saved contacts.
 ================================================================== */
 
 const cardKeys = card => {
@@ -83,11 +86,12 @@ async function loadContacts() {
   document.querySelectorAll(".contact-page").forEach(card => {
     const fields = cardFields(card);
 
+    /* Prefer the canonical key, then any alias that actually holds data. */
     const row = cardKeys(card)
       .map(key => rows.get(key))
       .find(r => r && (r.whatsapp || r.phone || r.email)) || null;
 
-        if (fields.whatsapp) fields.whatsapp.value = row?.whatsapp || "";
+    if (fields.whatsapp) fields.whatsapp.value = row?.whatsapp || "";
     if (fields.phone) fields.phone.value = row?.phone || "";
     if (fields.email) fields.email.value = row?.email || "";
     if (fields.address) fields.address.value = row?.address || "";
@@ -104,10 +108,6 @@ function contactRows(card) {
   const label = cardLabel(card);
 
   const whatsapp = (fields.whatsapp?.value || "").replace(/\D/g, "");
-  const phoneRaw = (fields.phone?.value || "").trim();
-  const email = (fields.email?.value || "").trim();
-  const address = (fields.address?.value || "").trim();
-  const hours = (fields.hours?.value || "").trim();
 
   if (!whatsapp) {
     return { error: `${label}: enter a WhatsApp number.` };
@@ -119,26 +119,36 @@ function contactRows(card) {
     };
   }
 
-  if (email && !EMAIL_PATTERN.test(email)) {
+  const email = (fields.email?.value || "").trim();
+
+  if (fields.email && email && !EMAIL_PATTERN.test(email)) {
     return { error: `${label}: enter a valid email address.` };
   }
 
-  const phone = phoneRaw
-    ? phoneRaw.replace(/[^\d+]/g, "")
-    : `+${whatsapp}`;
+  const phoneRaw = (fields.phone?.value || "").trim();
+  const address = (fields.address?.value || "").trim();
+  const hours = (fields.hours?.value || "").trim();
 
-  const updated_at = new Date().toISOString();
+  const base = {
+    whatsapp,
+
+    /* Phone always tracks WhatsApp unless the card supplies its own,
+       so any page still reading phone stays correct. */
+    phone: fields.phone && phoneRaw
+      ? phoneRaw.replace(/[^\d+]/g, "")
+      : `+${whatsapp}`,
+
+    updated_at: new Date().toISOString()
+  };
+
+  /* Only send optional columns the card owns AND has filled.
+     An empty box can never blank a stored value. */
+  if (fields.email && email) base.email = email;
+  if (fields.address && address) base.address = address;
+  if (fields.hours && hours) base.hours = hours;
 
   return {
-    rows: cardKeys(card).map(page_key => ({
-      page_key,
-      whatsapp,
-      phone,
-      email,
-      address: fields.address ? address : null,
-      hours: fields.hours ? hours : null,
-      updated_at
-    }))
+    rows: cardKeys(card).map(page_key => ({ page_key, ...base }))
   };
 }
 
@@ -179,9 +189,9 @@ async function saveContact(card) {
   const fields = cardFields(card);
   const saved = built.rows[0];
 
-    if (fields.whatsapp) fields.whatsapp.value = saved.whatsapp;
+  if (fields.whatsapp) fields.whatsapp.value = saved.whatsapp;
   if (fields.phone) fields.phone.value = saved.phone;
-  if (fields.email) fields.email.value = saved.email;
+  if (fields.email) fields.email.value = saved.email || "";
   if (fields.address) fields.address.value = saved.address || "";
   if (fields.hours) fields.hours.value = saved.hours || "";
 
@@ -193,7 +203,8 @@ async function saveContact(card) {
 async function saveAllContacts() {
   const cards = [...document.querySelectorAll(".contact-page")];
 
-  const rows = [];
+  /* Validate every card before writing anything. */
+  const batches = [];
 
   for (const card of cards) {
     const built = contactRows(card);
@@ -203,7 +214,7 @@ async function saveAllContacts() {
       return;
     }
 
-    rows.push(...built.rows);
+    batches.push(built.rows);
   }
 
   const button = $("saveAllContacts");
@@ -214,17 +225,28 @@ async function saveAllContacts() {
     button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
   }
 
-  const { error } = await supabase
-    .from("page_contacts")
-    .upsert(rows, { onConflict: "page_key" });
+  /* One upsert per card: rows in a single batch must share the same
+     columns, and Home carries more columns than the rest. */
+  let failed = null;
+
+  for (const rows of batches) {
+    const { error } = await supabase
+      .from("page_contacts")
+      .upsert(rows, { onConflict: "page_key" });
+
+    if (error) {
+      failed = error;
+      break;
+    }
+  }
 
   if (button) {
     button.disabled = false;
     button.innerHTML = original;
   }
 
-  if (error) {
-    msg("error", error.message);
+  if (failed) {
+    msg("error", failed.message);
     return;
   }
 
