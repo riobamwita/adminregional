@@ -62,7 +62,9 @@ const cardLabel = card =>
 const cardFields = card => ({
   whatsapp: card.querySelector('[data-field="whatsapp"]'),
   phone: card.querySelector('[data-field="phone"]'),
-  email: card.querySelector('[data-field="email"]')
+  email: card.querySelector('[data-field="email"]'),
+  address: card.querySelector('[data-field="address"]'),
+  hours: card.querySelector('[data-field="hours"]')
 });
 
 
@@ -85,9 +87,11 @@ async function loadContacts() {
       .map(key => rows.get(key))
       .find(r => r && (r.whatsapp || r.phone || r.email)) || null;
 
-    if (fields.whatsapp) fields.whatsapp.value = row?.whatsapp || "";
+        if (fields.whatsapp) fields.whatsapp.value = row?.whatsapp || "";
     if (fields.phone) fields.phone.value = row?.phone || "";
     if (fields.email) fields.email.value = row?.email || "";
+    if (fields.address) fields.address.value = row?.address || "";
+    if (fields.hours) fields.hours.value = row?.hours || "";
   });
 
   return true;
@@ -102,6 +106,8 @@ function contactRows(card) {
   const whatsapp = (fields.whatsapp?.value || "").replace(/\D/g, "");
   const phoneRaw = (fields.phone?.value || "").trim();
   const email = (fields.email?.value || "").trim();
+  const address = (fields.address?.value || "").trim();
+  const hours = (fields.hours?.value || "").trim();
 
   if (!whatsapp) {
     return { error: `${label}: enter a WhatsApp number.` };
@@ -129,6 +135,8 @@ function contactRows(card) {
       whatsapp,
       phone,
       email,
+      address: fields.address ? address : null,
+      hours: fields.hours ? hours : null,
       updated_at
     }))
   };
@@ -171,9 +179,11 @@ async function saveContact(card) {
   const fields = cardFields(card);
   const saved = built.rows[0];
 
-  if (fields.whatsapp) fields.whatsapp.value = saved.whatsapp;
+    if (fields.whatsapp) fields.whatsapp.value = saved.whatsapp;
   if (fields.phone) fields.phone.value = saved.phone;
   if (fields.email) fields.email.value = saved.email;
+  if (fields.address) fields.address.value = saved.address || "";
+  if (fields.hours) fields.hours.value = saved.hours || "";
 
   msg("success", `${label} contact updated.`);
   return true;
