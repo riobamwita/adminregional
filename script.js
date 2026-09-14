@@ -1,4 +1,5 @@
 import{supabase}from"./supabase.js";
+import{unlinkCar}from"./tradein-sync.js";
 
 const $=id=>document.getElementById(id),grid=$("propertiesGrid");
 
@@ -194,7 +195,24 @@ function render(){
 /* ---------- actions ---------- */
 window.editCar=async id=>{if(!await canManageVehicles()){alert("Access Denied: You do not have permission to edit vehicles.");return}location.href=`edit.html?id=${id}`};
 
-window.deleteCar=async id=>{if(!await canManageVehicles()){alert("Access Denied: You do not have permission to delete vehicles.");return}let c=cars.find(x=>x.id===id);if(!c||!confirm(`Delete ${c.make||""} ${c.model||""}?`))return;try{let{data:imgs}=await supabase.from("car_images").select("storage_path").eq("car_id",id),paths=[c.display_image_path,...(imgs||[]).map(x=>x.storage_path)].filter(Boolean);if(paths.length){let r=await supabase.storage.from("car-images").remove(paths);if(r.error)throw r.error}let{error}=await supabase.from("cars").delete().eq("id",id);if(error)throw error;load()}catch(e){$("error").textContent=e.message;$("error").classList.add("active")}};
+window.deleteCar=async id=>{
+  if(!await canManageVehicles()){alert("Access Denied: You do not have permission to delete vehicles.");return}
+  let c=cars.find(x=>x.id===id);
+  if(!c)return;
+  const fromTradeIn=N(c.source_type).replace(/[\s-]+/g,"_")==="trade_in"&&!!c.source_request_id;
+  const msg=`Delete ${c.make||""} ${c.model||""}?${fromTradeIn?"\n\nThe trade-in request it came from will be returned to review.":""}`;
+  if(!confirm(msg))return;
+  try{
+    let{data:imgs}=await supabase.from("car_images").select("storage_path").eq("car_id",id),
+        paths=[c.display_image_path,...(imgs||[]).map(x=>x.storage_path)].filter(Boolean);
+    if(paths.length){let r=await supabase.storage.from("car-images").remove(paths);if(r.error)throw r.error}
+    let{error}=await supabase.from("cars").delete().eq("id",id);
+    if(error)throw error;
+    /* The trade-in request must stop reading as "in inventory". */
+    await unlinkCar(id);
+    load();
+  }catch(e){$("error").textContent=e.message;$("error").classList.add("active")}
+};
 
 async function toggleVisibility(id,btn){
   if(!await canManageVehicles()){alert("Access Denied: You do not have permission to change vehicle visibility.");return}

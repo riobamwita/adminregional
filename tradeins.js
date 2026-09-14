@@ -1,5 +1,15 @@
 import { supabase } from "./supabase.js";
-import{requireAdmin}from"./admin-guard.js";import{markSectionSeen}from"./badges.js";import{attachBadges}from"./admin-nav.js";
+import { requireAdmin } from "./admin-guard.js";
+import { markSectionSeen } from "./badges.js";
+import { attachBadges } from "./admin-nav.js";
+import {
+  TRADEIN_TO_CAR,
+  buildCarInsert,
+  carPatchFromTradein,
+  pushTradeinToCar,
+  reconcileTradeinLinks
+} from "./tradein-sync.js";
+
 const $ = id => document.getElementById(id);
 const grid = $("requestsGrid");
 const BUCKET = "car-images";
@@ -14,7 +24,8 @@ let requests = [], current = null, currentAdmin = null, adminEmails = new Set(),
 
 const statuses = ["new", "reviewing", "valued", "completed", "rejected"];
 
-/* Editable fields on the trade-in modal (writes to tradein_requests) */
+/* Editable fields on the trade-in modal. Every key that also exists in
+   TRADEIN_TO_CAR is mirrored onto the linked inventory vehicle on save. */
 const EDIT_FIELDS = [
   { k: "vehicle_make",   l: "Make",               t: "text" },
   { k: "vehicle_model",  l: "Model",              t: "text" },
@@ -29,21 +40,6 @@ const EDIT_FIELDS = [
   { k: "location",       l: "Location",           t: "text" },
   { k: "defect_details", l: "Defect Details",     t: "textarea", full: true }
 ];
-
-/* Tradein field → cars column mapping, for post-approval sync */
-const TRADEIN_TO_CAR_FIELD = {
-  vehicle_make:  "make",
-  vehicle_model: "model",
-  vehicle_year:  "year",
-  registration:  "registration_number",
-  body_type:     "body_type",
-  fuel_type:     "fuel_type",
-  transmission:  "transmission",
-  mileage:       "mileage",
-  colour:        "exterior_color",
-  condition:     "condition",
-  location:      "location"
-};
 
 async function auth() {
   let { data: { session } } = await supabase.auth.getSession();
@@ -74,6 +70,12 @@ async function load() {
     let { data, error } = await supabase.from("tradein_requests").select("*").order("created_at", { ascending: false });
     if (error) throw error;
     requests = data || [];
+
+    /* A request only reads as "in inventory" if the vehicle is really
+       there. Deleted or never-created vehicles are unlinked here, and
+       vehicles created outside this screen are adopted. */
+    await reconcileTradeinLinks(requests);
+
     stats();
     render();
   } catch (e) {
@@ -89,7 +91,7 @@ function stats() {
   $("totalRequests").textContent = requests.length;
   $("newRequests").textContent = requests.filter(x => (x.status || "new") === "new").length;
   $("reviewingRequests").textContent = requests.filter(x => x.status === "reviewing").length;
-  $("completedRequests").textContent = requests.filter(x => x.approved_car_id || x.status === "approved").length;
+  $("completedRequests").textContent = requests.filter(x => x.approved_car_id).length;
 }
 
 function render() {
@@ -188,9 +190,6 @@ function buildEditForm() {
       ${EDIT_FIELDS.map(f => {
         const raw = current[f.k];
         let value = raw ?? "";
-        if (f.k === "defect_details" && Array.isArray(current.defects) && !value) {
-          /* fallback: nothing */
-        }
         const input = f.t === "textarea"
           ? `<textarea id="ef_${f.k}" data-key="${esc(f.k)}" ${locked ? "disabled" : ""}>${esc(value)}</textarea>`
           : `<input id="ef_${f.k}" data-key="${esc(f.k)}" type="${esc(f.t)}"
@@ -238,6 +237,21 @@ function buildEditForm() {
   }
 }
 
+function paintVehicleSections() {
+  $("detailTitle").textContent = `${current.full_name || "Customer"} — ${current.vehicle_make || ""} ${current.vehicle_model || ""}`.trim();
+  $("vehicleTitle").textContent = `${current.vehicle_make || "Vehicle"} ${current.vehicle_model || ""}`.trim();
+  $("vehicleMeta").textContent = [current.vehicle_year, current.registration].filter(Boolean).join(" • ") || "Trade-in vehicle";
+
+  $("vehicleDetails").innerHTML = [
+    field("Make", current.vehicle_make), field("Model", current.vehicle_model), field("Year", current.vehicle_year),
+    field("Registration", current.registration), field("Body Type", current.body_type), field("Fuel", current.fuel_type),
+    field("Transmission", current.transmission), field("Mileage", current.mileage != null ? `${Number(current.mileage).toLocaleString()} km` : "—"),
+    field("Colour", current.colour), field("Condition", current.condition),
+    field("Defects", Array.isArray(current.defects) ? current.defects.join(", ") : current.defects),
+    field("Defect Details", current.defect_details), field("Location", current.location)
+  ].join("");
+}
+
 async function saveVehicleEdits() {
   if (!current) return;
 
@@ -275,41 +289,26 @@ async function saveVehicleEdits() {
       .eq("id", current.id);
     if (error) throw error;
 
-    /* If already linked to a car in some edge case, sync anyway */
+    current = { ...current, ...updates };
+
+    /* Mirror onto the inventory vehicle so the listing, the edit page
+       and the website all show the same values. */
+    let syncNote = "";
     if (current.approved_car_id) {
-      const carUpdates = {};
-      Object.entries(TRADEIN_TO_CAR_FIELD).forEach(([subKey, carKey]) => {
-        if (subKey in updates) carUpdates[carKey] = updates[subKey];
-      });
-      if ("location" in updates) {
-        carUpdates.location = updates.location;
-        carUpdates.city = updates.location;
-      }
-      if (Object.keys(carUpdates).length) {
-        carUpdates.updated_at = new Date().toISOString();
-        await supabase.from("cars").update(carUpdates).eq("id", current.approved_car_id);
+      try {
+        await pushTradeinToCar(current, current.approved_car_id, Object.keys(TRADEIN_TO_CAR));
+      } catch (syncError) {
+        console.error(syncError);
+        syncNote = `\n\nThe trade-in record was saved, but the inventory vehicle was not updated: ${syncError.message || syncError}`;
       }
     }
 
-    /* Update local state */
-    current = { ...current, ...updates };
     requests = requests.map(x => x.id === current.id ? current : x);
 
-    /* Re-render read-only sections */
-    $("detailTitle").textContent = `${current.full_name || "Customer"} — ${current.vehicle_make || ""} ${current.vehicle_model || ""}`.trim();
-    $("vehicleTitle").textContent = `${current.vehicle_make || "Vehicle"} ${current.vehicle_model || ""}`.trim();
-    $("vehicleMeta").textContent = [current.vehicle_year, current.registration].filter(Boolean).join(" • ") || "Trade-in vehicle";
-
-    $("vehicleDetails").innerHTML = [
-      field("Make", current.vehicle_make), field("Model", current.vehicle_model), field("Year", current.vehicle_year),
-      field("Registration", current.registration), field("Body Type", current.body_type), field("Fuel", current.fuel_type),
-      field("Transmission", current.transmission), field("Mileage", current.mileage != null ? `${Number(current.mileage).toLocaleString()} km` : "—"),
-      field("Colour", current.colour), field("Condition", current.condition),
-      field("Defects", Array.isArray(current.defects) ? current.defects.join(", ") : current.defects),
-      field("Defect Details", current.defect_details), field("Location", current.location)
-    ].join("");
-
+    paintVehicleSections();
     render();
+
+    if (syncNote) alert(`Saved.${syncNote}`);
 
     button.innerHTML = `<i class="fa-solid fa-circle-check"></i> Saved`;
     setTimeout(() => {
@@ -558,6 +557,7 @@ ${c.negotiated_price != null || c.inventory_price != null ? `
   ${row("Timeline", c.trade_timeline)}
   ${row("Notes", c.notes)}
   ${row("Request ID", c.id)}
+  ${row("Inventory Vehicle ID", c.approved_car_id)}
 </table>
 
 <h2>Submitted Photos (${files.filter(isImageFile).length})</h2>
@@ -670,10 +670,14 @@ async function viewRequest(id) {
   current = requests.find(x => String(x.id) === String(id));
   if (!current) return;
   try {
+    /* Re-check this one link before drawing the panel, so the modal can
+       never offer "Open Inventory Vehicle" for a vehicle that is gone. */
+    await reconcileTradeinLinks([current]);
+    requests = requests.map(x => x.id === current.id ? current : x);
+
     currentFiles = await getFiles(id);
     let status = current.approved_car_id ? "approved" : (current.status || "new");
     let agent = isAgent(current);
-    $("detailTitle").textContent = `${current.full_name || "Customer"} — ${current.vehicle_make || ""} ${current.vehicle_model || ""}`.trim();
     $("detailDate").textContent = date(current.created_at);
     $("detailStatus").value = current.status || "new";
     updateDetailStatus(status);
@@ -687,7 +691,6 @@ async function viewRequest(id) {
       field("Location", current.location), field("ID / Passport", current.id_number), field("Contact Time", current.contact_time)
     ].join("");
 
-    /* NEW: build the editable vehicle form */
     buildEditForm();
 
     $("upgradeDetails").innerHTML = [
@@ -702,23 +705,14 @@ async function viewRequest(id) {
 
     $("additionalDetails").innerHTML = [
       field("Source", current.source), field("Timeline", current.trade_timeline),
-      field("Notes", current.notes), field("Request ID", current.id)
+      field("Notes", current.notes), field("Request ID", current.id),
+      field("Inventory Vehicle ID", current.approved_car_id)
     ].join("");
 
     renderContact();
     $("approvalContent").innerHTML = approvalPanel();
 
-    $("vehicleTitle").textContent = `${current.vehicle_make || "Vehicle"} ${current.vehicle_model || ""}`.trim();
-    $("vehicleMeta").textContent = [current.vehicle_year, current.registration].filter(Boolean).join(" • ") || "Trade-in vehicle";
-
-    $("vehicleDetails").innerHTML = [
-      field("Make", current.vehicle_make), field("Model", current.vehicle_model), field("Year", current.vehicle_year),
-      field("Registration", current.registration), field("Body Type", current.body_type), field("Fuel", current.fuel_type),
-      field("Transmission", current.transmission), field("Mileage", current.mileage != null ? `${Number(current.mileage).toLocaleString()} km` : "—"),
-      field("Colour", current.colour), field("Condition", current.condition),
-      field("Defects", Array.isArray(current.defects) ? current.defects.join(", ") : current.defects),
-      field("Defect Details", current.defect_details), field("Location", current.location)
-    ].join("");
+    paintVehicleSections();
 
     $("valuationDetails").innerHTML = [
       field("Expected Value", `KES ${money(current.expected_value)}`),
@@ -813,81 +807,118 @@ async function copyImageToCar(file, carId, index) {
 async function approveToInventory() {
   if (!current || !isMainAdmin()) return alert("Only the main administrator can approve vehicles into inventory.");
   if (current.approved_car_id) return alert("This request has already been added to inventory.");
+
   let buy = Number($("negotiatedPrice")?.value), sell = Number($("inventoryPrice")?.value);
   if (!Number.isFinite(buy) || buy < 0) return alert("Enter a valid agreed trade-in value.");
   if (!Number.isFinite(sell) || sell <= 0) return alert("Enter a valid inventory selling price.");
+
   let name = `${current.vehicle_make || ""} ${current.vehicle_model || ""}`.trim() || "this vehicle";
   if (!confirm(`Approve ${name} and add it to inventory for KES ${money(sell)}?`)) return;
+
   let button = $("approveInventory");
   button.disabled = true;
   button.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Adding to Inventory...`;
+
   let uploaded = [];
+  let createdCarId = null;   /* only set when this run inserted the row */
+
   try {
     let { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Your session has expired. Please log in again.");
+
     let check = await supabase.from("tradein_requests").select("approved_car_id").eq("id", current.id).maybeSingle();
     if (check.error) throw check.error;
     if (check.data?.approved_car_id) throw new Error("This request has already been approved by another administrator.");
+
     let existing = await supabase.from("cars").select("id").eq("source_request_id", current.id).maybeSingle();
     if (existing.error) throw existing.error;
+
     let car;
     if (existing.data) {
       car = existing.data;
+      /* Keep the price on an already-created row in step with the panel. */
+      await supabase.from("cars").update({
+        price: sell, purchase_price: buy, is_public: true, updated_at: new Date().toISOString()
+      }).eq("id", car.id);
     } else {
-      let carData = {
-        make: current.vehicle_make || null, model: current.vehicle_model || null,
-        year: current.vehicle_year ? Number(current.vehicle_year) : null,
-        price: sell, purchase_price: buy,
-        condition: current.condition || null, body_type: current.body_type || null,
-        mileage: current.mileage != null && current.mileage !== "" ? Number(current.mileage) : null,
-        fuel_type: current.fuel_type || null, transmission: current.transmission || null,
-        registration_number: current.registration || null,
-        location: current.location || null, city: current.location || null,
-        exterior_color: current.colour || null,
-        status: "available", featured: false, financing_available: false, test_drive_available: true,
-        source_request_id: current.id, source_type: "trade_in",
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
-      };
-      let r = await supabase.from("cars").insert(carData).select().single();
+      let r = await supabase.from("cars").insert(buildCarInsert(current, { buy, sell })).select().single();
       if (r.error) {
         if (r.error.code === "23505") {
           let q = await supabase.from("cars").select("*").eq("source_request_id", current.id).single();
           if (q.error) throw q.error;
           car = q.data;
         } else throw r.error;
-      } else car = r.data;
-    }
-    let images = imageFiles();
-    if (!existing.data) for (let i = 0; i < images.length; i++) {
-      let copied = await copyImageToCar(images[i], car.id, i);
-      uploaded.push(copied.storage_path);
-      let { error: imageError } = await supabase.from("car_images").insert({
-        car_id: car.id, image_url: copied.image_url, storage_path: copied.storage_path,
-        image_type: "gallery", display_order: i
-      });
-      if (imageError) throw imageError;
-      if (i === 0) {
-        let { error: displayError } = await supabase.from("cars").update({
-          display_image_url: copied.image_url, display_image_path: copied.storage_path
-        }).eq("id", car.id);
-        if (displayError) throw displayError;
+      } else {
+        car = r.data;
+        createdCarId = car.id;
       }
     }
+
+    if (!car?.id) throw new Error("The inventory vehicle was not created. Nothing has been marked as approved.");
+
+    let images = imageFiles();
+    if (createdCarId) {
+      for (let i = 0; i < images.length; i++) {
+        let copied = await copyImageToCar(images[i], car.id, i);
+        uploaded.push(copied.storage_path);
+        let { error: imageError } = await supabase.from("car_images").insert({
+          car_id: car.id, image_url: copied.image_url, storage_path: copied.storage_path,
+          image_type: "gallery", display_order: i
+        });
+        if (imageError) throw imageError;
+        if (i === 0) {
+          let { error: displayError } = await supabase.from("cars").update({
+            display_image_url: copied.image_url, display_image_path: copied.storage_path
+          }).eq("id", car.id);
+          if (displayError) throw displayError;
+        }
+      }
+    }
+
+    /* Confirm the row is really readable before the request is stamped. */
+    let verify = await supabase.from("cars").select("id").eq("id", car.id).maybeSingle();
+    if (verify.error) throw verify.error;
+    if (!verify.data) throw new Error("The inventory vehicle could not be confirmed. Nothing has been marked as approved.");
+
     let now = new Date().toISOString();
     let requestUpdate = {
       status: "approved", negotiated_price: buy, inventory_price: sell,
       approved_car_id: car.id, approved_at: now, approved_by: session.user.id, updated_at: now
     };
-    let { error: updateError } = await supabase.from("tradein_requests").update(requestUpdate).eq("id", current.id).is("approved_car_id", null);
+
+    let { data: updatedRows, error: updateError } = await supabase
+      .from("tradein_requests")
+      .update(requestUpdate)
+      .eq("id", current.id)
+      .is("approved_car_id", null)
+      .select("id");
     if (updateError) throw updateError;
+    if (!updatedRows || !updatedRows.length) {
+      throw new Error("This request was approved by another administrator while you were working on it. Refresh to see the current state.");
+    }
+
     current = { ...current, ...requestUpdate };
     requests = requests.map(x => x.id === current.id ? current : x);
-    alert(`Vehicle approved and successfully added to inventory.${images.length ? ` ${images.length} image(s) were transferred.` : ""}`);
+
+    alert(`Vehicle approved and successfully added to inventory.${images.length && createdCarId ? ` ${images.length} image(s) were transferred.` : ""}`);
     closeDetail();
     load();
+
   } catch (e) {
     console.error(e);
-    if (uploaded.length) await supabase.storage.from(BUCKET).remove(uploaded);
+
+    /* Roll the whole thing back, so a failed approval never leaves a
+       half-made vehicle or a request pointing at nothing. */
+    try {
+      if (uploaded.length) await supabase.storage.from(BUCKET).remove(uploaded);
+      if (createdCarId) {
+        await supabase.from("car_images").delete().eq("car_id", createdCarId);
+        await supabase.from("cars").delete().eq("id", createdCarId);
+      }
+    } catch (rollbackError) {
+      console.error("Rollback failed:", rollbackError);
+    }
+
     alert(e.message || "Unable to add vehicle to inventory.");
     if (button) {
       button.disabled = false;
@@ -913,13 +944,16 @@ async function updateStatus(id, status) {
 
 async function deleteRequest() {
   if (!current) return;
+  if (current.approved_car_id &&
+      !confirm("This request is linked to a vehicle in inventory. Deleting the request will leave that vehicle in place. Continue?")) return;
   if (!confirm(`Delete trade-in request from ${current.full_name || "this customer"}? This cannot be undone.`)) return;
   const id = current.id;
   try {
-    let { data: files, error } = await supabase.from("tradein_files").select("file_url,file_name").eq("tradein_id", id);
-    if (error) throw error;
     let { error: e } = await supabase.from("tradein_requests").delete().eq("id", id);
     if (e) throw e;
+    /* Drop the back-reference so the vehicle no longer points at a
+       request that is gone. */
+    await supabase.from("cars").update({ source_request_id: null }).eq("source_request_id", id);
     requests = requests.filter(x => x.id !== id);
     closeDetail();
     stats();
@@ -958,4 +992,16 @@ $("closeMenu").onclick = $("overlay").onclick = () => { $("sidebar").classList.r
 $("logoutBtn").onclick = async () => { await supabase.auth.signOut(); location.replace("auth.html"); };
 window.addEventListener("load", () => setTimeout(() => $("loader")?.classList.add("hide"), 450));
 
-requireAdmin("tradeins").then(async allowed => { if (!allowed) return; await auth(); load();markSectionSeen("tradeins");attachBadges(); });
+/* Refresh the links when the tab is returned to, so a vehicle deleted on
+   the listings page is reflected here without a manual reload. */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && !current && requests.length) load();
+});
+
+requireAdmin("tradeins").then(async allowed => {
+  if (!allowed) return;
+  await auth();
+  load();
+  markSectionSeen("tradeins");
+  attachBadges();
+});

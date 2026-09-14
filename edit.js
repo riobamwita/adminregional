@@ -11,6 +11,10 @@
    - Year range is always 1980 -> next year.
    - Catalogue validation no longer blocks the save. A vehicle can always
      be saved; the make/model is registered in the catalogue afterwards.
+   - Trade-in vehicles stay in step with their originating request:
+     saving writes the shared fields back to tradein_requests, and
+     deleting releases the request so it stops reading "in inventory".
+     Field mapping lives in tradein-sync.js, nowhere else.
    ===================================================================== */
 
 import { supabase } from "./supabase.js";
@@ -23,6 +27,7 @@ import {
     MIN_VEHICLE_YEAR,
     MAX_VEHICLE_YEAR
 } from "./car-schema.js";
+import { pushCarToTradein, unlinkCar } from "./tradein-sync.js";
 
 const BUCKET = "car-images";
 
@@ -222,6 +227,34 @@ function renderGallery() {
     });
 }
 
+/* ---------------- trade-in origin ---------------- */
+
+const isTradeInVehicle = () =>
+    !!car && car.source_type === "trade_in" && !!car.source_request_id;
+
+/* Shows where the vehicle came from and links back to the request. */
+function renderTradeInBanner() {
+    if (!isTradeInVehicle()) return;
+
+    const host = $("tradeinOrigin") || form;
+    if (!host) return;
+
+    if (document.getElementById("tradeinOriginNote")) return;
+
+    const note = document.createElement("div");
+    note.id = "tradeinOriginNote";
+    note.className = "trade-origin-note";
+    note.style.cssText =
+        "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;padding:10px 14px;" +
+        "border-left:3px solid #f7941d;background:#f5f8fa;font-size:13px;color:#102b46";
+    note.innerHTML =
+        `<i class="fa-solid fa-right-left" style="color:#f7941d"></i>` +
+        `<span>This vehicle came in through a trade-in. Saving here also updates the trade-in request.</span>` +
+        `<a href="tradeins.html" style="margin-left:auto;font-weight:700;color:#075985;text-decoration:none">Open Trade-Ins</a>`;
+
+    host.parentNode.insertBefore(note, host);
+}
+
 /* ---------------- load vehicle ---------------- */
 
 async function loadVehicle() {
@@ -337,6 +370,8 @@ async function loadVehicle() {
 
         gallery = galleryResult.data || [];
         renderGallery();
+
+        renderTradeInBanner();
 
         if (form) form.style.display = "block";
 
@@ -526,6 +561,10 @@ form.onsubmit = async event => {
             if (el && typeof el.checked === "boolean") updates[key] = el.checked;
         });
 
+        /* The link back to the trade-in request is never editable here. */
+        delete updates.source_type;
+        delete updates.source_request_id;
+
         if (newDisplay) {
             await uploadNewDisplay();
             newDisplay = null;
@@ -562,6 +601,18 @@ form.onsubmit = async event => {
             drive_type: updates.drive_type ?? car.drive_type
         });
 
+        /* Keep the originating trade-in request in step. Mapping and
+           casting live in tradein-sync.js. */
+        let tradeinNote = "";
+        if (isTradeInVehicle()) {
+            try {
+                await pushCarToTradein(car);
+            } catch (syncError) {
+                console.warn("Trade-in request not synced:", syncError?.message || syncError);
+                tradeinNote = " The trade-in request was not updated — open it and save again.";
+            }
+        }
+
         if (updates.status === "sold") {
             try {
                 await recordAgentSale({ ...car, ...updates });
@@ -570,12 +621,12 @@ form.onsubmit = async event => {
             }
         }
 
-        showMessage("success", "Vehicle saved successfully. Returning to listings...");
+        showMessage("success", `Vehicle saved successfully.${tradeinNote} Returning to listings...`);
         saveButtons.forEach(button => (button.textContent = "Saved"));
 
         setTimeout(() => {
             window.location.href = "index.html";
-        }, 700);
+        }, tradeinNote ? 2200 : 700);
 
     } catch (error) {
         showMessage("error", error?.message || "Unable to save vehicle.");
@@ -589,7 +640,13 @@ form.onsubmit = async event => {
 
 if ($("deleteBtn")) {
     $("deleteBtn").onclick = async () => {
-        if (!confirm("Delete this vehicle and all its images?")) return;
+        const fromTradeIn = isTradeInVehicle();
+
+        if (!confirm(
+            fromTradeIn
+                ? "Delete this vehicle and all its images? The trade-in request it came from will be returned to review."
+                : "Delete this vehicle and all its images?"
+        )) return;
 
         try {
             $("deleteBtn").disabled = true;
@@ -606,6 +663,9 @@ if ($("deleteBtn")) {
 
             const result = await supabase.from("cars").delete().eq("id", carId);
             if (result.error) throw result.error;
+
+            /* The trade-in request must stop reading as "in inventory". */
+            await unlinkCar(carId);
 
             location.href = "index.html";
 
