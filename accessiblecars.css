@@ -45,12 +45,6 @@ body.locked{overflow:hidden}
   transition:transform .22s var(--ease),box-shadow .22s ease,border-color .22s ease,background .22s ease;
 }
 
-/* status reads on the card edge — a rounded bar, not a hard border */
-.request-card::before{
-  content:"";position:absolute;left:6px;top:11px;bottom:11px;width:3px;
-  border-radius:var(--pill);background:var(--line-3);
-  transition:background .2s ease;
-}
 .request-card:has(.request-status.new)::before{background:#1769aa}
 .request-card:has(.request-status.in-progress)::before{background:var(--amber)}
 .request-card:has(.request-status.completed)::before{background:var(--green)}

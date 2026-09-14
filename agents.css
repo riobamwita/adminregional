@@ -19,10 +19,6 @@ body.locked{overflow:hidden}
   box-shadow:var(--sh-xs);
   transition:transform .22s var(--ease),box-shadow .22s ease,border-color .22s ease,background .22s ease;
 }
-.request-card::before{
-  content:"";position:absolute;left:6px;top:11px;bottom:11px;width:3px;
-  border-radius:var(--pill);background:var(--line-3);transition:background .2s ease;
-}
 .request-card:has(.request-status.pending)::before{background:#1769aa}
 .request-card:has(.request-status.reviewing)::before{background:var(--purple)}
 .request-card:has(.request-status.approved)::before{background:var(--green)}
