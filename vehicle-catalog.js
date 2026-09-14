@@ -114,6 +114,48 @@ function setOptions(select,values,placeholder="Select",allowNew=true){
     }
 }
 
+function setFixedOptions(select, values, placeholder = "Select", allowNew = true) {
+    if (!select) return;
+
+    const previous = select.value;
+
+    select.innerHTML = "";
+
+    const ph = document.createElement("option");
+    ph.value = "";
+    ph.textContent = placeholder;
+    select.appendChild(ph);
+
+    uniqueSorted(values).forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+    });
+
+    if (allowNew) {
+        const add = document.createElement("option");
+        add.value = ADD_NEW;
+        add.textContent = "+ Add new...";
+        add.dataset.addNew = "true";
+        select.appendChild(add);
+    }
+
+    select.disabled = false;
+
+    if (previous && previous !== ADD_NEW) {
+        ensureOption(select, previous);
+
+        const match = [...select.options].find(
+            o => norm(o.value) === norm(previous)
+        );
+
+        if (match) {
+            select.value = match.value;
+        }
+    }
+}
+
 function attachFreeText(select,label){
     if(!select||select.dataset.freeText==="1")return;
     select.dataset.freeText="1";
@@ -149,22 +191,77 @@ function findModel(catalog,make,model){
     return catalog.find(r=>r.make_key===norm(make)&&r.model_key===norm(model))||null;
 }
 
-const CAR_SELECT_FIELDS={
-    condition:"condition",
-    exterior_color:"exterior_color",
-    interior_color:"interior_color",
-    seats:"seats",
-    doors:"doors",
-    country_of_origin:"country_of_origin",
-    auction_grade:"auction_grade",
-    previous_owners:"previous_owners",
-    number_of_keys:"number_of_keys",
-    inspection_status:"inspection_status",
-    location:"location",
-    city:"city",
-    county:"county",
-    status:"status"
+const CAR_SELECT_FIELDS = {
+    exterior_color: "exterior_color",
+    interior_color: "interior_color",
+    seats: "seats",
+    doors: "doors",
+    country_of_origin: "country_of_origin",
+    auction_grade: "auction_grade",
+    previous_owners: "previous_owners",
+    number_of_keys: "number_of_keys",
+    inspection_status: "inspection_status",
+    location: "location",
+    city: "city",
+    county: "county"
 };
+
+/*
+ * These two fields are NOT database/catalogue driven.
+ * They always use the values below.
+ */
+const CONDITION_OPTIONS = [
+    "New",
+    "Locally Used",
+    "Foreign Used",
+    "Wellcabs"
+];
+
+const STATUS_OPTIONS = [
+    "Available",
+    "Reserved",
+    "Inactive",
+    "Sold",
+    "On Ship",
+    "Under Port Clearance"
+];
+
+/*
+ * Static transmission list.
+ * Database/catalogue values are no longer required for these.
+ */
+const TRANSMISSION_OPTIONS = [
+    "Manual",
+    "Automatic",
+    "CVT",
+    "AMT",
+    "DCT",
+    "DSG",
+    "Tiptronic",
+    "Sequential",
+    "Semi-Automatic",
+    "Automated Manual",
+    "Single-Speed",
+    "Direct Drive",
+    "eCVT"
+];
+
+/*
+ * Static drive-type list.
+ */
+const DRIVE_TYPE_OPTIONS = [
+    "FWD",
+    "RWD",
+    "AWD",
+    "4WD",
+    "4x4",
+    "2WD",
+    "4x2",
+    "6WD",
+    "6x6",
+    "8WD",
+    "8x8"
+];
 
 function valuesFromCars(cars,key,make=null,model=null){
     let rows=cars||[];
@@ -195,6 +292,44 @@ export async function initVehicleCatalogue({makeId,modelId,yearId,bodyId,fuelId,
         if(el)auxiliary[id]=el;
     });
 
+    /*
+ * Fixed local fields — never loaded from database.
+ */
+const condition = $("condition");
+const status = $("status");
+
+setFixedOptions(
+    condition,
+    CONDITION_OPTIONS,
+    "Select condition",
+    true
+);
+
+setFixedOptions(
+    status,
+    STATUS_OPTIONS,
+    "Select status",
+    true
+);
+
+/*
+ * Transmission and drive type are also static.
+ * They must contain the complete list regardless of catalogue contents.
+ */
+setFixedOptions(
+    trans,
+    TRANSMISSION_OPTIONS,
+    "Select transmission",
+    true
+);
+
+setFixedOptions(
+    drive,
+    DRIVE_TYPE_OPTIONS,
+    "Select drive type",
+    true
+);
+
     const allMakes=[
         ...rows.map(r=>r.make),
         ...cars.map(r=>r.make)
@@ -214,18 +349,67 @@ export async function initVehicleCatalogue({makeId,modelId,yearId,bodyId,fuelId,
         ];
     };
 
-    function fillDependents(record){
-        setOptions(body,dependentValues(record,"body_types","body_type"),"Select body type");
-        setOptions(fuel,dependentValues(record,"fuel_types","fuel_type"),"Select fuel type");
-        setOptions(trans,dependentValues(record,"transmissions","transmission"),"Select transmission");
-        setOptions(drive,dependentValues(record,"drive_types","drive_type"),"Select drive type");
+    function fillDependents(record) {
+    /*
+     * These remain catalogue/model dependent.
+     */
+    setOptions(
+        body,
+        dependentValues(record, "body_types", "body_type"),
+        "Select body type"
+    );
 
-        const years=[
-            ...(record?.years||[]),
-            ...valuesFromCars(cars,"year",make.value,model.value)
-        ];
-        setOptions(year,years,"Select year");
-    }
+    setOptions(
+        fuel,
+        dependentValues(record, "fuel_types", "fuel_type"),
+        "Select fuel type"
+    );
+
+    /*
+     * Transmission and drive type are intentionally NOT database driven.
+     * Rebuild them from the static master lists.
+     */
+    setFixedOptions(
+        trans,
+        TRANSMISSION_OPTIONS,
+        "Select transmission",
+        true
+    );
+
+    setFixedOptions(
+        drive,
+        DRIVE_TYPE_OPTIONS,
+        "Select drive type",
+        true
+    );
+
+    /*
+     * Year remains catalogue/model dependent.
+     */
+    const years = [
+        ...(record?.years || []),
+        ...valuesFromCars(cars, "year", make.value, model.value)
+    ];
+
+    setOptions(year, years, "Select year");
+
+    /*
+     * Condition and status are always local/static.
+     */
+    setFixedOptions(
+        condition,
+        CONDITION_OPTIONS,
+        "Select condition",
+        true
+    );
+
+    setFixedOptions(
+        status,
+        STATUS_OPTIONS,
+        "Select status",
+        true
+    );
+}
 
     setOptions(make,allMakes,"Select make");
     setOptions(model,[],"Select make first");
@@ -240,14 +424,18 @@ export async function initVehicleCatalogue({makeId,modelId,yearId,bodyId,fuelId,
     });
 
     [
-        [make,"make"],
-        [model,"model"],
-        [body,"body type"],
-        [fuel,"fuel type"],
-        [trans,"transmission"],
-        [drive,"drive type"],
-        ...Object.entries(auxiliary).map(([id,el])=>[el,id.replaceAll("_"," ")])
-    ].forEach(([el,label])=>attachFreeText(el,label));
+    [make, "make"],
+    [model, "model"],
+    [body, "body type"],
+    [fuel, "fuel type"],
+    [trans, "transmission"],
+    [drive, "drive type"],
+    [condition, "condition"],
+    [status, "status"],
+    ...Object.entries(auxiliary).map(
+        ([id, el]) => [el, id.replaceAll("_", " ")]
+    )
+].forEach(([el, label]) => attachFreeText(el, label));
 
     make.addEventListener("change",()=>{
         if(make.value===ADD_NEW)return;
@@ -295,17 +483,22 @@ export async function initVehicleCatalogue({makeId,modelId,yearId,bodyId,fuelId,
         fillDependents(modelRecord());
 
         [
-            [year,values.year],
-            [body,values.body_type],
-            [fuel,values.fuel_type],
-            [trans,values.transmission],
-            [drive,values.drive_type]
-        ].forEach(([el,value])=>{
-            if(!el||value===null||value===undefined||value==="")return;
-            ensureOption(el,String(value));
-            const match=[...el.options].find(o=>norm(o.value)===norm(value));
-            el.value=match?match.value:String(value);
-        });
+    [year, values.year],
+    [body, values.body_type],
+    [fuel, values.fuel_type],
+    [trans, values.transmission],
+    [drive, values.drive_type]
+].forEach(([el, value]) => {
+    if (!el || value === null || value === undefined || value === "") return;
+
+    ensureOption(el, String(value));
+
+    const match = [...el.options].find(
+        o => norm(o.value) === norm(value)
+    );
+
+    el.value = match ? match.value : String(value);
+});
     }
 
     function currentSelection(){
