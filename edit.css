@@ -361,11 +361,12 @@ input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0
   .gallery-item .make-main{font-size:9.5px;min-height:28px;padding:0 6px}
   .checks{grid-template-columns:1fr}
 
-  /* delete on its own row, cancel and save side by side below */
+  /* cancel and save side by side on top, delete alone on the row
+     beneath them, pushed to the far right */
   .bottom{flex-direction:column;align-items:stretch;gap:7px;padding:10px 0 calc(10px + env(safe-area-inset-bottom))}
-  .delete{width:100%}
-  .bottom-actions{margin-left:0;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .bottom-actions{order:1;margin-left:0;display:grid;grid-template-columns:1fr 1fr;gap:7px}
   .bottom .cancel,.bottom .save{width:100%;min-width:0}
+  .delete{order:2;width:auto;align-self:flex-end;margin-left:auto}
 }
 
 @media (max-width:400px){
