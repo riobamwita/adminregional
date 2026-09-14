@@ -180,6 +180,159 @@ function field(label, value) {
   return `<div class="detail-field"><span>${esc(label)}</span><strong>${esc(dash(value))}</strong></div>`;
 }
 
+/* ---------------- LOCATION ---------------- */
+function locationInfo(sub) {
+  const c = sub || current;
+  if (!c) return null;
+
+  const lat = Number(c.latitude);
+  const lng = Number(c.longitude);
+  const hasGps =
+    Number.isFinite(lat) && Number.isFinite(lng) &&
+    Math.abs(lat) <= 90 && Math.abs(lng) <= 180 &&
+    !(lat === 0 && lng === 0);
+
+  const place = [...new Set(
+    [c.showroom_name, c.town_area || c.location || c.city, c.county]
+      .map(v => String(v ?? "").trim())
+      .filter(Boolean)
+  )].join(", ");
+
+  const vehicle = `${c.make || "Vehicle"} ${c.model || ""}`.trim();
+  const label = [vehicle, c.registration_number].filter(Boolean).join(" · ");
+  const accuracy = Number(c.location_accuracy);
+
+  return { lat, lng, hasGps, place, vehicle, label, accuracy };
+}
+
+function buildMapsUrl(sub) {
+  const info = locationInfo(sub);
+  if (!info) return "";
+  if (info.hasGps) return `https://www.google.com/maps/search/?api=1&query=${info.lat},${info.lng}`;
+  if (info.place) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(info.place)}`;
+  return "";
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const helper = document.createElement("textarea");
+      helper.value = text;
+      helper.setAttribute("readonly", "");
+      helper.style.cssText = "position:fixed;top:-1000px;opacity:0";
+      document.body.appendChild(helper);
+      helper.select();
+      const ok = document.execCommand("copy");
+      helper.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function flashButton(button, text, icon = "fa-circle-check") {
+  if (!button) return;
+  const original = button.innerHTML;
+  button.innerHTML = `<i class="fa-solid ${icon}"></i> ${text}`;
+  button.classList.add("done");
+  setTimeout(() => {
+    button.innerHTML = original;
+    button.classList.remove("done");
+  }, 1600);
+}
+
+async function shareLocation(button) {
+  const info = locationInfo();
+  const url = buildMapsUrl();
+  if (!info || !url) return;
+
+  const where = info.place || "the location pinned by the agent";
+  const headline = `${info.label || "Vehicle"} is at ${where}.`;
+  const payload = { title: `${info.vehicle} — location`, text: headline, url };
+
+  if (navigator.share) {
+    try {
+      if (!navigator.canShare || navigator.canShare(payload)) {
+        await navigator.share(payload);
+        return;
+      }
+    } catch (e) {
+      if (e?.name === "AbortError") return;
+      console.warn("Share failed, falling back to copy:", e);
+    }
+  }
+
+  if (await copyText(`${headline}\n${url}`)) {
+    flashButton(button, "Copied to share");
+    return;
+  }
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(`${headline} ${url}`)}`, "_blank", "noopener");
+}
+
+async function copyLocationLink(button) {
+  const url = buildMapsUrl();
+  if (!url) return;
+  const ok = await copyText(url);
+  flashButton(button, ok ? "Link copied" : "Copy failed", ok ? "fa-circle-check" : "fa-triangle-exclamation");
+}
+
+function renderLocationCard() {
+  const host = document.querySelector(".vehicle-summary-card");
+  if (!host || !current) return;
+
+  let box = $("locationBlock");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "locationBlock";
+    box.className = "location-card";
+    host.appendChild(box);
+  }
+
+  const info = locationInfo();
+  const url = buildMapsUrl();
+
+  if (!url) {
+    box.innerHTML = `
+      <div class="location-empty">
+        <i class="fa-solid fa-location-crosshairs"></i>
+        <span>No location was captured for this submission. Add a town or GPS coordinates in the edit form to enable maps.</span>
+      </div>`;
+    return;
+  }
+
+  const sub = info.hasGps
+    ? `${info.lat.toFixed(6)}, ${info.lng.toFixed(6)}${Number.isFinite(info.accuracy) && info.accuracy > 0 ? ` · ±${Math.round(info.accuracy)} m` : ""}`
+    : "No GPS pin — matched by town and county";
+
+  box.innerHTML = `
+    <div class="location-head">
+      <i class="fa-solid fa-location-dot"></i>
+      <div>
+        <strong>${esc(info.place || "Pinned location")}</strong>
+        <span>${esc(sub)}</span>
+      </div>
+    </div>
+    <div class="location-actions">
+      <a class="location-btn open" id="openLocation" href="${esc(url)}" target="_blank" rel="noopener">
+        <i class="fa-solid fa-map-location-dot"></i> Open in Maps
+      </a>
+      <button class="location-btn share" id="shareLocation" type="button">
+        <i class="fa-solid fa-share-nodes"></i> Share location
+      </button>
+      <button class="location-btn copy" id="copyLocation" type="button">
+        <i class="fa-solid fa-link"></i> Copy link
+      </button>
+    </div>`;
+
+  $("shareLocation").onclick = () => shareLocation($("shareLocation"));
+  $("copyLocation").onclick = () => copyLocationLink($("copyLocation"));
+}
+
 /* ---------------- FILES ---------------- */
 async function getFiles(id) {
   const { data, error } = await supabase
@@ -438,6 +591,8 @@ function renderSummary() {
     field("Submitted", date(current.created_at)),
     field("Last Updated", date(current.updated_at || current.created_at))
   ].join("");
+
+  renderLocationCard();
 }
 
 /* ---------------- STATUS ---------------- */
@@ -796,6 +951,8 @@ function openLightbox(images, startIndex = 0) {
 function buildPrintableHTML() {
   const c = current;
   const files = currentFiles || [];
+  const info = locationInfo(c);
+  const mapLink = buildMapsUrl(c);
 
   const row = (label, val) =>
     `<tr><th>${esc(label)}</th><td>${esc(dash(val))}</td></tr>`;
@@ -826,6 +983,7 @@ function buildPrintableHTML() {
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #d9e2e8; vertical-align: top; }
   th { width: 34%; background: #f5f8fa; font-weight: 700; color: #657b8c; text-transform: uppercase; font-size: 8.5px; letter-spacing: .04em; }
   td { font-size: 10.5px; }
+  td a { color: #0f6ea8; word-break: break-all; }
   .badge { display: inline-block; padding: 3px 7px; background: #edf5f8; color: #075985; font-size: 8px; font-weight: 800; text-transform: uppercase; }
   .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; page-break-inside: avoid; }
   .photos figure { margin: 0; border: 1px solid #d9e2e8; padding: 4px; }
@@ -883,7 +1041,9 @@ function buildPrintableHTML() {
   ${row("Showroom / Yard", c.showroom_name)}
   ${row("Town / Area", c.town_area)}
   ${row("County", c.county)}
-  ${row("GPS", (c.latitude != null && c.longitude != null) ? `${c.latitude}, ${c.longitude}` : "—")}
+  ${row("Location", info?.place || "—")}
+  ${row("GPS", info?.hasGps ? `${info.lat}, ${info.lng}` : "—")}
+  <tr><th>Map Link</th><td>${mapLink ? `<a href="${esc(mapLink)}">${esc(mapLink)}</a>` : "—"}</td></tr>
 </table>
 
 <h2>Description</h2>
@@ -1278,7 +1438,9 @@ $("menu").onclick = () => { $("sidebar").classList.add("open"); $("overlay").cla
 $("closeMenu").onclick = $("overlay").onclick = () => { $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); };
 $("logoutBtn").onclick = async () => { await supabase.auth.signOut(); location.replace("auth.html"); };
 
-window.addEventListener("load", () => setTimeout(() => $("loader")?.classList.add("hide"), 450));
+/* loader: fires even if the window "load" event already happened */
+const hideLoader = () => setTimeout(() => $("loader")?.classList.add("hide"), 450);
+document.readyState === "complete" ? hideLoader() : window.addEventListener("load", hideLoader);
 
 /* ---------------- BOOT ---------------- */
 requireAdmin("agent_submissions").then(async allowed => {

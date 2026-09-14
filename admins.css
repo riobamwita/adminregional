@@ -1,20 +1,4 @@
-/* =========================================================================
-   REGIONAL AUTOSELECTIONS LTD — MANAGE AGENTS
-   Page stylesheet. Loads AFTER style.css and uses its tokens.
-   No tokens, base, loader, header, sidebar or layout here — style.css owns
-   all of that now. Redefining them is what broke the radius and shadows.
-   -------------------------------------------------------------------------
-   0  Shell fixes          1  Page overrides      2  Messages
-   3  Stat strip           4  Action bar          5  Agent list
-   6  Modal shell          7  Tabs & pane bar     8  Forms
-   9  Rates                10 Permissions         11 Payments
-   12 History              13 Responsive          14 Motion & print
-   ========================================================================= */
 
-
-/* ---------- 0. SHELL FIXES ---------- */
-/* inline sidebar on this page: let <nav> grow so .side-bottom sits at the
-   bottom (safe to move into style.css) */
 
 .hidden{display:none!important}
 body:has(.modal.open){overflow:hidden}

@@ -10,7 +10,7 @@ const pages=[
  ["financing","Financing Requests","fa-coins"],
  ["diaspora","Diaspora Requests","fa-earth-africa"],
  ["sellcars","Sell Your Car Requests","fa-car-side"],
- ["accessiblecars","Accessible Car Requests","fa-wheelchair"],
+ ["accessiblecars","Accessible Cars","fa-wheelchair"],
  ["reservations","Reservation Requests","fa-calendar-check"],
  ["testdrives","Test Drives","fa-road"],
  ["insurance","Insurance Requests","fa-shield-halved"],
