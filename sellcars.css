@@ -20,6 +20,10 @@
    13 Motion
    ============================================================ */
 
+/* Shared dashboard token aliases */
+:root{--radius:var(--r);--shadow-sm:var(--sh-sm);--shadow:var(--sh)}
+
+
 /* ---------- 1. PAGE OVERRIDES ---------- */
 :root{--deep:#071d30}
 

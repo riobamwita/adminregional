@@ -23,30 +23,30 @@
 
 /* ---------- 1. TOKENS ---------- */
 :root{
-  --ink:#102b46;
-  --ink-2:#0b3555;
-  --muted:#5f7688;
+  --ink:#0f2a45;
+  --ink-2:#0a1f35;
+  --muted:#5e7589;
   --label:#4d657a;
   --gold:#f7941d;
-  --gold-2:#ffab2e;
+  --gold-2:#ffab34;
   --gold-soft:#f7941d1f;
-  --green:#138a3d;
-  --red:#dc2626;
-  --amber:#b45309;
+  --green:#0f8a43;
+  --red:#e11d48;
+  --amber:#c2740a;
   --purple:#7c3aed;
-  --paper:#f2f8fc;
+  --paper:#eaf1f7;
   --card:#ffffff;
-  --tint:#f8fbfd;
-  --line:#102b461f;
-  --line-soft:#102b4610;
-  --shadow-sm:0 2px 8px #102b460d;
-  --shadow:0 10px 30px #102b4614;
+  --tint:#f4f9fc;
+  --line:#0f2a4518;
+  --line-soft:#0f2a450f;
+  --shadow-sm:0 3px 10px #0f2a4514;
+  --shadow:0 8px 24px #0f2a451c;
 
-  --head-h:66px;
-  --side-w:232px;
+  --head-h:56px;
+  --side-w:206px;
   --tap:44px;
-  --gutter:24px;
-  --radius:2px;
+  --gutter:14px;
+  --radius:14px;
 }
 
 /* ---------- 2. RESET & BASE ---------- */
@@ -561,3 +561,12 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
   .insight-card,.records-panel,.stat-card{border-color:#ccc;box-shadow:none;break-inside:avoid}
   table{min-width:0}
 }
+
+/* ---------- SHARED DASHBOARD VISUAL ALIGNMENT ---------- */
+.stats,.insights-grid,.records-panel{width:100%;}
+.insight-card,.records-panel,.sale-modal .modal-box,.deductions-modal .modal-box{
+  border-radius:var(--r);
+  box-shadow:var(--sh-sm);
+}
+.stat-card{border-radius:var(--r);box-shadow:var(--sh-sm);}
+button,.btn,.toolbar button,.heading-actions button,.heading-actions a{border-radius:var(--pill);}

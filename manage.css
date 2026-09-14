@@ -13,6 +13,10 @@
    9  Motion & print
    ============================================================ */
 
+/* Shared dashboard token aliases */
+:root{--radius:var(--r);--shadow-sm:var(--sh-sm);--shadow:var(--sh)}
+
+
 /* ---------- 1. PAGE OVERRIDES & MESSAGES ---------- */
 .page-heading h1{text-transform:none}
 
