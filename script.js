@@ -56,7 +56,7 @@ function card(c){
         sold=st==="sold",
         img=c.display_image_url,
         meta=chip("fa-gauge",c.mileage!=null?`${M(c.mileage)} km`:"")+chip("fa-gears",c.transmission)+chip("fa-gas-pump",c.fuel_type);
-  return`<article class="car-card ${esc(cls)}">
+    return`<article class="car-card ${esc(cls)}" data-id="${esc(c.id)}" role="button" tabindex="0" aria-label="Open ${esc(name)}">
 <div class="car-image">${img?`<img src="${esc(optimizedUrl(img,720,74))}" alt="${esc(name)}" loading="lazy" decoding="async" onerror="this.remove()">`:`<div class="no-image"><i class="fa-solid fa-car"></i></div>`}${sold?"":`<span class="status ${esc(cls)}">${esc(st)}</span>`}${c.featured?`<span class="featured" title="Featured"><i class="fa-solid fa-star"></i></span>`:""}${sold?`<div class="sold-overlay"><span>SOLD</span></div>`:""}</div>
 <div class="car-info">
 <div class="car-head"><h3 title="${esc(name)}">${esc(name)}</h3><span class="car-year">${c.year||"—"}</span></div>
@@ -83,6 +83,9 @@ window.deleteCar=async id=>{if(!await canManageVehicles()){alert("Access Denied:
 let searchTimer;
 $("searchInput").oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,150)};
 $("sortFilter").onchange=render;
+
+grid.onclick=e=>{if(e.target.closest("button, a"))return;const el=e.target.closest(".car-card");if(el)editCar(el.dataset.id)};
+grid.onkeydown=e=>{if(e.key!=="Enter"&&e.key!==" ")return;const el=e.target.closest(".car-card");if(!el)return;e.preventDefault();editCar(el.dataset.id)};
 
 $("filterToggle").onclick=()=>{
   const open=$("adminFilters").classList.toggle("open");

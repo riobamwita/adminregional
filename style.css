@@ -839,3 +839,6 @@ tbody tr:hover{background:var(--tint)}
   .cars-grid{grid-template-columns:repeat(3,1fr)}
   .stats{display:grid;grid-template-columns:repeat(5,1fr)}
 }
+
+.car-card{cursor:pointer}
+.car-card:focus-visible{outline:2px solid var(--accent,#c8102e);outline-offset:2px}
