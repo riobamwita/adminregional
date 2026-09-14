@@ -161,8 +161,6 @@ async function load(){
  $("loading").style.display="block";
  $("salesTable").innerHTML="";
  try{
-  currentAdmin=await requireAdmin("statistics");
-  if(!currentAdmin)return;attachBadges?.().catch(e=>console.error("badges",e));
   const[{data:c,error:ce},{data:g,error:ge},{data:d,error:de}]=await Promise.all([
    supabase.from("cars").select("*").order("created_at",{ascending:false}),
    supabase.from("ground_sales").select("*").order("sale_date",{ascending:false}),
@@ -315,14 +313,20 @@ document.querySelectorAll("[data-ded-filter]").forEach(b=>b.onclick=()=>{
 
 $("menu").onclick=()=>{$("sidebar").classList.add("open");$("overlay").classList.add("show")};
 $("closeMenu").onclick=$("overlay").onclick=()=>{$("sidebar").classList.remove("open");$("overlay").classList.remove("show")};
-$("logoutBtn").onclick=async()=>{await supabase.auth.signOut();location.replace("auth.html")};
+$("logoutBtn").onclick=async()=>{await supabase.auth.signOut();location.href="auth.html"};
 
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAll()});
 
 window.addEventListener("load",()=>{
- setTimeout(()=>$("loader").classList.add("hide"),450);
+ setTimeout(()=>$("loader")?.classList.add("hide"),450);
  $("saleDate").value=today();
  $("dedDate").value=today()
 });
 
-load();
+/* same guard pattern as every other admin page */
+requireAdmin("statistics").then(admin=>{
+ if(!admin)return;
+ currentAdmin=admin;
+ load();
+ attachBadges()
+});
