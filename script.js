@@ -57,7 +57,7 @@ function card(c){
         img=c.display_image_url,
         meta=chip("fa-gauge",c.mileage!=null?`${M(c.mileage)} km`:"")+chip("fa-gears",c.transmission)+chip("fa-gas-pump",c.fuel_type);
   return`<article class="car-card ${esc(cls)}">
-<div class="car-image">${img?`<img src="${esc(optimizedUrl(img,640,68))}" alt="${esc(name)}" loading="lazy" decoding="async" width="640" height="400" onerror="this.remove()">`:`<div class="no-image"><i class="fa-solid fa-car"></i></div>`}<span class="status ${esc(cls)}">${esc(st)}</span>${c.featured?`<span class="featured" title="Featured"><i class="fa-solid fa-star"></i></span>`:""}${sold?`<div class="sold-overlay"><span>SOLD</span></div>`:""}</div>
+<div class="car-image">${img?`<img src="${esc(optimizedUrl(img,640,68))}" alt="${esc(name)}" loading="lazy" decoding="async" width="640" height="400" onerror="this.remove()">`:`<div class="no-image"><i class="fa-solid fa-car"></i></div>`}${sold?"":`<span class="status ${esc(cls)}">${esc(st)}</span>`}${c.featured?`<span class="featured" title="Featured"><i class="fa-solid fa-star"></i></span>`:""}${sold?`<div class="sold-overlay"><span>SOLD</span></div>`:""}</div>
 <div class="car-info">
 <div class="car-head"><h3 title="${esc(name)}">${esc(name)}</h3><span class="car-year">${c.year||"—"}</span></div>
 <p class="car-location"><i class="fa-solid fa-location-dot"></i>${esc(c.location||c.city||"Location not set")}</p>
