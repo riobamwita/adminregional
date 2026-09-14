@@ -18,22 +18,35 @@ const CATS = {
 };
 
 /* Submission column → cars column mapping, for mirroring edits into inventory */
-const SUBMISSION_TO_CAR_FIELD = {
-  registration_number: "registration_number",
-  make:                "make",
-  model:               "model",
-  year:                "year",
-  body_type:           "body_type",
-  engine_cc:           "engine_size",
-  fuel_type:           "fuel_type",
-  transmission:        "transmission",
-  drive_type:          "drive_type",
-  mileage:             "mileage",
-  exterior_color:      "exterior_color",
-  seats:               "seats",
-  condition:           "condition",
-  description:         "description"
+const SUBMISSION_TO_CAR_FIELD={
+listing_reference:"stock_number",make:"make",model:"model",trim:"trim",year:"year",body_type:"body_type",
+engine_cc:"engine_size",engine_description:"engine_description",horsepower:"horsepower",fuel_type:"fuel_type",
+transmission:"transmission",drive_type:"drive_type",mileage:"mileage",exterior_color:"exterior_color",
+interior_color:"interior_color",seats:"seats",doors:"doors",vin:"vin",chassis_number:"chassis_number",
+registration_number:"registration_number",stock_number:"stock_number",country_of_origin:"country_of_origin",
+import_year:"import_year",registration_year:"registration_year",auction_grade:"auction_grade",
+previous_owners:"previous_owners",accident_history:"accident_history",service_history:"service_history",
+number_of_keys:"number_of_keys",condition:"condition",inspection_status:"inspection_status",
+inspection_notes:"inspection_notes",location:"location",city:"city",county:"county",latitude:"latitude",
+longitude:"longitude",location_accuracy:"location_accuracy",negotiable:"negotiable",
+financing_available:"financing_available",test_drive_available:"test_drive_available",featured:"featured",
+description:"description",key_features:"key_features",showroom_name:"showroom_name"
 };
+
+function buildCarUpdates(updates){
+  const carUpdates={};
+  Object.entries(SUBMISSION_TO_CAR_FIELD).forEach(([a,c])=>{
+    if(a in updates) carUpdates[c]=updates[a];
+  });
+  if("inventory_price" in updates) carUpdates.price=updates.inventory_price;
+  if("purchase_price" in updates) carUpdates.purchase_price=updates.purchase_price;
+  if("town_area" in updates){
+    carUpdates.location=updates.town_area;
+    carUpdates.city=updates.town_area;
+  }
+  carUpdates.updated_at=new Date().toISOString();
+  return carUpdates;
+}
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g,
   m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m]));
@@ -997,36 +1010,63 @@ async function approveToInventory() {
       const baseDescription = current.description ? String(current.description).trim() : "";
       const description = [baseDescription, keyFeatures ? `Key Features: ${keyFeatures}` : ""].filter(Boolean).join("\n\n");
 
-      const carData = {
-        make: current.make || null,
-        model: current.model || null,
-        year: current.year ? Number(current.year) : null,
-        price: sell,
-        purchase_price: buy,
-        condition: current.condition || null,
-        body_type: current.body_type || null,
-        mileage: current.mileage !== null && current.mileage !== undefined && current.mileage !== ""
-          ? Number(current.mileage) : null,
-        fuel_type: current.fuel_type || null,
-        transmission: current.transmission || null,
-        drive_type: current.drive_type || null,
-        engine_size: current.engine_cc ? Number(current.engine_cc) : null,
-        seats: current.seats ? Number(current.seats) : null,
-        registration_number: current.registration_number || null,
-        exterior_color: current.exterior_color || null,
-        location: current.town_area || current.showroom_name || null,
-        city: current.town_area || null,
-        county: current.county || null,
-        description: description || null,
-        status: "available",
-        featured: false,
-        financing_available: false,
-        test_drive_available: true,
-        source_request_id: current.id,
-        source_type: "agent",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      const carData={
+  make:current.make||null,
+  model:current.model||null,
+  trim:current.trim||null,
+  year:current.year?Number(current.year):null,
+  price:sell,
+  purchase_price:buy,
+  condition:current.condition||null,
+  body_type:current.body_type||null,
+  engine_size:current.engine_cc?Number(current.engine_cc):null,
+  engine_description:current.engine_description||null,
+  horsepower:current.horsepower?Number(current.horsepower):null,
+  fuel_type:current.fuel_type||null,
+  transmission:current.transmission||null,
+  drive_type:current.drive_type||null,
+  mileage:current.mileage!==null&&current.mileage!==undefined&&current.mileage!==""?Number(current.mileage):null,
+  mileage_unit:"km",
+  exterior_color:current.exterior_color||null,
+  interior_color:current.interior_color||null,
+  seats:current.seats?Number(current.seats):null,
+  doors:current.doors?Number(current.doors):null,
+  vin:current.vin||null,
+  chassis_number:current.chassis_number||null,
+  registration_number:current.registration_number||null,
+  stock_number:current.stock_number||null,
+  country_of_origin:current.country_of_origin||null,
+  import_year:current.import_year?Number(current.import_year):null,
+  registration_year:current.registration_year?Number(current.registration_year):null,
+  auction_grade:current.auction_grade||null,
+  previous_owners:current.previous_owners?Number(current.previous_owners):null,
+  accident_history:current.accident_history||null,
+  service_history:current.service_history||null,
+  number_of_keys:current.number_of_keys?Number(current.number_of_keys):null,
+  inspection_status:current.inspection_status||null,
+  inspection_notes:current.inspection_notes||null,
+  location:current.town_area||current.location||current.showroom_name||null,
+  city:current.city||current.town_area||null,
+  county:current.county||null,
+  latitude:current.latitude??null,
+  longitude:current.longitude??null,
+  location_accuracy:current.location_accuracy??null,
+  description:current.description||null,
+  key_features:current.key_features||null,
+  showroom_name:current.showroom_name||null,
+  negotiable:current.negotiable??false,
+  financing_available:current.financing_available??false,
+  test_drive_available:current.test_drive_available??true,
+  featured:current.featured??false,
+  status:"available",
+  source_request_id:current.id,
+  source_type:"agent",
+  agent_id:current.agent_id||null,
+  agent_email:current.agent_email||null,
+  agent_name:current.agent_name||null,
+  created_at:new Date().toISOString(),
+  updated_at:new Date().toISOString()
+};
 
       const result = await supabase.from("cars").insert(carData).select().single();
       if (result.error) {
