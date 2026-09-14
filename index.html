@@ -1,10 +1,25 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css"><title>Admin | Regional Autoselections Ltd</title></head><body>
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f7941d"><meta name="color-scheme" content="light"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="style.css"><title>Admin | Regional Autoselections Ltd</title></head><body>
+
 <div id="loader"><div class="loader-mark"><span></span><span></span><span></span></div><p>REGIONAL AUTOSELECTIONS LTD</p></div>
-<header class="header"><div class="nav wrap"><a class="brand" href="index.html"><img src="assets/logo.jpg"><span>REGIONAL<br><small>AUTOSELECTIONS LTD</small></span></a><div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div><button class="menu" id="menu"><i class="fa-solid fa-bars"></i></button></div></header>
+
+<header class="header">
+<div class="nav wrap">
+<a class="brand" href="index.html"><span>REGIONAL<b>AUTOSELECTIONS</b><em>LTD</em></span></a>
+<div class="admin-label"><i class="fa-solid fa-gauge-high"></i> ADMIN</div>
+<button class="menu" id="menu" type="button" aria-label="Open menu" aria-controls="adminNav" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+</div>
+</header>
+
 <div class="admin-layout">
 <div id="adminNav"></div>
+
 <main class="main">
-<section class="page-heading"><div><span class="eyebrow"><b></b> ADMIN DASHBOARD</span><h1>Vehicle <strong>Listings</strong></h1><p>Manage inventory, deals and customer requests.</p></div><a href="add.html" class="primary-btn add-vehicle"><i class="fa-solid fa-plus"></i> Add Vehicle</a></section>
+
+<section class="page-heading">
+<div><span class="eyebrow"><b></b> ADMIN DASHBOARD</span><h1>Vehicle <strong>Listings</strong></h1><p>Manage inventory, deals and customer requests.</p></div>
+<a href="add.html" class="primary-btn add-vehicle"><i class="fa-solid fa-plus"></i> Add Vehicle</a>
+</section>
+
 <section class="stats">
 <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-car-side"></i></div><div><span>Total Listings</span><strong id="totalCars">0</strong></div></div>
 <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div><div><span>Available</span><strong id="availableCars">0</strong></div></div>
@@ -12,11 +27,20 @@
 <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-tag"></i></div><div><span>Sold</span><strong id="soldCars">0</strong></div></div>
 <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-star"></i></div><div><span>Featured</span><strong id="featuredCars">0</strong></div></div>
 </section>
+
 <section class="listing-panel">
-<div class="panel-head"><div><span class="eyebrow dark"><b></b> INVENTORY</span><h2>All Vehicles</h2></div><div class="panel-actions"><button id="filterToggle" class="outline-btn"><i class="fa-solid fa-sliders"></i> Filters <span id="filterCount"></span></button><button id="refreshListings" class="outline-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></div></div>
+
+<div class="panel-head">
+<div><span class="eyebrow dark"><b></b> INVENTORY</span><h2>All Vehicles <span id="resultCount" class="count-pill">0</span></h2></div>
+<div class="panel-actions">
+<button id="filterToggle" class="outline-btn" type="button" aria-controls="adminFilters" aria-expanded="false"><i class="fa-solid fa-sliders"></i> Filters <span id="filterCount"></span></button>
+<button id="refreshListings" class="outline-btn" type="button"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+</div>
+</div>
+
 <div class="toolbar">
-<div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search vehicles..."></div>
-<select id="sortFilter"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-high">Price: High → Low</option><option value="price-low">Price: Low → High</option><option value="year-new">Year: Newest</option><option value="mileage-low">Mileage: Low → High</option></select>
+<div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Search make, model, colour, location..." autocomplete="off" aria-label="Search vehicles"></div>
+<select id="sortFilter" aria-label="Sort vehicles"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="price-high">Price: High → Low</option><option value="price-low">Price: Low → High</option><option value="year-new">Year: Newest</option><option value="mileage-low">Mileage: Low → High</option></select>
 </div>
 
 <div id="adminFilters" class="admin-filters">
@@ -37,22 +61,27 @@
 
 <div class="filter-group">
 <label>Colour</label>
-<select id="colorFilter"><option value="">Any Colour</option></select>
+<select id="colorFilter" aria-label="Filter by colour"><option value="">Any Colour</option></select>
 </div>
 </div>
 
 <div class="range-grid">
-<div class="range-group"><label>Price</label><div><span id="priceMinText">Any</span><span id="priceMaxText">Any</span></div><input id="priceMin" type="range"><input id="priceMax" type="range"></div>
-<div class="range-group"><label>Year</label><div><span id="yearMinText">Any</span><span id="yearMaxText">Any</span></div><input id="yearMin" type="range"><input id="yearMax" type="range"></div>
-<div class="range-group"><label>Mileage</label><div><span id="mileageMinText">Any</span><span id="mileageMaxText">Any</span></div><input id="mileageMin" type="range"><input id="mileageMax" type="range"></div>
-<div class="range-group"><label>Engine Size</label><div><span id="engineMinText">Any</span><span id="engineMaxText">Any</span></div><input id="engineMin" type="range"><input id="engineMax" type="range"></div>
+<div class="range-group"><label>Price</label><div><span id="priceMinText">Any</span><span id="priceMaxText">Any</span></div><input id="priceMin" type="range" aria-label="Minimum price"><input id="priceMax" type="range" aria-label="Maximum price"></div>
+<div class="range-group"><label>Year</label><div><span id="yearMinText">Any</span><span id="yearMaxText">Any</span></div><input id="yearMin" type="range" aria-label="Earliest year"><input id="yearMax" type="range" aria-label="Latest year"></div>
+<div class="range-group"><label>Mileage</label><div><span id="mileageMinText">Any</span><span id="mileageMaxText">Any</span></div><input id="mileageMin" type="range" aria-label="Minimum mileage"><input id="mileageMax" type="range" aria-label="Maximum mileage"></div>
+<div class="range-group"><label>Engine Size</label><div><span id="engineMinText">Any</span><span id="engineMaxText">Any</span></div><input id="engineMin" type="range" aria-label="Minimum engine size"><input id="engineMax" type="range" aria-label="Maximum engine size"></div>
 </div>
 </div>
+
 <div id="loading" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading vehicles...</div>
 <div id="error" class="error"></div>
 <div id="propertiesGrid" class="cars-grid"></div>
-<div id="empty" class="empty"><div><i class="fa-solid fa-car"></i></div><h3>No vehicles found</h3><p>There are no vehicles matching your search.</p><a href="add.html" class="primary-btn add-vehicle"><i class="fa-solid fa-plus"></i> Add Vehicle</a></div>
+<div id="empty" class="empty"><div><i class="fa-solid fa-car"></i></div><h3>No vehicles found</h3><p>Nothing matches this search. Clear the filters or add a vehicle.</p><a href="add.html" class="primary-btn add-vehicle"><i class="fa-solid fa-plus"></i> Add Vehicle</a></div>
+
 </section>
 </main>
 </div>
-<script type="module">import{loadAdminNav}from"./admin-nav.js";loadAdminNav()</script><script type="module" src="script.js"></script></body></html>
+
+<script type="module">import{loadAdminNav}from"./admin-nav.js";loadAdminNav()</script>
+<script type="module" src="script.js"></script>
+</body></html>
