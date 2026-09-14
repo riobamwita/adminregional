@@ -61,22 +61,7 @@ function render(){
   }
 
   grid.innerHTML=list.map(x=>`
-    <article class="diaspora-card" data-id="${esc(x.id)}">
-      <div class="diaspora-card-top">
-        <span class="diaspora-status ${esc(x.status||"new")}">${esc(x.status||"new")}</span>
-        <small>${date(x.created_at)}</small>
-      </div>
-      <h3>${esc(x.full_name)}</h3>
-      <p><i class="fa-solid fa-earth-africa"></i>${esc(x.country||"Country not provided")}</p>
-      <p><i class="fa-solid fa-phone"></i>${esc(x.phone||"No phone")}</p>
-      <p><i class="fa-solid fa-calendar"></i>Return: ${returnDate(x.expected_return_date)}</p>
-      <div class="diaspora-card-meta">
-      </div>
-      <div class="diaspora-card-bottom">
-        <span>${x.passport_url?'<i class="fa-solid fa-file-shield"></i> Passport uploaded':'No passport'}</span>
-        <button type="button">View Request <i class="fa-solid fa-arrow-right"></i></button>
-      </div>
-    </article>
+    <article class="request-card" data-id="${esc(x.id)}"><div class="request-top"><span class="request-status ${esc(x.status||"new")}">${esc(x.status||"new")}</span><small>${date(x.created_at)}</small></div><h3>${esc(x.full_name)}</h3><p><i class="fa-solid fa-phone"></i> ${esc(x.phone||"No phone")}</p><p><i class="fa-solid fa-earth-africa"></i> ${esc(x.country||"Country not provided")}</p><div class="request-meta"><span>Expected return</span><strong>${returnDate(x.expected_return_date)}</strong></div><div class="request-bottom"><span>${x.passport_url?"Passport uploaded":"No passport"}</span><button type="button">View <i class="fa-solid fa-arrow-right"></i></button></div></article>
   `).join("");
 }
 
@@ -191,7 +176,7 @@ function close(){
 }
 
 grid.addEventListener("click",e=>{
-  const card=e.target.closest(".diaspora-card");
+  const card=e.target.closest(".request-card");
   if(card)viewRequest(card.dataset.id);
 });
 

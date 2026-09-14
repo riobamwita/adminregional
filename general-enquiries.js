@@ -162,24 +162,7 @@ function render() {
     const waiting = awaitingReply(x);
     const count   = x.response_count || 0;
     return `
-<article class="request-card" onclick="openRequest('${x.id}')">
-  <div class="request-top">
-    <span class="request-status ${esc(x.status || "new")}">${esc(x.status || "new")}</span>
-    <small>${ago(x.created_at)}</small>
-  </div>
-  <h3>${esc(x.full_name || "Unnamed customer")}</h3>
-  <span class="cat">${esc(x.category || "General Enquiry")}</span>
-  <p><i class="fa-solid fa-phone"></i> ${esc(x.phone || "—")}</p>
-  <p><i class="fa-solid fa-comment-dots"></i> Prefers ${esc(x.preferred_contact || "whatsapp")}</p>
-  <div class="request-snippet">${esc(x.message || "No message")}</div>
-  <div class="request-bottom">
-    <span class="reply-flag ${waiting ? "waiting" : "answered"}">
-      <i class="fa-solid ${waiting ? "fa-circle-exclamation" : "fa-circle-check"}"></i>
-      ${waiting ? "Awaiting reply" : `${count} repl${count === 1 ? "y" : "ies"}`}
-    </span>
-    <button type="button">Open <i class="fa-solid fa-arrow-right"></i></button>
-  </div>
-</article>`;
+<article class="request-card" data-id="${x.id}" onclick="openRequest('${x.id}')"><div class="request-top"><span class="request-status ${esc(x.status || "new")}">${esc(x.status || "new")}</span><small>${ago(x.created_at)}</small></div><h3>${esc(x.full_name || "Unnamed customer")}</h3><p><i class="fa-solid fa-phone"></i> ${esc(x.phone || "—")}</p><p><i class="fa-solid fa-comment-dots"></i> Prefers ${esc(x.preferred_contact || "whatsapp")}</p><div class="request-meta"><span>${esc(x.category || "General Enquiry")}</span><strong>${count} repl${count === 1 ? "y" : "ies"}</strong></div><div class="request-bottom"><span class="reply-flag ${waiting ? "waiting" : "answered"}"><i class="fa-solid ${waiting ? "fa-circle-exclamation" : "fa-circle-check"}"></i> ${waiting ? "Awaiting reply" : "Answered"}</span><button type="button">View <i class="fa-solid fa-arrow-right"></i></button></div></article>`;
   }).join("");
 }
 

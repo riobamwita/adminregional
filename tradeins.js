@@ -110,16 +110,7 @@ function render() {
   $("empty").style.display = "none";
   grid.innerHTML = l.map(x => {
     let st = x.approved_car_id ? "approved" : (x.status || "new");
-    return `<article class="request-card" data-id="${esc(x.id)}">
-      <div class="request-top"><small>${esc(date(x.created_at))}</small>
-      <span class="request-status ${esc(st)}">${esc(x.approved_car_id ? "in inventory" : st)}</span></div>
-      <h3>${esc(x.full_name || "Customer")}</h3>
-      <p><i class="fa-solid fa-phone"></i> ${esc(x.phone || "—")}</p>
-      <p><i class="fa-solid fa-envelope"></i> ${esc(x.email || "—")}</p>
-      <div class="request-meta"><span>${esc(`${x.vehicle_make || ""} ${x.vehicle_model || ""}`.trim() || "Vehicle not specified")}</span><strong>KES ${money(x.expected_value)}</strong></div>
-      <div class="request-bottom"><span>${esc(x.registration || "No registration")}</span>
-      <button type="button">View Request <i class="fa-solid fa-arrow-right"></i></button></div>
-    </article>`;
+    return `<article class="request-card" data-id="${esc(x.id)}"><div class="request-top"><span class="request-status ${esc(st)}">${esc(x.approved_car_id ? "in inventory" : st)}</span><small>${esc(date(x.created_at))}</small></div><h3>${esc(x.full_name || "Customer")}</h3><p><i class="fa-solid fa-phone"></i> ${esc(x.phone || "—")}</p><p><i class="fa-solid fa-envelope"></i> ${esc(x.email || "—")}</p><div class="request-meta"><span>${esc(`${x.vehicle_make || ""} ${x.vehicle_model || ""}`.trim() || "Vehicle not specified")}</span><strong>KES ${money(x.expected_value)}</strong></div><div class="request-bottom"><span>${esc(x.registration || "No registration")}</span><button type="button">View <i class="fa-solid fa-arrow-right"></i></button></div></article>`;
   }).join("");
 }
 

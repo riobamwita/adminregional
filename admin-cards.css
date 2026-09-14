@@ -1,0 +1,394 @@
+/* =========================================================
+   ADMIN CARDS + DETAIL MODAL — SHARED ACROSS ALL LIST PAGES
+
+   Load this AFTER style.css and AFTER the page stylesheet:
+
+     <link rel="stylesheet" href="style.css">
+     <link rel="stylesheet" href="insurance.css">
+     <link rel="stylesheet" href="admin-cards.css">
+
+   It gives every admin list page:
+     - the same grid and the same fixed card size (compact, 8 slots)
+     - the same detail-modal geometry (shell, header, 2-col body, footer)
+
+   Page stylesheets keep owning their own colours, status tints and
+   inner panel content. Only dimensions and layout are unified here.
+   ========================================================= */
+
+/* =========================================================
+   1. CARD GRID — identical on every page
+   ========================================================= */
+.requests-grid,
+.diaspora-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(248px,1fr));
+  gap:10px;
+  align-items:start;
+}
+
+/* =========================================================
+   2. CARD — fixed height, fixed slot count, compact
+   Slots: status+date / title / line 1 / line 2 / meta / footer
+   ========================================================= */
+.request-card,
+.diaspora-card{
+  height:198px;
+  display:flex;flex-direction:column;gap:5px;
+  padding:11px 12px;margin:0;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  box-shadow:var(--sh-xs);
+  overflow:hidden;cursor:pointer;
+  transition:border-color .16s ease,box-shadow .16s ease,transform .16s var(--ease);
+}
+.request-card:hover,
+.diaspora-card:hover{
+  border-color:var(--gold-line);
+  box-shadow:var(--sh-sm);
+  transform:translateY(-2px);
+}
+
+/* --- slot 1: status + date --- */
+.request-top,
+.diaspora-card-top{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  min-height:20px;flex-shrink:0;margin:0;padding:0;border:0;
+}
+.request-badges{display:flex;align-items:center;gap:5px;min-width:0}
+.request-top small,
+.diaspora-card-top small{
+  flex-shrink:0;font-size:9.5px;color:var(--faint);white-space:nowrap;
+}
+.request-status,
+.diaspora-status{
+  display:inline-flex;align-items:center;
+  height:19px;padding:0 8px;border-radius:var(--pill);
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  white-space:nowrap;max-width:118px;overflow:hidden;text-overflow:ellipsis;
+}
+.agent-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  height:19px;padding:0 7px;border-radius:var(--pill);
+  background:var(--blue-soft);color:#1d4ed8;
+  font-size:8.5px;font-weight:700;letter-spacing:.05em;white-space:nowrap;
+}
+
+/* --- slot 2: title --- */
+.request-card h3,
+.diaspora-card h3{
+  margin:1px 0 0;
+  font-size:13px;line-height:1.25;font-weight:700;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  flex-shrink:0;
+}
+
+/* --- slots 3 & 4: exactly two info lines --- */
+.request-card>p,
+.diaspora-card>p{
+  display:flex;align-items:center;gap:7px;
+  margin:0;min-height:16px;flex-shrink:0;
+  font-size:11px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.request-card>p i,
+.diaspora-card>p i{
+  width:12px;flex-shrink:0;text-align:center;color:var(--gold);font-size:10px;
+}
+/* anything beyond the two canonical lines is hidden so every card matches */
+.request-card>p:nth-of-type(n+3),
+.diaspora-card>p:nth-of-type(n+3),
+.request-card .inventory-mini,
+.request-card .request-snippet,
+.request-card>.cat{display:none}
+
+/* --- slot 5: meta strip --- */
+.request-meta,
+.diaspora-card-meta{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin:1px 0 0;padding:7px 9px;min-height:32px;flex-shrink:0;
+  background:var(--tint);border:1px solid var(--line-2);border-radius:var(--r-sm);
+}
+.request-meta span,
+.request-meta>div span{
+  min-width:0;font-size:10px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.request-meta strong,
+.request-meta>div strong{
+  flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;
+}
+.request-meta>div{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0}
+
+/* --- slot 6: footer, always pinned to the bottom --- */
+.request-bottom,
+.diaspora-card-bottom{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-top:auto;padding-top:8px;flex-shrink:0;
+  border-top:1px solid var(--line-2);
+}
+.request-bottom>span,
+.diaspora-card-bottom>span{
+  min-width:0;font-size:10px;color:var(--faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.request-bottom button,
+.diaspora-card-bottom button{
+  flex-shrink:0;display:inline-flex;align-items:center;gap:5px;
+  height:27px;padding:0 11px;
+  border:1px solid var(--line);border-radius:var(--pill);
+  background:var(--card);color:var(--ink);
+  font-size:10px;font-weight:700;white-space:nowrap;
+  transition:border-color .16s ease,background .16s ease,color .16s ease;
+}
+.request-bottom button:hover,
+.diaspora-card-bottom button:hover{
+  border-color:var(--gold);background:var(--gold-soft);color:var(--ink);
+}
+.reply-flag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700}
+.reply-flag.waiting{color:var(--amber)}
+.reply-flag.answered{color:var(--green)}
+
+/* =========================================================
+   3. DETAIL MODAL — one geometry for every page
+   ========================================================= */
+.request-modal,
+.trade-detail,
+.sell-detail,
+.diaspora-admin-modal{
+  position:fixed;inset:0;z-index:200;
+  display:none;padding:16px;
+}
+.request-modal.show,.request-modal.open,
+.trade-detail.show,.trade-detail.open,
+.sell-detail.show,.sell-detail.open,
+.diaspora-admin-modal.show,.diaspora-admin-modal.open{
+  display:grid;place-items:center;
+}
+
+.request-bg,.request-modal-bg,.detail-bg,.diaspora-admin-bg{
+  position:absolute;inset:0;
+  background:#081f32bf;
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+}
+
+/* --- shell --- */
+.request-modal .request-box,
+.request-modal .request-detail-shell,
+.trade-detail .trade-detail-shell,
+.sell-detail .sell-detail-shell,
+.diaspora-admin-modal .diaspora-admin-box{
+  position:relative;z-index:1;
+  width:min(1080px,100%);height:min(88dvh,860px);
+  display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-lg);
+  animation:adminModalIn .18s var(--ease);
+}
+@keyframes adminModalIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* --- header --- */
+.request-modal .request-head,
+.request-modal .request-detail-header,
+.trade-detail .trade-detail-header,
+.sell-detail .sell-detail-header,
+.diaspora-admin-modal .diaspora-admin-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  flex-shrink:0;margin:0;
+  padding:13px 16px;
+  background:var(--tint);
+  border-bottom:1px solid var(--line);
+}
+.request-head h2,.request-detail-heading h2,
+.trade-detail-heading h2,.sell-detail-header h2,
+.diaspora-admin-head h2{
+  margin:4px 0 2px;font-size:17px;line-height:1.2;
+}
+.request-head>div>span,.request-detail-heading .eyebrow,
+.trade-detail-heading .eyebrow,.sell-detail-header .eyebrow,
+.diaspora-admin-head>div>span{
+  font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--green);
+}
+.request-head p,.request-detail-heading p,
+.trade-detail-heading p,.sell-detail-header p,
+.diaspora-admin-head p{
+  margin:0;font-size:11px;color:var(--muted);
+}
+.modal-head-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.request-head>button,
+.diaspora-admin-head>button,
+.modal-close,.header-action,.modal-download{
+  flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:32px;border-radius:var(--pill);
+  border:1px solid var(--line);background:var(--card);
+  color:var(--muted);font-size:11px;font-weight:700;
+  transition:border-color .16s ease,color .16s ease;
+}
+.request-head>button,.diaspora-admin-head>button,.modal-close{width:32px;padding:0;font-size:13px}
+.header-action,.modal-download{padding:0 12px}
+.request-head>button:hover,.diaspora-admin-head>button:hover,.modal-close:hover{border-color:var(--red);color:var(--red)}
+.header-action:hover,.modal-download:hover{border-color:var(--gold);color:var(--ink)}
+
+/* --- body: two columns where a second panel exists --- */
+.request-modal .request-layout,
+.request-modal .request-detail-layout,
+.trade-detail .trade-detail-layout,
+.sell-detail .sell-detail-layout,
+.diaspora-admin-modal .diaspora-request-layout{
+  flex:1;min-height:0;
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+  gap:0;overflow:hidden;
+}
+
+/* left / main panel */
+.request-layout>.customer-panel,
+.request-detail-layout>.enquiry-main,
+.trade-detail-layout>.trade-person-panel,
+.sell-detail-layout>.sell-person-panel,
+.diaspora-request-layout>.diaspora-customer-panel{
+  min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:10px;
+  padding:14px;margin:0;
+  background:var(--card);
+}
+
+/* right / summary panel */
+.request-layout>.vehicle-panel,
+.request-detail-layout>.vehicle-source-sidebar,
+.trade-detail-layout>.trade-vehicle-panel,
+.sell-detail-layout>.sell-vehicle-panel,
+.diaspora-request-layout>.diaspora-vehicle-panel{
+  min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:10px;
+  padding:14px;margin:0;
+  background:var(--tint);
+  border-left:1px solid var(--line);
+}
+
+/* single-column bodies (test drives, general enquiries) use the same metrics */
+.request-modal .request-box>#modalBody{
+  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:10px;
+  padding:14px;
+}
+
+/* panel scrollbars */
+.request-layout>section::-webkit-scrollbar,
+.request-detail-layout>*::-webkit-scrollbar,
+.trade-detail-layout>*::-webkit-scrollbar,
+.sell-detail-layout>*::-webkit-scrollbar,
+.diaspora-request-layout>section::-webkit-scrollbar,
+#modalBody::-webkit-scrollbar{width:7px}
+.request-layout>section::-webkit-scrollbar-thumb,
+.request-detail-layout>*::-webkit-scrollbar-thumb,
+.trade-detail-layout>*::-webkit-scrollbar-thumb,
+.sell-detail-layout>*::-webkit-scrollbar-thumb,
+.diaspora-request-layout>section::-webkit-scrollbar-thumb,
+#modalBody::-webkit-scrollbar-thumb{background:var(--line-3);border-radius:var(--pill)}
+
+/* --- footer action bar --- */
+.request-modal .modal-actions,
+.diaspora-admin-modal .admin-modal-actions{
+  flex-shrink:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:11px 16px;margin:0;
+  background:var(--tint);
+  border-top:1px solid var(--line);
+}
+.request-modal .modal-actions select,
+.diaspora-admin-modal .admin-modal-actions select{flex:1;min-width:150px}
+
+/* detail field grids inside the panels — same density everywhere */
+.detail-grid,.detail-grid-large{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;
+}
+.detail-field,.detail-grid>div{
+  min-width:0;padding:8px 10px;
+  background:var(--card);border:1px solid var(--line-2);border-radius:var(--r-sm);
+}
+.detail-field span,.detail-grid>div span{
+  display:block;font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--muted);
+  text-transform:uppercase;
+}
+.detail-field strong,.detail-grid>div strong{
+  display:block;margin-top:3px;font-size:11.5px;color:var(--ink);word-break:break-word;
+}
+
+/* =========================================================
+   4. RESPONSIVE — same breakpoints as style.css
+   ========================================================= */
+@media (max-width:900px){
+  .requests-grid,.diaspora-grid{grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:9px}
+
+  .request-modal,.trade-detail,.sell-detail,.diaspora-admin-modal{padding:0}
+
+  .request-modal .request-box,
+  .request-modal .request-detail-shell,
+  .trade-detail .trade-detail-shell,
+  .sell-detail .sell-detail-shell,
+  .diaspora-admin-modal .diaspora-admin-box{
+    width:100%;height:100dvh;max-height:100dvh;border:0;border-radius:0;
+  }
+
+  .request-modal .request-layout,
+  .request-modal .request-detail-layout,
+  .trade-detail .trade-detail-layout,
+  .sell-detail .sell-detail-layout,
+  .diaspora-admin-modal .diaspora-request-layout{
+    grid-template-columns:1fr;grid-template-rows:auto;
+    overflow-y:auto;overscroll-behavior:contain;
+  }
+
+  .request-layout>.customer-panel,
+  .request-detail-layout>.enquiry-main,
+  .trade-detail-layout>.trade-person-panel,
+  .sell-detail-layout>.sell-person-panel,
+  .diaspora-request-layout>.diaspora-customer-panel,
+  .request-layout>.vehicle-panel,
+  .request-detail-layout>.vehicle-source-sidebar,
+  .trade-detail-layout>.trade-vehicle-panel,
+  .sell-detail-layout>.sell-vehicle-panel,
+  .diaspora-request-layout>.diaspora-vehicle-panel{
+    overflow:visible;padding:12px;
+  }
+
+  .request-layout>.vehicle-panel,
+  .request-detail-layout>.vehicle-source-sidebar,
+  .trade-detail-layout>.trade-vehicle-panel,
+  .sell-detail-layout>.sell-vehicle-panel,
+  .diaspora-request-layout>.diaspora-vehicle-panel{
+    border-left:0;border-top:1px solid var(--line);
+  }
+
+  /* sticky sidebars inside the summary panel must not stick when stacked */
+  .source-sticky{position:static}
+}
+
+@media (max-width:600px){
+  .requests-grid,.diaspora-grid{grid-template-columns:repeat(auto-fill,minmax(100%,1fr));gap:8px}
+  .request-card,.diaspora-card{height:190px;padding:10px 11px}
+  .request-card h3,.diaspora-card h3{font-size:12.5px}
+  .request-modal .request-head,
+  .request-modal .request-detail-header,
+  .trade-detail .trade-detail-header,
+  .sell-detail .sell-detail-header,
+  .diaspora-admin-modal .diaspora-admin-head{padding:11px 12px}
+  .request-head h2,.request-detail-heading h2,
+  .trade-detail-heading h2,.sell-detail-header h2,
+  .diaspora-admin-head h2{font-size:15.5px}
+  .request-modal .modal-actions,
+  .diaspora-admin-modal .admin-modal-actions{padding:10px 12px}
+  .request-modal .modal-actions>*,
+  .diaspora-admin-modal .admin-modal-actions>*{flex:1;min-width:0}
+  .detail-grid,.detail-grid-large{grid-template-columns:1fr}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .request-card,.diaspora-card{transition:none}
+  .request-card:hover,.diaspora-card:hover{transform:none}
+  .request-modal .request-box,
+  .request-modal .request-detail-shell,
+  .trade-detail .trade-detail-shell,
+  .sell-detail .sell-detail-shell,
+  .diaspora-admin-modal .diaspora-admin-box{animation:none}
+}

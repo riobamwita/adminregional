@@ -174,7 +174,7 @@ function render(){
  list.sort((a,b)=>o==="oldest"?new Date(a.created_at)-new Date(b.created_at):new Date(b.created_at)-new Date(a.created_at));
  if(!list.length){$("empty").style.display="block";grid.innerHTML="";return}
  $("empty").style.display="none";
- grid.innerHTML=list.map(x=>{const s=x.status||"new";return`<article class="request-card" data-id="${esc(x.id)}"><div class="request-top"><small>${esc(date(x.created_at))}</small><span class="request-status ${esc(s)}">${esc(s)}</span></div><h3>${esc(x.full_name||"Customer")}</h3><p><i class="fa-solid fa-phone"></i>${esc(x.phone||"—")}</p><p><i class="fa-solid fa-envelope"></i>${esc(x.email||"—")}</p><div class="request-meta"><span>${esc(vehicleName(x))}</span><strong>KES ${money(x.vehicle_budget)}</strong></div><div class="request-bottom"><span>${esc(x.financing_type||"Financing")}</span><button type="button">View Request <i class="fa-solid fa-arrow-right"></i></button></div></article>`}).join("")
+ grid.innerHTML=list.map(x=>{const s=x.status||"new";return`<article class="request-card" data-id="${esc(x.id)}"><div class="request-top"><span class="request-status ${esc(s)}">${esc(s)}</span><small>${esc(date(x.created_at))}</small></div><h3>${esc(x.full_name||"Customer")}</h3><p><i class="fa-solid fa-phone"></i> ${esc(x.phone||"—")}</p><p><i class="fa-solid fa-envelope"></i> ${esc(x.email||"—")}</p><div class="request-meta"><span>${esc(vehicleName(x))}</span><strong>KES ${money(x.vehicle_budget)}</strong></div><div class="request-bottom"><span>${esc(x.financing_type||"Financing")}</span><button type="button">View <i class="fa-solid fa-arrow-right"></i></button></div></article>`}).join("")
 }
 
 grid.onclick=e=>{const c=e.target.closest(".request-card");if(c)openRequest(c.dataset.id)};

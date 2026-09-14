@@ -154,23 +154,7 @@ function render() {
     const label = x._car ? "in inventory" : st;
     const name = `${x.make || "Vehicle"} ${x.model || ""} ${x.year || ""}`.trim();
     return `
-      <article class="request-card" data-id="${esc(x.id)}">
-        <div class="request-top">
-          <small>${esc(date(x.created_at))}</small>
-          <span class="request-status ${esc(st)}">${esc(label)}</span>
-        </div>
-        <h3>${esc(name)}</h3>
-        <p><i class="fa-solid fa-user-tie"></i> ${esc(x.agent_name || x.agent_email || "Agent")}</p>
-        <p><i class="fa-solid fa-id-card"></i> ${esc(x.registration_number || "No registration")}</p>
-        <div class="request-meta">
-          <span>${Number(x.mileage || 0).toLocaleString()} KM</span>
-          <strong>KES ${money(x.asking_price)}</strong>
-        </div>
-        <div class="request-bottom">
-          <span>${esc(x.town_area || "Location not set")}</span>
-          <button type="button">View <i class="fa-solid fa-arrow-right"></i></button>
-        </div>
-      </article>
+      <article class="request-card" data-id="${esc(x.id)}"><div class="request-top"><span class="request-status ${esc(st)}">${esc(label)}</span><small>${esc(date(x.created_at))}</small></div><h3>${esc(name)}</h3><p><i class="fa-solid fa-user-tie"></i> ${esc(x.agent_name||x.agent_email||"Agent")}</p><p><i class="fa-solid fa-id-card"></i> ${esc(x.registration_number||"No registration")}</p><div class="request-meta"><span>${Number(x.mileage||0).toLocaleString()} KM</span><strong>KES ${money(x.asking_price)}</strong></div><div class="request-bottom"><span>${esc(x.town_area||"Location not set")}</span><button type="button">View <i class="fa-solid fa-arrow-right"></i></button></div></article>
     `;
   }).join("");
 }

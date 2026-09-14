@@ -168,29 +168,7 @@ function render() {
     const st = state(x);
     const agent = isAgent(x);
     const approved = !!x.approved_car_id;
-    return `<article class="request-card ${agent ? "agent-request" : ""} ${approved ? "approved-request" : ""}" data-id="${esc(x.id)}">
-      <div class="request-top">
-        <div class="request-badges">
-          <span class="request-status ${esc(st)}">${approved ? "in inventory" : esc(st)}</span>
-          ${agent ? `<span class="agent-tag"><i class="fa-solid fa-user-tie"></i> AGENT</span>` : ""}
-        </div>
-        <small>${date(x.created_at)}</small>
-      </div>
-      <h3>${esc(x.make || "Vehicle")} ${esc(x.model || "")} ${esc(x.year || "")}</h3>
-      <p><i class="fa-solid fa-user"></i> ${esc(x.full_name || "—")}</p>
-      <p><i class="fa-solid fa-phone"></i> ${esc(x.phone || "—")}</p>
-      <p><i class="fa-solid fa-location-dot"></i> ${esc(x.location || "—")}</p>
-      <div class="request-meta">
-        <span>${esc(x.registration || "No registration")} · ${Number(x.mileage || 0).toLocaleString()} KM</span>
-        <strong>KES ${money(x.asking_price)}</strong>
-      </div>
-      ${x.condition ? `<div class="inventory-mini"><i class="fa-solid fa-car"></i> Condition: ${esc(x.condition)}</div>` : ""}
-      ${approved ? `<div class="inventory-mini"><i class="fa-solid fa-circle-check"></i> Added to Inventory</div>` : ""}
-      <div class="request-bottom">
-        <span>${esc(x.condition || "Condition —")}</span>
-        <button type="button">View Request <i class="fa-solid fa-arrow-right"></i></button>
-      </div>
-    </article>`;
+    return `<article class="request-card ${agent ? "agent-request" : ""} ${approved ? "approved-request" : ""}" data-id="${esc(x.id)}"><div class="request-top"><div class="request-badges"><span class="request-status ${esc(st)}">${approved ? "in inventory" : esc(st)}</span>${agent ? `<span class="agent-tag"><i class="fa-solid fa-user-tie"></i> AGENT</span>` : ""}</div><small>${date(x.created_at)}</small></div><h3>${esc(x.make || "Vehicle")} ${esc(x.model || "")} ${esc(x.year || "")}</h3><p><i class="fa-solid fa-user"></i> ${esc(x.full_name || "—")}</p><p><i class="fa-solid fa-phone"></i> ${esc(x.phone || "—")}</p><div class="request-meta"><span>${esc(x.registration || "No registration")} · ${Number(x.mileage || 0).toLocaleString()} KM</span><strong>KES ${money(x.asking_price)}</strong></div><div class="request-bottom"><span>${esc(x.condition || "Condition —")}</span><button type="button">View <i class="fa-solid fa-arrow-right"></i></button></div></article>`;
   }).join("");
 }
 
