@@ -55,6 +55,25 @@ const dash = v => (v === null || v === undefined || v === "" ? "—" : v);
 const money = v => Number(v || 0).toLocaleString("en-KE");
 const date = v => v ? new Date(v).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" }) : "—";
 
+/* Stable "RALxxxxxx" reference for submissions that don't have a real
+   listing_reference yet — deterministic per submission id, so it never
+   changes on re-render and never falls back to showing the raw UUID
+   (which is also shown separately as the Submission ID). */
+function hashDigits(str, len = 6) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+  return String(h % 10 ** len).padStart(len, "0");
+}
+const formatListingRef = sub =>
+  sub?.listing_reference || `RAL${hashDigits(String(sub?.id || sub?.created_at || ""))}`;
+
+/* Submission ID display uses the same RAL format but a different hash
+   seed than formatListingRef, so the two labels never show an
+   identical value even when listing_reference is unset. The real
+   UUID (sub.id) is still used everywhere internally — queries, links,
+   data-id attributes — this is display-only. */
+const formatSubmissionRef = sub => `RAL${hashDigits(`SUB-${sub?.id || ""}`)}`;
+
 let submissions = [];
 let current = null;
 let currentAdmin = null;
@@ -567,7 +586,7 @@ function renderSummary() {
   if (!current) return;
   const carCount = currentFiles.length;
   $("summaryDetails").innerHTML = [
-    field("Listing Reference", current.listing_reference || current.id),
+    field("Listing Reference", formatListingRef(current)),
     field("Submission Status", current._car ? "In Inventory" : current.status || "pending"),
     field("Asking Price", `KES ${money(current.asking_price)}`),
     field("Mileage", current.mileage != null ? `${Number(current.mileage).toLocaleString()} KM` : "—"),
@@ -990,7 +1009,7 @@ function buildPrintableHTML() {
   </div>
   <div style="text-align:right">
     <div class="badge">${esc(c._car ? "In Inventory" : c.status || "pending")}</div>
-    <div style="font-size:9px;color:#657b8c;margin-top:4px">Ref: ${esc(c.listing_reference || c.id)}</div>
+    <div style="font-size:9px;color:#657b8c;margin-top:4px">Ref: ${esc(formatListingRef(c))}</div>
     <div style="font-size:9px;color:#657b8c">${esc(date(c.created_at))}</div>
   </div>
 </header>
@@ -999,8 +1018,8 @@ function buildPrintableHTML() {
 <table>
   ${row("Agent Name", c.agent_name)}
   ${row("Agent Email", c.agent_email)}
-  ${row("Listing Reference", c.listing_reference || c.id)}
-  ${row("Submission ID", c.id)}
+  ${row("Listing Reference", formatListingRef(c))}
+  ${row("Submission ID", formatSubmissionRef(c))}
   ${row("GPS Captured", c.gps_captured_at ? date(c.gps_captured_at) : "Not captured")}
 </table>
 
@@ -1301,8 +1320,8 @@ async function viewRequest(id) {
     $("agentDetails").innerHTML = [
       field("Agent Name", current.agent_name),
       field("Agent Email", current.agent_email),
-      field("Listing Reference", current.listing_reference || current.id),
-      field("Submission ID", current.id),
+      field("Listing Reference", formatListingRef(current)),
+      field("Submission ID", formatSubmissionRef(current)),
       field("Submitted", date(current.created_at)),
       field("Last Updated", date(current.updated_at || current.created_at)),
       field("GPS Captured", current.gps_captured_at ? date(current.gps_captured_at) : "Not captured"),
