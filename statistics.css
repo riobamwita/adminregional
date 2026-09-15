@@ -6,7 +6,8 @@
    .listing-panel, .panel-head, .toolbar, .search, selects,
    .table-wrap/table, .field inputs, .loading, .error, .empty)
    is inherited from style.css — exactly like every other admin
-   page. Nothing below redefines any of it.
+   page. Section 4 is the one deliberate exception: it reshapes
+   .stats on this page only, so every figure reads on one line.
    ========================================================= */
 
 /* ---------- 1. UTILITIES ---------- */
@@ -34,9 +35,46 @@ body.locked{overflow:hidden}
 }
 .success.active{display:block}
 
-/* ---------- 4. STAT CARD VARIANTS ---------- */
+/* ---------- 4. STAT CARDS ----------
+   A wrapping grid forces every card into the same narrow column, which
+   is what splits "KES 62,330,000" across two lines. Here the row is one
+   horizontal strip instead: each card takes exactly the width its own
+   figure needs, cards share whatever space is left over, and when they
+   no longer fit the row scrolls sideways rather than folding the
+   amount. Scoped to this page — the grid on every other admin page is
+   untouched. */
+.stats{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:10px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x proximity;
+  padding-bottom:6px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--line-3,#0f2a4530) transparent;
+}
+.stats::-webkit-scrollbar{height:6px}
+.stats::-webkit-scrollbar-track{background:transparent}
+.stats::-webkit-scrollbar-thumb{background:var(--line-3,#0f2a4530);border-radius:var(--pill)}
+
+.stat-card{
+  /* grow into spare width, never shrink below the content */
+  flex:1 0 auto;
+  min-width:max-content;
+  scroll-snap-align:start;
+}
+
+/* Label on one line, figure on one line. */
+.stat-card span,.stat-card strong{
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+}
+
 .stat-card.net{border-color:var(--gold-line);box-shadow:var(--sh-sm)}
-.stat-card strong.negative,.ded-summary strong.negative{color:var(--red)}
+.stat-card strong.negative,.ded-summary strong.negative,.sourced-summary strong.negative{color:var(--red)}
 
 /* ---------- 5. INSIGHT CARDS ---------- */
 .insights-grid{
@@ -73,7 +111,7 @@ body.locked{overflow:hidden}
 }
 .performance-list>div:last-child{border-bottom:0;padding-bottom:0}
 .performance-list span{color:var(--muted);font-size:11px}
-.performance-list strong{font-size:12.5px;text-align:right;word-break:break-word}
+.performance-list strong{font-size:12.5px;text-align:right;white-space:nowrap}
 
 /* ---------- 6. LEDGER PANEL ---------- */
 .panel-head p{font-size:11.5px;color:var(--muted);margin-top:5px;max-width:66ch}
@@ -92,6 +130,15 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
 .source.inventory{background:var(--green-soft);color:var(--green)}
 .source.ground{background:var(--purple-soft);color:var(--purple)}
 .auto{font-size:10px;color:var(--faint);white-space:nowrap}
+
+/* Marks a ledger row whose vehicle was bought from a customer. */
+.origin-tag{
+  display:inline-flex;align-items:center;gap:5px;margin-top:5px;
+  padding:3px 8px;border-radius:var(--pill);
+  background:var(--tint);border:1px solid var(--line);
+  font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+}
+.origin-tag i{font-size:8.5px;color:var(--gold)}
 
 .delete-sale,.delete-ded{
   width:32px;height:32px;flex-shrink:0;display:grid;place-items:center;
@@ -156,10 +203,16 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
   flex-shrink:0;padding-bottom:12px;border-bottom:1px solid var(--line);
 }
-.ded-summary>div{padding:10px 11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--tint)}
+.ded-summary>div{padding:10px 11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--tint);overflow:hidden}
 .ded-summary>div:nth-child(3){background:var(--green-soft);border-color:#0f8a4333}
 .ded-summary span{display:block;font-size:9.5px;font-weight:700;letter-spacing:.09em;color:var(--muted)}
-.ded-summary strong{display:block;font-size:15px;margin-top:4px;letter-spacing:-.02em;word-break:break-word}
+/* Same rule as the stat cards: one line, and scroll the box rather than
+   break the number. */
+.ded-summary strong{
+  display:block;font-size:15px;margin-top:4px;letter-spacing:-.02em;
+  white-space:nowrap;overflow-x:auto;scrollbar-width:none;
+}
+.ded-summary strong::-webkit-scrollbar{display:none}
 
 .ded-tabs{display:flex;gap:6px;padding:12px 0;flex-shrink:0}
 .ded-tab{
@@ -205,15 +258,96 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
 .ded-info small{display:block;font-size:10px;color:var(--muted);margin-top:4px}
 .ded-amount{flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--red);white-space:nowrap}
 
-.ded-empty{
+.ded-empty,.src-empty{
   text-align:center;padding:34px 16px;color:var(--muted);
   border:1px dashed var(--line);border-radius:var(--r);
 }
-.ded-empty i{display:block;font-size:21px;color:var(--gold);margin-bottom:9px}
-.ded-empty h3{font-size:14px;color:var(--ink);margin-bottom:4px}
-.ded-empty p{font-size:11.5px}
+.ded-empty i,.src-empty i{display:block;font-size:21px;color:var(--gold);margin-bottom:9px}
+.ded-empty h3,.src-empty h3{font-size:14px;color:var(--ink);margin-bottom:4px}
+.ded-empty p,.src-empty p{font-size:11.5px;max-width:52ch;margin-inline:auto}
 
-/* ---------- 9. RESPONSIVE (matches style.css breakpoints) ---------- */
+/* ---------- 9. EXPECTED INCOME (SELL-IN & TRADE-IN) ---------- */
+.sourced-summary{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:8px;
+  margin-bottom:12px;
+}
+.sourced-summary>div{
+  padding:11px 12px;background:var(--tint);overflow:hidden;
+  border:1px solid var(--line);border-radius:var(--r-sm);
+}
+.sourced-summary>div.pending{background:var(--amber-soft);border-color:#c2740a33}
+.sourced-summary>div.receivedbox{background:var(--green-soft);border-color:#0f8a4333}
+.sourced-summary span{display:block;font-size:9.5px;font-weight:700;letter-spacing:.09em;color:var(--muted)}
+.sourced-summary strong{
+  display:block;font-size:16px;margin-top:4px;letter-spacing:-.02em;
+  white-space:nowrap;overflow-x:auto;scrollbar-width:none;
+}
+.sourced-summary strong::-webkit-scrollbar{display:none}
+.sourced-summary small{display:block;font-size:10px;color:var(--muted);margin-top:4px}
+.sourced-summary small b{color:var(--ink)}
+
+.src-warning{display:none}
+.src-warning.active{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-bottom:11px;padding:10px 12px;
+  background:var(--amber-soft);border:1px solid #c2740a33;border-radius:var(--r-sm);
+  font-size:11px;line-height:1.5;color:#7a4a05;
+}
+.src-warning i{color:var(--amber);margin-top:1px;flex-shrink:0}
+
+.src-filters{align-items:center}
+.src-capital{margin-left:auto;font-size:10.5px;color:var(--muted)}
+.src-capital strong{font-size:11.5px;color:var(--ink);white-space:nowrap}
+
+.sourced-list{display:grid;gap:8px}
+
+.src-item{
+  padding:12px;background:var(--card);
+  border:1px solid var(--line);border-left:3px solid var(--line-3);
+  border-radius:var(--r-sm);
+}
+.src-item.pending{border-left-color:var(--amber)}
+.src-item.received{border-left-color:var(--green)}
+.src-item.missing{border-left-color:var(--faint);opacity:.75}
+
+.src-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:11px}
+.src-mark{
+  width:32px;height:32px;flex-shrink:0;display:grid;place-items:center;
+  border-radius:var(--r-sm);background:var(--gold-soft,#f7941d1f);color:var(--gold);font-size:12px;
+}
+.src-title{flex:1;min-width:0}
+.src-title strong{display:block;font-size:12.5px;line-height:1.3}
+.src-title span{display:block;font-size:10px;color:var(--muted);margin-top:3px}
+
+.src-badge{
+  display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
+  padding:5px 10px;border-radius:var(--pill);
+  font-size:9.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap;
+}
+.src-badge i{font-size:9px}
+.src-badge.pending{background:var(--amber-soft);color:var(--amber)}
+.src-badge.received{background:var(--green-soft);color:var(--green)}
+.src-badge.missing{background:var(--red-soft);color:var(--red)}
+
+.src-figures{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;
+}
+.src-figures>div{padding:9px 10px;background:var(--tint);min-width:0}
+.src-figures span{display:block;font-size:9px;font-weight:700;letter-spacing:.07em;color:var(--muted)}
+.src-figures strong{
+  display:block;font-size:12.5px;margin-top:3px;letter-spacing:-.01em;
+  white-space:nowrap;overflow-x:auto;scrollbar-width:none;
+}
+.src-figures strong::-webkit-scrollbar{display:none}
+.src-figures strong.pos{color:var(--green)}
+.src-figures strong.neg{color:var(--red)}
+
+.src-note{font-size:10.5px;color:var(--muted);margin-top:9px}
+.src-note a{color:var(--green);font-weight:700}
+.src-note a:hover{text-decoration:underline}
+
+/* ---------- 10. RESPONSIVE (matches style.css breakpoints) ---------- */
 @media (max-width:900px){
   .toolbar{grid-template-columns:1fr}
   .heading-actions{width:100%}
@@ -231,6 +365,21 @@ td small{display:block;color:var(--muted);font-size:10.5px;margin-top:3px}
   .ded-tabs{flex-direction:column}
   .modal-actions{flex-direction:column-reverse}
   .modal-actions>*{width:100%}
+
+  /* On a phone the strip always scrolls, so stop the cards stretching
+     and let each sit at its natural width. */
+  .stats{gap:8px}
+  .stat-card{flex:0 0 auto}
+
+  .sourced-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .src-head{flex-wrap:wrap}
+  .src-badge{margin-left:42px}
+  .src-figures{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .src-capital{margin-left:0;width:100%}
+}
+
+@media (max-width:400px){
+  .sourced-summary{grid-template-columns:1fr}
 }
 
 @media (prefers-reduced-motion:reduce){

@@ -64,6 +64,8 @@
 
 <div class="stats">
 <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div><span>Total Recorded Revenue</span><strong id="totalRevenue">KES 0</strong></div></div>
+<div class="stat-card"><div class="stat-icon gold"><i class="fa-solid fa-hourglass-half"></i></div><div><span>Expected, Awaiting Sale</span><strong id="expectedIncome">KES 0</strong></div></div>
+<div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div><div><span>Received From Requests</span><strong id="receivedIncome">KES 0</strong></div></div>
 <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-money-bill-transfer"></i></div><div><span>Total Deductions</span><strong id="totalDeductions">KES 0</strong></div></div>
 <div class="stat-card net"><div class="stat-icon green"><i class="fa-solid fa-scale-balanced"></i></div><div><span>Net Income</span><strong id="netIncome">KES 0</strong></div></div>
 <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-car-side"></i></div><div><span>Total</span><strong id="totalSales">0</strong></div></div>
@@ -88,6 +90,31 @@
 <div><span>Largest Deduction</span><strong id="largestDeduction">KES 0</strong></div>
 </div></section>
 </div>
+
+<!-- EXPECTED INCOME FROM SELL-IN & TRADE-IN -->
+<section class="listing-panel">
+<div class="panel-head">
+<div><span class="eyebrow dark"><b></b> SELL-IN &amp; TRADE-IN</span><h2>Expected Income</h2><p>Vehicles bought from customers through Sell Your Car and Trade-In requests. Each one carries the price agreed at approval and what it was expected to sell for. A vehicle counts as received once its listing is marked Sold.</p></div>
+</div>
+
+<div class="sourced-summary">
+<div class="pending"><span>AWAITING SALE</span><strong id="srcExpected">KES 0</strong><small><b id="srcPendingCount">0</b> vehicles still in stock</small></div>
+<div><span>EXPECTED PROFIT</span><strong id="srcExpectedProfit">KES 0</strong><small>If they sell at the approved price</small></div>
+<div class="receivedbox"><span>RECEIVED</span><strong id="srcReceived">KES 0</strong><small><b id="srcReceivedCount">0</b> vehicles sold</small></div>
+<div><span>PROFIT REALISED</span><strong id="srcRealised">KES 0</strong><small id="srcCostNote">&nbsp;</small></div>
+</div>
+
+<div id="sourcedWarning" class="src-warning"></div>
+
+<div class="ded-filters src-filters">
+<button class="ded-filter src-filter active" data-src-filter="all" type="button">All vehicles</button>
+<button class="ded-filter src-filter" data-src-filter="pending" type="button">Awaiting sale</button>
+<button class="ded-filter src-filter" data-src-filter="received" type="button">Received</button>
+<span class="src-capital">Capital tied up in unsold stock: <strong id="srcCapital">KES 0</strong></span>
+</div>
+
+<div class="sourced-list" id="sourcedList"></div>
+</section>
 
 <section class="listing-panel">
 <div class="panel-head">
