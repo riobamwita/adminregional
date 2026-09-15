@@ -16,8 +16,8 @@
 
 /* ---------- 1. PAGE OVERRIDES ---------- */
 
-/* three controls on this page: search + status + sort */
-.toolbar{grid-template-columns:1fr 175px 175px}
+/* four controls on this page: search + category + status + sort */
+.toolbar{grid-template-columns:1fr 150px 150px 150px}
 
 /* insurance.js adds .locked to <body> while the modal is open */
 body.locked{overflow:hidden}
@@ -46,6 +46,7 @@ body.locked{overflow:hidden}
 
 .request-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
 .request-top small{font-size:10px;color:var(--muted);white-space:nowrap}
+.request-top-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 
 .request-status{
   padding:5px 8px;border-radius:var(--radius);
@@ -56,6 +57,15 @@ body.locked{overflow:hidden}
 .request-status.contacted,.request-status.in-progress{background:#fff7e8;color:var(--amber)}
 .request-status.completed{background:#eaf8ef;color:var(--green)}
 .request-status.cancelled{background:#fff1f2;color:var(--red)}
+
+/* Motor / Non-Motor category chip, shown alongside the status chip */
+.request-category{
+  padding:5px 8px;border-radius:var(--radius);
+  background:#eef1f5;color:#425466;
+  font-size:9.5px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;white-space:nowrap;
+}
+.request-category.nonmotor{background:#f3ecfb;color:#6b3fa0}
 
 .request-card h3{
   font-size:15px;line-height:1.25;margin-bottom:8px;
@@ -211,6 +221,7 @@ body.locked{overflow:hidden}
 }
 .document-btn i{color:var(--gold)}
 .document-btn:hover{border-color:var(--gold);background:#fffaf3}
+.no-documents{margin:0;font-size:11.5px;color:var(--muted);font-style:italic;line-height:1.6}
 
 /* ---------- 8. MODAL FOOTER ---------- */
 .modal-actions{
