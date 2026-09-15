@@ -1,7 +1,13 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="add.css"><title>Add Vehicle | Regional Autoselections</title></head><body>
 <header class="navbar"><a href="index.html" id="backBtn" class="back">
     <i class="fa-solid fa-arrow-left"></i> Listings
-</a></header>
+</a><div class="progress-pill" id="formProgress" aria-label="Form 0% complete">
+    <svg class="progress-ring" width="24" height="24" viewBox="0 0 34 34" aria-hidden="true">
+        <circle class="progress-ring-track" cx="17" cy="17" r="14"></circle>
+        <circle class="progress-ring-fill" id="formProgressRingFill" cx="17" cy="17" r="14"></circle>
+    </svg>
+    <span id="formProgressLabel">0%</span>
+</div></header>
 <main class="page"><header class="page-head"><div><small>ADMIN / LISTINGS</small><h1>Add Vehicle</h1><p>Create a new vehicle listing using the controlled vehicle catalogue.</p></div><div class="actions"><a href="index.html" id="cancelBtn" class="cancel">Cancel</a><button id="saveBtn" type="submit" form="carForm" class="save">Add Vehicle</button></div></header>
 <div id="error" class="msg error"></div><div id="success" class="msg success"></div><form id="carForm">
 <section class="section"><h2>Vehicle Information</h2><div class="grid"><div><label>Make *</label><select id="make"></select></div><div><label>Model *</label><select id="model"></select></div><div><label>Trim / Variant</label><input id="trim" placeholder="e.g. TX L Package"></div><div><label>Year *</label><select id="year"></select></div><div><label>Price *</label><input id="price" type="number"></div><div><label>Condition</label><select id="condition"><option value="">Select</option><option>New</option><option>Foreign Used</option><option>Locally Used</option><option>Wellcabs</option></select></div><div><label>Body Type</label><select id="body_type"></select></div><div><label>Status</label><select id="status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option><option value="inactive">Inactive</option></select></div></div></section>

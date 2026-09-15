@@ -15,10 +15,17 @@
      saving writes the shared fields back to tradein_requests, and
      deleting releases the request so it stops reading "in inventory".
      Field mapping lives in tradein-sync.js, nowhere else.
+   - NEW: a completion pill in the navbar, opposite "Back to Listings",
+     tracks how much of the form has been filled in. The counting logic
+     lives in form-progress.js so add.js and edit.js can't drift apart
+     on it — this file just tells it when to recompute, since loading a
+     saved vehicle sets field values directly and doesn't fire the
+     input/change events the pill normally listens for.
    ===================================================================== */
 
 import { supabase } from "./supabase.js";
 import { initVehicleCatalogue, registerCombo } from "./vehicle-catalog.js";
+import { initFormProgress } from "./form-progress.js";
 import { recordAgentSale } from "./agent-payments.js";
 import {
     CAR_FIELDS,
@@ -42,6 +49,10 @@ const displayInput = $("displayInput");
 const galleryInput = $("galleryInput");
 const displayPreview = $("displayPreview");
 const galleryPreview = $("galleryPreview");
+
+/* Recomputes the navbar completion pill. Safe to call as often as you
+   like — it just re-reads the DOM each time. */
+const updateFormProgress = initFormProgress(form);
 
 let car = null,
     gallery = [],
@@ -197,12 +208,14 @@ function showDisplay(url) {
     displayPreview.innerHTML = `<img src="${optimizedUrl(url, 800, 85)}" alt="Display image">`;
     displayPreview.classList.add("active");
     $("removeDisplay")?.classList.add("active");
+    updateFormProgress();
 }
 
 function clearDisplay() {
     displayPreview.innerHTML = "";
     displayPreview.classList.remove("active");
     $("removeDisplay")?.classList.remove("active");
+    updateFormProgress();
 }
 
 /* ---------------- gallery ---------------- */
@@ -370,6 +383,7 @@ async function loadVehicle() {
 
         gallery = galleryResult.data || [];
         renderGallery();
+        updateFormProgress();
 
         renderTradeInBanner();
 

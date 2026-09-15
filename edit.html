@@ -1,5 +1,11 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7941d"><link rel="icon" href="assets/logo.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"><link rel="stylesheet" href="edit.css"><title>Edit Vehicle | Regional Autoselections</title></head><body>
-<header class="navbar"><button id="backBtn" class="back"><i class="fa-solid fa-arrow-left"></i> Listings</button></header>
+<header class="navbar"><button id="backBtn" class="back"><i class="fa-solid fa-arrow-left"></i> Listings</button><div class="progress-pill" id="formProgress" aria-label="Form 0% complete">
+    <svg class="progress-ring" width="24" height="24" viewBox="0 0 34 34" aria-hidden="true">
+        <circle class="progress-ring-track" cx="17" cy="17" r="14"></circle>
+        <circle class="progress-ring-fill" id="formProgressRingFill" cx="17" cy="17" r="14"></circle>
+    </svg>
+    <span id="formProgressLabel">0%</span>
+</div></header>
 <main class="page"><header class="page-head"><div><small>ADMIN / LISTINGS</small><h1>Edit Vehicle</h1><p>Update vehicle information using the controlled vehicle catalogue.</p></div></header>
 <div id="loading" class="loading">Loading vehicle...</div><div id="error" class="msg error"></div><div id="success" class="msg success"></div>
 <form id="carForm" style="display:none">

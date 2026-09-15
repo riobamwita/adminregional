@@ -12,10 +12,15 @@
      missing make or model stops the form.
    - After a successful save the make/model combination is registered in
      the catalogue so it appears on every page from then on.
+   - NEW: a completion pill in the navbar, opposite "Back to Listings",
+     tracks how much of the form has been filled in. The counting logic
+     lives in form-progress.js so add.js and edit.js can't drift apart
+     on it — this file just tells it when to recompute.
    ===================================================================== */
 
 import { supabase } from "./supabase.js";
 import { initVehicleCatalogue, registerCombo } from "./vehicle-catalog.js";
+import { initFormProgress } from "./form-progress.js";
 import {
     CAR_FIELDS,
     NUMERIC_FIELDS,
@@ -33,6 +38,10 @@ const displayInput = $("displayInput");
 const galleryInput = $("galleryInput");
 const displayPreview = $("displayPreview");
 const galleryPreview = $("galleryPreview");
+
+/* Recomputes the navbar completion pill. Safe to call as often as you
+   like — it just re-reads the DOM each time. */
+const updateFormProgress = initFormProgress(form);
 
 let newDisplay = null,
     gallery = [],
@@ -150,6 +159,7 @@ function showDisplayPreview(url) {
     displayPreview.innerHTML = `<img src="${url}" alt="Display image">`;
     displayPreview.classList.add("active");
     $("removeDisplay")?.classList.add("active");
+    updateFormProgress();
 }
 
 if (displayInput) {
@@ -166,6 +176,7 @@ if ($("removeDisplay")) {
         displayPreview.innerHTML = "";
         displayPreview.classList.remove("active");
         $("removeDisplay").classList.remove("active");
+        updateFormProgress();
     };
 }
 
@@ -368,11 +379,13 @@ async function initialise() {
         });
 
         generateVehicleText();
+        updateFormProgress();
 
     } catch (error) {
         /* A catalogue failure must never stop a vehicle being added. */
         console.warn("Vehicle catalogue unavailable:", error);
         populateYears("year");
+        updateFormProgress();
         showMessage(
             "error",
             "Vehicle catalogue is unavailable. You can still add the vehicle by typing the details manually."

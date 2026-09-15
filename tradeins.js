@@ -14,6 +14,16 @@ const $ = id => document.getElementById(id);
 const grid = $("requestsGrid");
 const BUCKET = "car-images";
 
+/* Everything the grid, the filters and the approval panel need. The rest
+   of the row is fetched only when a request is opened. */
+const LIST_COLUMNS = [
+  "id", "full_name", "phone", "email",
+  "vehicle_make", "vehicle_model", "vehicle_year", "registration",
+  "location", "status", "approved_car_id", "approved_at",
+  "expected_value", "max_budget", "negotiated_price", "inventory_price",
+  "created_at"
+].join(",");
+
 const esc = v => String(v ?? "—").replace(/[&<>"']/g,
   m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m]));
 const money = v => Number(v || 0).toLocaleString("en-KE");
@@ -21,6 +31,13 @@ const date = v => v ? new Date(v).toLocaleString("en-KE", { dateStyle: "medium",
 const dash = v => (v === null || v === undefined || v === "" ? "—" : v);
 
 let requests = [], current = null, currentAdmin = null, adminEmails = new Set(), currentFiles = [];
+
+/* Full rows and file lists keyed by request id, so reopening a request
+   costs nothing. */
+const fullCache = new Map();
+const filesCache = new Map();
+
+const SKELETON = `<div class="detail-field"><span>Loading</span><strong>…</strong></div>`;
 
 const statuses = ["new", "reviewing", "valued", "completed", "rejected"];
 
@@ -52,38 +69,67 @@ async function auth() {
 
 async function loadAdmins() {
   let { data, error } = await supabase.from("admin_users").select("email");
-  if (error) throw error;
+  if (error) return;
   adminEmails = new Set((data || []).map(x => String(x.email || "").trim().toLowerCase()).filter(Boolean));
 }
 
 const isAgent = x => adminEmails.has(String(x?.email || "").trim().toLowerCase());
 const isMainAdmin = () => currentAdmin?.is_main_admin === true;
 
-async function load() {
-  $("loading").style.display = "block";
-  grid.innerHTML = "";
-  $("empty").style.display = "none";
-  $("error").classList.remove("active");
-  try {
-    await auth();
-    await loadAdmins();
-    let { data, error } = await supabase.from("tradein_requests").select("*").order("created_at", { ascending: false });
-    if (error) throw error;
-    requests = data || [];
+function hideLoader() {
+  $("loader")?.classList.add("hide");
+  $("loading").style.display = "none";
+}
 
-    /* A request only reads as "in inventory" if the vehicle is really
-       there. Deleted or never-created vehicles are unlinked here, and
-       vehicles created outside this screen are adopted. */
-    await reconcileTradeinLinks(requests);
+async function fetchRequests() {
+  const { data, error } = await supabase
+    .from("tradein_requests")
+    .select(LIST_COLUMNS)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+/* The heavy columns, for one request, once per session. */
+async function fetchFullRequest(id) {
+  const key = String(id);
+  if (fullCache.has(key)) return fullCache.get(key);
+  const { data, error } = await supabase
+    .from("tradein_requests")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return null;
+  fullCache.set(key, data);
+  return data;
+}
+
+async function load({ silent = false } = {}) {
+  if (!silent) $("loading").style.display = "block";
+  $("error").classList.remove("active");
+
+  try {
+    /* Parallel: one round trip of latency instead of three. */
+    const [, , list] = await Promise.all([auth(), loadAdmins(), fetchRequests()]);
+
+    requests = list;
+    fullCache.clear();
 
     stats();
     render();
+    hideLoader();
+
+    /* Link repair runs after the paint and only repaints if it changed
+       something. */
+    reconcileTradeinLinks(requests)
+      .then(changed => { if (changed && changed.size) { stats(); render(); } })
+      .catch(err => console.warn("Link check failed:", err));
+
   } catch (e) {
     console.error(e);
     $("error").textContent = e.message || "Unable to load requests.";
     $("error").classList.add("active");
-  } finally {
-    $("loading").style.display = "none";
+    hideLoader();
   }
 }
 
@@ -123,9 +169,21 @@ function field(label, value) {
 /* ---------------- FILES ---------------- */
 
 async function getFiles(id) {
+  const key = String(id);
+  if (filesCache.has(key)) return filesCache.get(key);
   let { data, error } = await supabase.from("tradein_files").select("*").eq("tradein_id", id).order("created_at", { ascending: true });
   if (error) throw error;
+  filesCache.set(key, data || []);
   return data || [];
+}
+
+/* Supabase image transform. Thumbnails come back as small WebP-ish
+   renders instead of the full-size original. Non-storage URLs and
+   videos are returned untouched. */
+function optimizedUrl(url, width = 480, quality = 65) {
+  if (!url || !url.includes("/storage/v1/object/public/")) return url;
+  return url.replace("/object/public/", "/render/image/public/") +
+    `?width=${width}&quality=${quality}&resize=contain`;
 }
 
 function fileUrl(f) {
@@ -153,13 +211,16 @@ function fileCard(f, index) {
 
   let media;
   if (image) {
-    media = `<img src="${esc(url)}" alt="${esc(label)}" loading="lazy"
+    /* ~420px render, not the 4MB phone original. */
+    media = `<img src="${esc(optimizedUrl(url, 420, 62))}" alt="${esc(label)}" loading="lazy" decoding="async"
       data-lightbox-index="${index}" data-lightbox-kind="image"
       onerror="this.parentElement.innerHTML='<div class=&quot;file-icon&quot;><i class=&quot;fa-solid fa-image&quot;></i></div>'">`;
   } else if (video) {
-    media = `<video src="${esc(url)}" preload="metadata" muted
-      data-lightbox-index="${index}" data-lightbox-kind="video"
-      onerror="this.parentElement.innerHTML='<div class=&quot;file-icon&quot;><i class=&quot;fa-solid fa-video&quot;></i></div>'"></video>`;
+    /* A tile, not a <video>: the clip only downloads if it is opened. */
+    media = `<div class="file-icon video-tile" data-lightbox-index="${index}" data-lightbox-kind="video"
+      style="display:grid;place-items:center;width:100%;height:100%">
+      <i class="fa-solid fa-circle-play" style="font-size:26px;opacity:.85"></i>
+    </div>`;
   } else {
     media = `<div class="file-icon"><i class="fa-solid fa-file"></i></div>`;
   }
@@ -252,6 +313,13 @@ function paintVehicleSections() {
   ].join("");
 }
 
+/* Keep the cached copies in step after any local change. */
+function commitCurrent() {
+  if (!current) return;
+  fullCache.set(String(current.id), current);
+  requests = requests.map(x => String(x.id) === String(current.id) ? { ...x, ...current } : x);
+}
+
 async function saveVehicleEdits() {
   if (!current) return;
 
@@ -283,32 +351,29 @@ async function saveVehicleEdits() {
   try {
     updates.updated_at = new Date().toISOString();
 
-    const { error } = await supabase
-      .from("tradein_requests")
-      .update(updates)
-      .eq("id", current.id);
-    if (error) throw error;
+    const linkedCar = current.approved_car_id;
+    const merged = { ...current, ...updates };
 
-    current = { ...current, ...updates };
+    /* Both writes go out together instead of one behind the other. */
+    const [requestResult, syncError] = await Promise.all([
+      supabase.from("tradein_requests").update(updates).eq("id", current.id),
+      linkedCar
+        ? pushTradeinToCar(merged, linkedCar, Object.keys(TRADEIN_TO_CAR)).then(() => null, err => err)
+        : Promise.resolve(null)
+    ]);
 
-    /* Mirror onto the inventory vehicle so the listing, the edit page
-       and the website all show the same values. */
-    let syncNote = "";
-    if (current.approved_car_id) {
-      try {
-        await pushTradeinToCar(current, current.approved_car_id, Object.keys(TRADEIN_TO_CAR));
-      } catch (syncError) {
-        console.error(syncError);
-        syncNote = `\n\nThe trade-in record was saved, but the inventory vehicle was not updated: ${syncError.message || syncError}`;
-      }
-    }
+    if (requestResult.error) throw requestResult.error;
 
-    requests = requests.map(x => x.id === current.id ? current : x);
+    current = merged;
+    commitCurrent();
 
     paintVehicleSections();
     render();
 
-    if (syncNote) alert(`Saved.${syncNote}`);
+    if (syncError) {
+      console.error(syncError);
+      alert(`Saved.\n\nThe trade-in record was saved, but the inventory vehicle was not updated: ${syncError.message || syncError}`);
+    }
 
     button.innerHTML = `<i class="fa-solid fa-circle-check"></i> Saved`;
     setTimeout(() => {
@@ -368,7 +433,7 @@ function openLightbox(images, startIndex = 0) {
     <div class="lb-thumb ${i === lbIndex ? "active" : ""}" data-i="${i}">
       ${im.kind === "video"
         ? `<div class="thumb-video-mark"><i class="fa-solid fa-play"></i></div>`
-        : `<img src="${esc(im.url)}" alt="">`}
+        : `<img src="${esc(im.thumb || im.url)}" alt="" loading="lazy" decoding="async">`}
     </div>
   `).join("");
 
@@ -390,8 +455,9 @@ function openLightbox(images, startIndex = 0) {
       $("lbZoom").style.display = "none";
     } else {
       const img = document.createElement("img");
-      img.src = item.url;
+      img.src = item.view || item.url;
       img.alt = item.label || "";
+      img.decoding = "async";
       img.className = "lb-image";
       img.onclick = () => { zoomed = !zoomed; img.classList.toggle("zoomed", zoomed); };
       wrap.appendChild(img);
@@ -452,7 +518,7 @@ function buildPrintableTradeInForm() {
 
   const photos = files.filter(isImageFile).map(f => `
     <figure>
-      <img src="${esc(fileUrl(f))}" alt="">
+      <img src="${esc(optimizedUrl(fileUrl(f), 760, 68))}" alt="">
       <figcaption>${esc(f.file_name || "Photo")}</figcaption>
     </figure>`).join("");
 
@@ -599,9 +665,10 @@ function updateDetailStatus(status) {
   badge.textContent = status === "approved" ? "IN INVENTORY" : status.toUpperCase();
 }
 
-function renderContact() {
-  let p = String(current.phone || "").replace(/\D/g, "").replace(/^0/, "254");
-  let e = current.email || "";
+function renderContact(row) {
+  const c = row || current;
+  let p = String(c.phone || "").replace(/\D/g, "").replace(/^0/, "254");
+  let e = c.email || "";
   $("contactActions").innerHTML =
     `${p ? `<a class="contact-action-large" href="tel:+${esc(p)}"><i class="fa-solid fa-phone"></i>Call Customer</a><a class="contact-action-large whatsapp" href="https://wa.me/${esc(p)}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i>WhatsApp</a>` : ""}${e ? `<a class="contact-action-large" href="mailto:${esc(e)}"><i class="fa-solid fa-envelope"></i>Email Customer</a>` : ""}`;
 }
@@ -666,99 +733,126 @@ function approvalPanel() {
 
 /* ---------------- VIEW ---------------- */
 
+let openToken = 0;
+
+/* Paints instantly from the row already in the grid. */
+function openDetailShell(row) {
+  $("detailTitle").textContent = `${row.full_name || "Customer"} — ${row.vehicle_make || ""} ${row.vehicle_model || ""}`.trim();
+  $("detailDate").textContent = date(row.created_at);
+  $("detailStatus").value = row.status || "new";
+  updateDetailStatus(row.approved_car_id ? "approved" : (row.status || "new"));
+
+  $("agentBanner").innerHTML = "";
+  $("customerDetails").innerHTML = [
+    field("Full Name", row.full_name), field("Phone", row.phone), field("Email", row.email),
+    field("Location", row.location), SKELETON, SKELETON
+  ].join("");
+  $("upgradeDetails").innerHTML = SKELETON;
+  $("financialDetails").innerHTML = SKELETON;
+  $("additionalDetails").innerHTML = SKELETON;
+  if ($("vehicleEditForm")) $("vehicleEditForm").innerHTML = SKELETON;
+  $("filesContent").innerHTML = SKELETON;
+  $("approvalContent").innerHTML = "";
+
+  $("vehicleTitle").textContent = `${row.vehicle_make || "Vehicle"} ${row.vehicle_model || ""}`.trim();
+  $("vehicleMeta").textContent = [row.vehicle_year, row.registration].filter(Boolean).join(" • ") || "Trade-in vehicle";
+  $("vehicleDetails").innerHTML = SKELETON;
+
+  paintValuation(row);
+  renderContact.call(null, row);
+
+  $("tradeDetail").classList.add("show");
+  document.body.classList.add("locked");
+}
+
+function paintValuation(c) {
+  $("valuationDetails").innerHTML = [
+    field("Expected Value", `KES ${money(c.expected_value)}`),
+    field("Negotiated Value", c.negotiated_price != null ? `KES ${money(c.negotiated_price)}` : "—"),
+    field("Inventory Price", c.inventory_price != null ? `KES ${money(c.inventory_price)}` : "—"),
+    field("Estimated Profit", c.inventory_price != null && c.negotiated_price != null ? `KES ${money(Number(c.inventory_price) - Number(c.negotiated_price))}` : "—")
+  ].join("");
+}
+
+function paintApprovalPanel() {
+  $("approvalContent").innerHTML = approvalPanel();
+  if (!current.approved_car_id && isMainAdmin()) {
+    $("negotiatedPrice")?.addEventListener("input", updateProfit);
+    $("inventoryPrice")?.addEventListener("input", updateProfit);
+    $("approveInventory")?.addEventListener("click", approveToInventory);
+    updateProfit();
+  }
+}
+
+function paintDetail() {
+  $("agentBanner").innerHTML = isAgent(current)
+    ? `<div class="agent-banner"><i class="fa-solid fa-user-tie"></i><div><strong>AGENT SUBMISSION</strong><span>This request was submitted using an administrator email.</span></div></div>`
+    : "";
+
+  $("customerDetails").innerHTML = [
+    field("Full Name", current.full_name), field("Phone", current.phone), field("Email", current.email),
+    field("Location", current.location), field("ID / Passport", current.id_number), field("Contact Time", current.contact_time)
+  ].join("");
+
+  buildEditForm();
+
+  $("upgradeDetails").innerHTML = [
+    field("Identified Vehicle", current.identified_vehicle), field("Make", current.upgrade_make),
+    field("Model", current.upgrade_model), field("Max Budget", `KES ${money(current.max_budget)}`)
+  ].join("");
+
+  $("financialDetails").innerHTML = [
+    field("Expected Trade-In", `KES ${money(current.expected_value)}`), field("Loan Balance", `KES ${money(current.loan_balance)}`),
+    field("Top-Up", `KES ${money(current.topup)}`), field("Financing", current.financing)
+  ].join("");
+
+  $("additionalDetails").innerHTML = [
+    field("Source", current.source), field("Timeline", current.trade_timeline),
+    field("Notes", current.notes), field("Request ID", current.id),
+    field("Inventory Vehicle ID", current.approved_car_id)
+  ].join("");
+
+  renderContact();
+  paintVehicleSections();
+  paintValuation(current);
+
+  $("filesContent").innerHTML = currentFiles.length
+    ? `<div class="files-grid">${currentFiles.map((f, i) => fileCard(f, i)).join("")}</div>`
+    : `<div class="notes"><p>No vehicle files were submitted.</p></div>`;
+
+  paintApprovalPanel();
+}
+
 async function viewRequest(id) {
-  current = requests.find(x => String(x.id) === String(id));
-  if (!current) return;
+  const lite = requests.find(x => String(x.id) === String(id));
+  if (!lite) return;
+
+  const token = ++openToken;
+  current = lite;
+  openDetailShell(lite);
+
   try {
-    /* Re-check this one link before drawing the panel, so the modal can
-       never offer "Open Inventory Vehicle" for a vehicle that is gone. */
-    await reconcileTradeinLinks([current]);
-    requests = requests.map(x => x.id === current.id ? current : x);
+    /* The full row and the file list in one round trip. */
+    const [full, files] = await Promise.all([fetchFullRequest(id), getFiles(id)]);
+    if (token !== openToken) return;   /* closed, or another one opened */
 
-    currentFiles = await getFiles(id);
-    let status = current.approved_car_id ? "approved" : (current.status || "new");
-    let agent = isAgent(current);
-    $("detailDate").textContent = date(current.created_at);
-    $("detailStatus").value = current.status || "new";
-    updateDetailStatus(status);
+    current = full ? { ...lite, ...full } : lite;
+    currentFiles = files;
+    commitCurrent();
+    paintDetail();
 
-    $("agentBanner").innerHTML = agent
-      ? `<div class="agent-banner"><i class="fa-solid fa-user-tie"></i><div><strong>AGENT SUBMISSION</strong><span>This request was submitted using an administrator email.</span></div></div>`
-      : "";
-
-    $("customerDetails").innerHTML = [
-      field("Full Name", current.full_name), field("Phone", current.phone), field("Email", current.email),
-      field("Location", current.location), field("ID / Passport", current.id_number), field("Contact Time", current.contact_time)
-    ].join("");
-
-    buildEditForm();
-
-    $("upgradeDetails").innerHTML = [
-      field("Identified Vehicle", current.identified_vehicle), field("Make", current.upgrade_make),
-      field("Model", current.upgrade_model), field("Max Budget", `KES ${money(current.max_budget)}`)
-    ].join("");
-
-    $("financialDetails").innerHTML = [
-      field("Expected Trade-In", `KES ${money(current.expected_value)}`), field("Loan Balance", `KES ${money(current.loan_balance)}`),
-      field("Top-Up", `KES ${money(current.topup)}`), field("Financing", current.financing)
-    ].join("");
-
-    $("additionalDetails").innerHTML = [
-      field("Source", current.source), field("Timeline", current.trade_timeline),
-      field("Notes", current.notes), field("Request ID", current.id),
-      field("Inventory Vehicle ID", current.approved_car_id)
-    ].join("");
-
-    renderContact();
-    $("approvalContent").innerHTML = approvalPanel();
-
-    paintVehicleSections();
-
-    $("valuationDetails").innerHTML = [
-      field("Expected Value", `KES ${money(current.expected_value)}`),
-      field("Negotiated Value", current.negotiated_price != null ? `KES ${money(current.negotiated_price)}` : "—"),
-      field("Inventory Price", current.inventory_price != null ? `KES ${money(current.inventory_price)}` : "—"),
-      field("Estimated Profit", current.inventory_price != null && current.negotiated_price != null ? `KES ${money(Number(current.inventory_price) - Number(current.negotiated_price))}` : "—")
-    ].join("");
-
-    $("filesContent").innerHTML = currentFiles.length
-      ? `<div class="files-grid">${currentFiles.map((f, i) => fileCard(f, i)).join("")}</div>`
-      : `<div class="notes"><p>No vehicle files were submitted.</p></div>`;
-
-    $("tradeDetail").classList.add("show");
-    document.body.classList.add("locked");
-
-    /* Download button in the status card (once) */
-    const statusCard = document.querySelector(".status-card .status-controls");
-    if (statusCard && !statusCard.querySelector(".download-btn")) {
-      const dl = document.createElement("button");
-      dl.type = "button";
-      dl.className = "download-btn";
-      dl.style.width = "auto";
-      dl.innerHTML = `<i class="fa-solid fa-file-arrow-down"></i> Download`;
-      dl.onclick = downloadTradeInForm;
-      statusCard.appendChild(dl);
-    }
-
-    /* Lightbox */
-    $("filesContent").onclick = (e) => {
-      const card = e.target.closest("[data-lightbox-index]");
-      if (!card) return;
-      const items = currentFiles.map((f) => ({
-        url: fileUrl(f),
-        label: f.file_name || f.file_type || "File",
-        kind: isVideoFile(f) ? "video" : "image"
-      })).filter(it => it.url);
-      const idx = Number(card.dataset.lightboxIndex);
-      if (isNaN(idx)) return;
-      openLightbox(items, idx);
-    };
-
-    if (!current.approved_car_id && isMainAdmin()) {
-      $("negotiatedPrice")?.addEventListener("input", updateProfit);
-      $("inventoryPrice")?.addEventListener("input", updateProfit);
-      $("approveInventory")?.addEventListener("click", approveToInventory);
-      updateProfit();
+    /* The link check happens after the modal is usable, not before it
+       opens. Only the linked vehicle is checked, not the whole table. */
+    if (current.approved_car_id) {
+      const { data } = await supabase.from("cars").select("id").eq("id", current.approved_car_id).maybeSingle();
+      if (token !== openToken || data) return;
+      await reconcileTradeinLinks([current]);
+      commitCurrent();
+      updateDetailStatus(current.approved_car_id ? "approved" : (current.status || "new"));
+      buildEditForm();
+      paintApprovalPanel();
+      stats();
+      render();
     }
   } catch (e) {
     console.error(e);
@@ -790,7 +884,9 @@ function safeName(name) {
 async function copyImageToCar(file, carId, index) {
   const url = fileUrl(file);
   if (!url) throw new Error("Image URL is missing.");
-  let response = await fetch(url);
+  /* Copy a 1600px render into inventory instead of the raw upload. */
+  let response = await fetch(optimizedUrl(url, 1600, 82));
+  if (!response.ok) response = await fetch(url);
   if (!response.ok) throw new Error("Unable to download submitted image.");
   let blob = await response.blob();
   let name = safeName(file.file_name || `image-${index}.jpg`);
@@ -823,14 +919,17 @@ async function approveToInventory() {
   let createdCarId = null;   /* only set when this run inserted the row */
 
   try {
-    let { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Your session has expired. Please log in again.");
+    /* Session and both duplicate checks together. */
+    const [sessionResult, check, existing] = await Promise.all([
+      supabase.auth.getSession(),
+      supabase.from("tradein_requests").select("approved_car_id").eq("id", current.id).maybeSingle(),
+      supabase.from("cars").select("id").eq("source_request_id", current.id).maybeSingle()
+    ]);
 
-    let check = await supabase.from("tradein_requests").select("approved_car_id").eq("id", current.id).maybeSingle();
+    const session = sessionResult?.data?.session;
+    if (!session) throw new Error("Your session has expired. Please log in again.");
     if (check.error) throw check.error;
     if (check.data?.approved_car_id) throw new Error("This request has already been approved by another administrator.");
-
-    let existing = await supabase.from("cars").select("id").eq("source_request_id", current.id).maybeSingle();
     if (existing.error) throw existing.error;
 
     let car;
@@ -841,10 +940,10 @@ async function approveToInventory() {
         price: sell, purchase_price: buy, is_public: true, updated_at: new Date().toISOString()
       }).eq("id", car.id);
     } else {
-      let r = await supabase.from("cars").insert(buildCarInsert(current, { buy, sell })).select().single();
+      let r = await supabase.from("cars").insert(buildCarInsert(current, { buy, sell })).select("id").single();
       if (r.error) {
         if (r.error.code === "23505") {
-          let q = await supabase.from("cars").select("*").eq("source_request_id", current.id).single();
+          let q = await supabase.from("cars").select("id").eq("source_request_id", current.id).single();
           if (q.error) throw q.error;
           car = q.data;
         } else throw r.error;
@@ -856,29 +955,26 @@ async function approveToInventory() {
 
     if (!car?.id) throw new Error("The inventory vehicle was not created. Nothing has been marked as approved.");
 
+    /* Images copy in parallel, then land as a single insert. */
     let images = imageFiles();
-    if (createdCarId) {
-      for (let i = 0; i < images.length; i++) {
-        let copied = await copyImageToCar(images[i], car.id, i);
-        uploaded.push(copied.storage_path);
-        let { error: imageError } = await supabase.from("car_images").insert({
-          car_id: car.id, image_url: copied.image_url, storage_path: copied.storage_path,
-          image_type: "gallery", display_order: i
-        });
-        if (imageError) throw imageError;
-        if (i === 0) {
-          let { error: displayError } = await supabase.from("cars").update({
-            display_image_url: copied.image_url, display_image_path: copied.storage_path
-          }).eq("id", car.id);
-          if (displayError) throw displayError;
-        }
-      }
-    }
+    if (createdCarId && images.length) {
+      const copied = await Promise.all(images.map((f, i) => copyImageToCar(f, car.id, i)));
+      uploaded = copied.map(c => c.storage_path);
 
-    /* Confirm the row is really readable before the request is stamped. */
-    let verify = await supabase.from("cars").select("id").eq("id", car.id).maybeSingle();
-    if (verify.error) throw verify.error;
-    if (!verify.data) throw new Error("The inventory vehicle could not be confirmed. Nothing has been marked as approved.");
+      const [insertResult, displayResult] = await Promise.all([
+        supabase.from("car_images").insert(copied.map((c, i) => ({
+          car_id: car.id, image_url: c.image_url, storage_path: c.storage_path,
+          image_type: "gallery", display_order: i
+        }))),
+        supabase.from("cars").update({
+          display_image_url: copied[0].image_url,
+          display_image_path: copied[0].storage_path
+        }).eq("id", car.id)
+      ]);
+
+      if (insertResult.error) throw insertResult.error;
+      if (displayResult.error) throw displayResult.error;
+    }
 
     let now = new Date().toISOString();
     let requestUpdate = {
@@ -886,6 +982,8 @@ async function approveToInventory() {
       approved_car_id: car.id, approved_at: now, approved_by: session.user.id, updated_at: now
     };
 
+    /* The returned row confirms both that the vehicle exists and that no
+       one else approved this request first. */
     let { data: updatedRows, error: updateError } = await supabase
       .from("tradein_requests")
       .update(requestUpdate)
@@ -898,11 +996,12 @@ async function approveToInventory() {
     }
 
     current = { ...current, ...requestUpdate };
-    requests = requests.map(x => x.id === current.id ? current : x);
+    commitCurrent();
 
     alert(`Vehicle approved and successfully added to inventory.${images.length && createdCarId ? ` ${images.length} image(s) were transferred.` : ""}`);
     closeDetail();
-    load();
+    stats();
+    render();
 
   } catch (e) {
     console.error(e);
@@ -933,9 +1032,9 @@ async function updateStatus(id, status) {
   if (current?.approved_car_id && status !== "approved" && !confirm("This request is already linked to an inventory vehicle. Change its request status anyway?")) return;
   let { error } = await supabase.from("tradein_requests").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
   if (error) return alert(error.message);
-  let x = requests.find(x => x.id === id);
+  let x = requests.find(x => String(x.id) === String(id));
   if (x) x.status = status;
-  if (current) current.status = status;
+  if (current) { current.status = status; commitCurrent(); }
   updateDetailStatus(current?.approved_car_id ? "approved" : status);
   stats();
   render();
@@ -951,13 +1050,17 @@ async function deleteRequest() {
   try {
     let { error: e } = await supabase.from("tradein_requests").delete().eq("id", id);
     if (e) throw e;
-    /* Drop the back-reference so the vehicle no longer points at a
-       request that is gone. */
-    await supabase.from("cars").update({ source_request_id: null }).eq("source_request_id", id);
-    requests = requests.filter(x => x.id !== id);
+
+    requests = requests.filter(x => String(x.id) !== String(id));
+    fullCache.delete(String(id));
+    filesCache.delete(String(id));
     closeDetail();
     stats();
     render();
+
+    /* Drop the back-reference in the background. */
+    supabase.from("cars").update({ source_request_id: null }).eq("source_request_id", id);
+
     alert("Trade-in request deleted successfully.");
   } catch (e) {
     console.error(e);
@@ -966,6 +1069,7 @@ async function deleteRequest() {
 }
 
 function closeDetail() {
+  openToken++;
   $("tradeDetail").classList.remove("show");
   document.body.classList.remove("locked");
   current = null;
@@ -974,11 +1078,13 @@ function closeDetail() {
 
 /* ---------------- EVENTS ---------------- */
 
+let searchTimer;
+
 grid.addEventListener("click", e => { let card = e.target.closest(".request-card"); if (card) viewRequest(card.dataset.id); });
-$("searchInput").oninput = render;
+$("searchInput").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(render, 150); };
 $("statusFilter").onchange = render;
 $("sortFilter").onchange = render;
-$("refreshBtn").onclick = load;
+$("refreshBtn").onclick = () => load();
 $("detailStatus").onchange = e => updateDetailStatus(e.target.value);
 $("saveStatus").onclick = () => current && updateStatus(current.id, $("detailStatus").value);
 $("deleteRequest").onclick = deleteRequest;
@@ -990,17 +1096,55 @@ document.addEventListener("keydown", e => {
 $("menu").onclick = () => { $("sidebar").classList.add("open"); $("overlay").classList.add("show"); };
 $("closeMenu").onclick = $("overlay").onclick = () => { $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); };
 $("logoutBtn").onclick = async () => { await supabase.auth.signOut(); location.replace("auth.html"); };
-window.addEventListener("load", () => setTimeout(() => $("loader")?.classList.add("hide"), 450));
 
-/* Refresh the links when the tab is returned to, so a vehicle deleted on
-   the listings page is reflected here without a manual reload. */
+/* Bound once, instead of on every request that is opened. */
+$("filesContent").onclick = (e) => {
+  const card = e.target.closest("[data-lightbox-index]");
+  if (!card) return;
+  const items = currentFiles.map((f) => {
+    const src = fileUrl(f);
+    const kind = isVideoFile(f) ? "video" : "image";
+    return {
+      url: src,
+      /* screen-sized for viewing, thumbnail-sized for the strip */
+      view: kind === "video" ? src : optimizedUrl(src, 1400, 80),
+      thumb: kind === "video" ? src : optimizedUrl(src, 140, 50),
+      label: f.file_name || f.file_type || "File",
+      kind
+    };
+  }).filter(it => it.url);
+  const idx = Number(card.dataset.lightboxIndex);
+  if (isNaN(idx)) return;
+  openLightbox(items, idx);
+};
+
+(() => {
+  const statusCard = document.querySelector(".status-card .status-controls");
+  if (statusCard && !statusCard.querySelector(".download-btn")) {
+    const dl = document.createElement("button");
+    dl.type = "button";
+    dl.className = "download-btn";
+    dl.style.width = "auto";
+    dl.innerHTML = `<i class="fa-solid fa-file-arrow-down"></i> Download`;
+    dl.onclick = downloadTradeInForm;
+    statusCard.appendChild(dl);
+  }
+})();
+
+/* Returning to the tab refreshes quietly, at most once a minute, instead
+   of running a full blocking reload every time. */
+let lastRefresh = Date.now();
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && !current && requests.length) load();
+  if (document.visibilityState !== "visible" || current) return;
+  if (Date.now() - lastRefresh < 60000) return;
+  lastRefresh = Date.now();
+  load({ silent: true });
 });
 
-requireAdmin("tradeins").then(async allowed => {
+/* ---------------- BOOT ---------------- */
+
+requireAdmin("tradeins").then(allowed => {
   if (!allowed) return;
-  await auth();
   load();
   markSectionSeen("tradeins");
   attachBadges();

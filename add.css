@@ -7,7 +7,7 @@
    color/shadow/radius tokens, glass panels, gold accents and
    pill buttons.
 
-   Two things this file guarantees throughout:
+   Three things this file guarantees throughout:
    1. Every input / select / textarea is 16px at EVERY
       breakpoint, on every device. That's what stops iOS Safari
       zooming in on focus. No media query below overrides it.
@@ -16,10 +16,14 @@
       at every viewport width. Both are driven off the same
       --gutter / --page-max tokens instead of separate hard-coded
       padding, so they can't drift apart the way they used to.
+   3. The completion pill on the opposite side of the navbar sits
+      at that same inset, mirrored — .navbar uses space-between
+      with exactly these two children, so the two pills are
+      always flush with the left and right page edges.
    ------------------------------------------------------------
    1  Tokens
    2  Reset & base
-   3  Navbar
+   3  Navbar (back button + completion pill)
    4  Page head & messages
    5  Form sections & grid
    6  Fields
@@ -119,10 +123,11 @@ input,select,textarea{font-size:16px;font-weight:500}
 /* ---------- 3. NAVBAR ---------- */
 .navbar{
   height:var(--nav-h);position:sticky;top:0;z-index:20;
-  display:flex;align-items:center;justify-content:flex-start;gap:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding-top:env(safe-area-inset-top);
   /* same inset formula as .page below — this is what keeps
-     "Back to Listings" lined up with the page content */
+     "Back to Listings" and the completion pill lined up with
+     the page content on the left and right respectively */
   padding-left:max(var(--gutter),calc((100% - var(--page-max)) / 2));
   padding-right:max(var(--gutter),calc((100% - var(--page-max)) / 2));
   background:#ffffffab;
@@ -141,6 +146,30 @@ input,select,textarea{font-size:16px;font-weight:500}
   transition:border-color .16s ease,color .16s ease,background .16s ease,box-shadow .16s ease;
 }
 .back:hover{border-color:var(--gold-line);color:var(--ink);background:#fff;box-shadow:var(--sh-sm)}
+
+/* Completion pill — opposite the back button. A quiet ring rather than
+   a bar: it reads at a glance without competing with "Back to Listings"
+   for attention, and it doesn't need horizontal room to grow. */
+.progress-pill{
+  display:inline-flex;align-items:center;gap:7px;flex-shrink:0;
+  min-height:38px;padding:0 13px 0 8px;
+  background:var(--glass);color:var(--muted);
+  border:1px solid var(--line);border-radius:var(--pill);
+  font-size:11.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transition:border-color .16s ease,color .16s ease,background .16s ease;
+}
+.progress-pill[data-complete="true"]{
+  border-color:#0f8a4355;color:var(--green);background:var(--green-soft);
+}
+
+.progress-ring{flex-shrink:0;transform:rotate(-90deg)}
+.progress-ring-track{fill:none;stroke:var(--line-3);stroke-width:3}
+.progress-ring-fill{
+  fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;
+  transition:stroke-dashoffset .25s var(--ease),stroke .16s ease;
+}
+.progress-pill[data-complete="true"] .progress-ring-fill{stroke:var(--green)}
 
 /* ---------- 4. PAGE HEAD & MESSAGES ---------- */
 .page{
@@ -334,6 +363,7 @@ input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0
   :root{--gutter:12px}
 
   .back{min-height:36px;padding:0 13px;font-size:11.5px}
+  .progress-pill{min-height:36px;padding:0 11px 0 7px;font-size:11px}
 
   .page{margin-top:16px;margin-bottom:24px}
   .page-head h1{font-size:24px}
@@ -355,6 +385,9 @@ input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0
   .back{font-size:0;gap:0;width:38px;padding:0}
   .back i{font-size:13px}
 
+  .progress-pill{padding:0 9px 0 7px;font-size:10.5px;gap:6px}
+  .progress-ring{width:20px;height:20px}
+
   .page-head h1{font-size:22px}
   .section{padding:12px}
   .upload{min-height:86px;font-size:12px}
@@ -366,6 +399,7 @@ input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+  .progress-ring-fill{transition:none}
 }
 
 @media print{
