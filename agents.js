@@ -1,5 +1,6 @@
 import { supabase } from "./supabase.js";
 import { requireAdmin } from "./admin-guard.js";
+import { insertSafe, updateSafe } from "./db-safe.js";
 import{markSectionSeen}from"./badges.js";import{attachBadges}from"./admin-nav.js";
 const $ = id => document.getElementById(id);
 const grid = $("requestsGrid");
@@ -794,31 +795,32 @@ async function sendBackToAgent() {
   try {
     const now = new Date().toISOString();
 
-    const { error: actionError } = await supabase
-      .from("agent_vehicle_actions")
-      .insert({
-        agent_id: current.agent_id,
-        submission_id: current.id,
-        admin_id: currentAdmin?.id || null,
-        action_type: "correction",
-        title,
-        message: summary || "Please review and correct the submitted details, then resubmit.",
-        completed: false,
-        created_at: now,
-        updated_at: now
-      });
+    /* insertSafe drops admin_id (or any other column PostgREST reports
+       missing) and retries instead of failing the whole action — see
+       db-safe.js for the real fix: add the column in Supabase. */
+    const { error: actionError } = await insertSafe("agent_vehicle_actions", {
+      agent_id: current.agent_id,
+      submission_id: current.id,
+      admin_id: currentAdmin?.id || null,
+      action_type: "correction",
+      title,
+      message: summary || "Please review and correct the submitted details, then resubmit.",
+      completed: false,
+      created_at: now,
+      updated_at: now
+    });
     if (actionError) throw actionError;
 
-    const { error: subError } = await supabase
-      .from("agent_vehicle_submissions")
-      .update({
+    const { error: subError } = await updateSafe("agent_vehicle_submissions",
+      { id: current.id },
+      {
         status: "returned",
         returned_reason: summary || "Please review and correct the submitted details, then resubmit.",
         returned_at: now,
         returned_by: currentAdmin?.id || null,
         updated_at: now
-      })
-      .eq("id", current.id);
+      }
+    );
     if (subError) throw subError;
 
     current.status = "returned";
@@ -1105,16 +1107,13 @@ async function copySubmissionPhoto(file, carId, index) {
   };
 }
 
+/* Retained for compatibility, now backed by the generic helper.
+   Returns whatever fields actually made it into the row (columns
+   PostgREST reported missing are silently dropped — see db-safe.js). */
 async function updateSubmissionRow(id, payload) {
-  let { error } = await supabase.from("agent_vehicle_submissions").update(payload).eq("id", id);
-  if (error && /column|schema cache/i.test(error.message || "")) {
-    const fallback = { status: payload.status, updated_at: payload.updated_at };
-    const retry = await supabase.from("agent_vehicle_submissions").update(fallback).eq("id", id);
-    if (retry.error) throw retry.error;
-    return fallback;
-  }
+  const { error, appliedPayload } = await updateSafe("agent_vehicle_submissions", { id }, payload);
   if (error) throw error;
-  return payload;
+  return appliedPayload;
 }
 
 async function approveToInventory() {
@@ -1254,10 +1253,14 @@ async function approveToInventory() {
     current = { ...current, ...saved, _car: { id: car.id, status: "available", source_request_id: current.id, source_type: "agent" } };
     submissions = submissions.map(x => (x.id === current.id ? current : x));
 
-    await supabase.from("agent_vehicle_actions")
-      .update({ completed: true, completed_at: now, updated_at: now })
-      .eq("submission_id", current.id)
-      .eq("completed", false);
+    /* Uses the same schema-cache-safe update as "Send Back to Agent" —
+       if completed_at (or any other column here) isn't on the table,
+       this drops it and retries rather than leaving the approval
+       half-done. */
+    await updateSafe("agent_vehicle_actions",
+      { submission_id: current.id, completed: false },
+      { completed: true, completed_at: now, updated_at: now }
+    );
 
     alert(`Vehicle approved and successfully added to inventory.${uploaded.length ? ` ${uploaded.length} photo(s) were transferred.` : ""}`);
     closeDetail();
